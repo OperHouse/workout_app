@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/background_1" /> <!-- Цвет фона CardView -->
+    <stroke android:color="@color/light_gray2" android:width="2dp"/> <!-- Цвет и ширина обводки -->
+    <corners android:radius="16dp"/> <!-- Радиус скругленных углов -->
+</shape>

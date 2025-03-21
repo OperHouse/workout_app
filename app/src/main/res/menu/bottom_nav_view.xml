@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="Клиенты"
+        android:icon="@drawable/ic_people"
+        android:id="@+id/People"/>
+    <item android:title="Питание"
+        android:icon="@drawable/ic_nutrition_bar"
+        android:id="@+id/Nutrition"/>
+
+    <item android:title="Тренировки"
+        android:icon="@drawable/ic_workout_bar"
+        android:id="@+id/Workout"/>
+
+    <item android:title="Профиль"
+        android:icon="@drawable/ic_user_profile"
+        android:id="@+id/Profile"/>
+</menu>
