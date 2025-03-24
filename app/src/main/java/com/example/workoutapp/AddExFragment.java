@@ -179,20 +179,103 @@ public class AddExFragment extends Fragment {
 
             @Override
             public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
-
+                // Отображаем две кнопки: одна для удаления, другая для изменения
                 new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-                        .addActionIcon(R.drawable.ic_trash_can_foreground)
+                        .addActionIcon(R.drawable.ic_trash_can_foreground)  // Иконка для удаления
                         .create()
                         .decorate();
+
+                // Ограничиваем смахивание, чтобы не смахивать слишком далеко
                 if (Math.abs(dX) > viewHolder.itemView.getWidth() * 0.3) {
                     dX = (float) (viewHolder.itemView.getWidth() * 0.3 * (dX > 0 ? 1 : -1));
                 }
+
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
             }
         };
 
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
         itemTouchHelper.attachToRecyclerView(exRecycler); // Подключаем к RecyclerView
+
+
+
+        //=========================================================================================//
+        ItemTouchHelper.SimpleCallback presetSwipeRightCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                PresetModel presetToDelete = presetsList.get(position);
+
+                // Создаем новый фрагмент
+                ChangePresetFragment changePresetFragment = new ChangePresetFragment();
+
+                // Создаем Bundle и передаем объект PresetModel
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("preset", presetToDelete); // Передаем объект через Bundle
+                changePresetFragment.setArguments(bundle); // Устанавливаем Bundle в фрагмент
+
+                // Переход к новому фрагменту
+                FragmentManager fragmentManager = getFragmentManager();
+                assert fragmentManager != null;
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.replace(R.id.frameLayout, changePresetFragment);
+                fragmentTransaction.commit();
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+                        .addActionIcon(R.drawable.ic_edit_foreground)
+                        .create()
+                        .decorate();
+                if (Math.abs(dX) > viewHolder.itemView.getWidth() * 0.3) {
+                    dX = (float) (viewHolder.itemView.getWidth() * 0.3 * (dX > 0 ? 1 : -1));
+                }
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+            }
+        };
+        ItemTouchHelper presetSwipeRightHelper = new ItemTouchHelper(presetSwipeRightCallback);
+        presetSwipeRightHelper.attachToRecyclerView(presetRecycler);
+
+
+        ItemTouchHelper.SimpleCallback swipeRightCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                ExModel exerciseToChange = exList.get(position);
+
+                showDialogChangeEx(exerciseToChange, position);
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+                        .addActionIcon(R.drawable.ic_edit_foreground)
+                        .create()
+                        .decorate();
+                if (Math.abs(dX) > viewHolder.itemView.getWidth() * 0.3) {
+                    dX = (float) (viewHolder.itemView.getWidth() * 0.3 * (dX > 0 ? 1 : -1));
+                }
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+            }
+        };
+
+        ItemTouchHelper swipeRightItemTouchHelper = new ItemTouchHelper(swipeRightCallback);
+        swipeRightItemTouchHelper.attachToRecyclerView(exRecycler);
+
+
 
         return RootViewAddExFragment;
     }
@@ -201,6 +284,7 @@ public class AddExFragment extends Fragment {
         Dialog dialogCreateEx = new Dialog(requireContext());
         dialogCreateEx.setContentView(R.layout.create_ex_dialog_box);
         Objects.requireNonNull(dialogCreateEx.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialogCreateEx.getWindow().setBackgroundDrawable(new ColorDrawable(0));
         dialogCreateEx.show();
 
         ImageButton backBtn = dialogCreateEx.findViewById(R.id.imageButtonBack1);
@@ -268,6 +352,114 @@ public class AddExFragment extends Fragment {
                 Toast.makeText(requireContext(), "Упражнение добавлено!", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+    private void showDialogChangeEx(ExModel exerciseToChange, int position){
+
+        Dialog dialogCreateEx = new Dialog(requireContext());
+        dialogCreateEx.setContentView(R.layout.create_ex_dialog_box);
+        //dialogCreateEx.set
+        Objects.requireNonNull(dialogCreateEx.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialogCreateEx.show();
+
+        AtomicBoolean isDialogClosedByOutsideClick = new AtomicBoolean(false);
+
+        dialogCreateEx.setCancelable(true); // Делаем диалог закрываемым
+        dialogCreateEx.setCanceledOnTouchOutside(true); // Закрыть при клике вне диалога
+
+        dialogCreateEx.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+
+        String oldName = exerciseToChange.getExName();
+        ImageButton backBtn = dialogCreateEx.findViewById(R.id.imageButtonBack1);
+        EditText nameEx = dialogCreateEx.findViewById(R.id.editText);
+        AppCompatSpinner spinnerTypeEx = dialogCreateEx.findViewById(R.id.spinnerTypeEx);
+        AppCompatSpinner spinnerBodyType = dialogCreateEx.findViewById(R.id.spinnerBodyType);
+        Button createWorkBtn = dialogCreateEx.findViewById(R.id.createWorkBtn);
+        TextView text = dialogCreateEx.findViewById(R.id.textView1);
+
+        text.setText("Изменение упражнения");
+        createWorkBtn.setText("Изменить упражнение");
+        nameEx.setText(exerciseToChange.getExName());
+
+        // Список типов упражнений
+        String[] ExercisesType = {"Гантели", "Гриф", "Вес тела", "Кроссовер", "Тренажер", "Время", "Другое"};
+        ArrayList<String> List1 = new ArrayList<>(Arrays.asList(ExercisesType));
+        ArrayAdapter<String> adapter1 = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, List1);
+        adapter1.setDropDownViewResource(R.layout.spinners_style);
+        spinnerTypeEx.setAdapter(adapter1);
+
+
+        // Список частей тела
+        String[] BodyPart = {"Грудь", "Плечи", "Ноги", "Руки", "Тренажер", "Спина", "Пресс", "Кардио", "Другое"};
+        ArrayList<String> List2 = new ArrayList<>(Arrays.asList(BodyPart));
+        ArrayAdapter<String> adapter2 = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, List2);
+        adapter2.setDropDownViewResource(R.layout.spinners_style);
+        spinnerBodyType.setAdapter(adapter2);
+
+        // Устанавливаем значения в спиннеры, если они есть
+        String exerciseType = exerciseToChange.getExType().replaceAll("[()]", "").trim(); // Убираем скобки и пробелы
+        String bodyType = exerciseToChange.getBodyType().replaceAll("[()]", "").trim();
+
+
+        // Устанавливаем тип упражнения в спиннер
+        int typeIndex = List1.indexOf(exerciseType);
+        if (typeIndex != -1) {
+            spinnerTypeEx.setSelection(typeIndex);
+        }
+
+        // Устанавливаем часть тела в спиннер
+        int bodyIndex = List2.indexOf(bodyType);
+        if (bodyIndex != -1) {
+            spinnerBodyType.setSelection(bodyIndex);
+        }
+
+        dialogCreateEx.setOnDismissListener(dialog -> {
+            if (isDialogClosedByOutsideClick.get()) {
+                // Диалог был закрыт нажатием вне
+                exAdapter.notifyItemChanged(position);
+            }
+        });
+
+        createWorkBtn.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("NotifyDataSetChanged")
+            @Override
+            public void onClick(View v) {
+                String exName = nameEx.getText().toString().trim();
+                String exType = "("+ spinnerTypeEx.getSelectedItem().toString() + ")";
+                String bodyType = spinnerBodyType.getSelectedItem().toString();
+
+                // Проверка, что все поля заполнены
+                if (exName.isEmpty()) {
+                    nameEx.setError("Пожалуйста, введите название упражнения");
+                    return;
+                }
+
+                // Создание нового объекта ExModel
+                ExModel newExercise = new ExModel();
+                newExercise.setExName(exName);
+                newExercise.setExType(exType);
+                newExercise.setBodyType(bodyType);
+
+                // Добавление упражнения в базу данных
+                dataBase.changeExercise(oldName,newExercise);
+
+                exList.clear();
+                exList.addAll(dataBase.getAllExercise());
+                exAdapter.notifyDataSetChanged();
+
+                exAdapter.updateExList(exList);
+
+                // Закрытие диалога
+                dialogCreateEx.dismiss();
+
+                // Информирование пользователя о добавлении упражнения (можно, например, через Toast)
+                Toast.makeText(requireContext(), "Упражнение измененно!", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        dialogCreateEx.setOnCancelListener(dialog -> isDialogClosedByOutsideClick.set(true));
+
+
+
     }
     private void showDeleteConfirmationDialog(ExModel exerciseToDelete, int position, RecyclerView r) {
         Dialog dialogCreateEx = new Dialog(requireContext());
@@ -395,7 +587,7 @@ public class AddExFragment extends Fragment {
         Toast.makeText(requireContext(), "Упражнение удалено", Toast.LENGTH_SHORT).show();
     }
 
-
+    //===========================================================================================//
 
 
 }
