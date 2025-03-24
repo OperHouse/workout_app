@@ -161,7 +161,6 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
             }
         }
         exList.removeAll(toRemove);
-
         // Добавляем обратно невзаимодействующие элементы из exListMain
         for (ExModel elm : exListMain) {
             if (!elm.getIsPressed()) {
