@@ -36,7 +36,6 @@ public class CreatePresetFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dataBase = new DataBase(requireContext());
-        List<ExModel> exList = dataBase.getAllExercise();
     }
 
     @Override

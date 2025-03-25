@@ -276,7 +276,6 @@ public class AddExFragment extends Fragment {
         swipeRightItemTouchHelper.attachToRecyclerView(exRecycler);
 
 
-
         return RootViewAddExFragment;
     }
 
@@ -411,6 +410,14 @@ public class AddExFragment extends Fragment {
         if (bodyIndex != -1) {
             spinnerBodyType.setSelection(bodyIndex);
         }
+
+        backBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                exAdapter.notifyItemChanged(position);
+                dialogCreateEx.dismiss();;
+            }
+        });
 
         dialogCreateEx.setOnDismissListener(dialog -> {
             if (isDialogClosedByOutsideClick.get()) {
@@ -551,7 +558,7 @@ public class AddExFragment extends Fragment {
                 }
                 presetsList.remove(position);
                 presetAdapter.notifyItemRemoved(position);
-                //r.requestLayout();
+                r.requestLayout();
                 dialogCreateEx.dismiss();
             }
         });
@@ -588,6 +595,8 @@ public class AddExFragment extends Fragment {
     }
 
     //===========================================================================================//
+
+
 
 
 }
