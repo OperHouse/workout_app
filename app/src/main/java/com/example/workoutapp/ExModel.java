@@ -1,6 +1,8 @@
 package com.example.workoutapp;
 
-public class ExModel {
+import java.io.Serializable;
+
+public class ExModel implements Serializable {
 
     String exName;
     String exType;
