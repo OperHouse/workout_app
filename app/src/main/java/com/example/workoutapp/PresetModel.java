@@ -1,8 +1,9 @@
 package com.example.workoutapp;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class PresetModel {
+public class PresetModel implements Serializable {
     private final String presetName;
     private final List<ExModel> exercises;
 

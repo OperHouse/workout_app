@@ -6,6 +6,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -36,7 +37,6 @@ public class DataBase extends SQLiteOpenHelper {
     public  static final String BODY_TYPE2 = "body_type2";
     public DataBase(@Nullable Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        SQLiteDatabase dataBase = getWritableDatabase();
     }
 
     @Override
@@ -134,14 +134,7 @@ public class DataBase extends SQLiteOpenHelper {
         db.close();
     }
 
-    // Function to delete a preset by name
-    public void deletePreset(String presetName) {
-        SQLiteDatabase db = this.getWritableDatabase();
 
-        // Удаляем все упражнения, связанные с пресетом
-        db.delete(TABLE_PRESETS, PRESET_NAME + "=?", new String[]{presetName});
-        db.close();
-    }
     public void deletePreset(String presetName, String exerciseName) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -156,15 +149,20 @@ public class DataBase extends SQLiteOpenHelper {
 
         // Удаляем все старые упражнения, связанные с этим пресетом
         db.delete(TABLE_PRESETS, PRESET_NAME + "=?", new String[]{oldPresetName});
+        Log.d("ChangePreset", "Old exercises deleted for preset: " + oldPresetName);
 
         // Добавляем новые упражнения для обновленного пресета
         for (ExModel exercise : updatedPreset.getExercises()) {
             ContentValues values = new ContentValues();
             values.put(PRESET_NAME, updatedPreset.getPresetName());
-            values.put(EXERCISE_NAME, exercise.getExName());
-            values.put(EXERCISE_TYPE, exercise.getExType());
-            values.put(BODY_TYPE, exercise.getBodyType());
+            values.put(EXERCISE_NAME2, exercise.getExName());
+            values.put(EXERCISE_TYPE2, exercise.getExType());
+            values.put(BODY_TYPE2, exercise.getBodyType());
 
+            // Печать значений, чтобы увидеть, что передается в запрос
+            Log.d("ChangePreset", "Inserting new exercise: " + exercise.getExName());
+
+            // Вставляем новое упражнение
             db.insert(TABLE_PRESETS, null, values);
         }
 
@@ -221,5 +219,46 @@ public class DataBase extends SQLiteOpenHelper {
 
         db.close();
         return presetList;
+    }
+
+    //=====================================Check_Data============================================//
+    public void printAllPresets() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_PRESETS, null);
+
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                do {
+                    @SuppressLint("Range") String presetName = cursor.getString(cursor.getColumnIndex(PRESET_NAME));
+                    @SuppressLint("Range") String exerciseName = cursor.getString(cursor.getColumnIndex(EXERCISE_NAME2));
+                    @SuppressLint("Range") String exerciseType = cursor.getString(cursor.getColumnIndex(EXERCISE_TYPE2));
+                    @SuppressLint("Range") String bodyType = cursor.getString(cursor.getColumnIndex(BODY_TYPE2));
+
+                    Log.d("DB_LOG", "Preset: Name = " + presetName + ", Exercise = " + exerciseName + ", Type = " + exerciseType + ", Body Type = " + bodyType);
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+        }
+
+        db.close();
+    }
+    public void printAllExercises() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_EXERCISE, null);
+
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                do {
+                    @SuppressLint("Range") String exerciseName = cursor.getString(cursor.getColumnIndex(EXERCISE_NAME));
+                    @SuppressLint("Range") String exerciseType = cursor.getString(cursor.getColumnIndex(EXERCISE_TYPE));
+                    @SuppressLint("Range") String bodyType = cursor.getString(cursor.getColumnIndex(BODY_TYPE));
+
+                    Log.d("DB_LOG", "Exercise: Name = " + exerciseName + ", Type = " + exerciseType + ", Body Type = " + bodyType);
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+        }
+
+        db.close();
     }
 }

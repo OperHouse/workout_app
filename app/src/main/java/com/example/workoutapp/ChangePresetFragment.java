@@ -9,8 +9,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -20,13 +22,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 import java.util.Objects;
 
+public class ChangePresetFragment extends Fragment {
 
-public class CreatePresetFragment extends Fragment {
-    DataBase dataBase;
-    private List<ExModel> exList;  // основной список всех элементов
-    private List<ExModel> clickedList;  // список нажатых элементов
-
-    public CreatePresetFragment() {
+    private PresetModel presetModel;
+    private List<ExModel> exList;
+    private DataBase dataBase;
+    private ExAdapter exAdapter;
+    private RecyclerView exRecycler;
+    public ChangePresetFragment() {
         // Required empty public constructor
     }
 
@@ -36,27 +39,43 @@ public class CreatePresetFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dataBase = new DataBase(requireContext());
+
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View RootViewCreatePresetFragment = inflater.inflate(R.layout.fragment_create_preset, container, false);
+        View RootViewChangePresetFragment = inflater.inflate(R.layout.fragment_change_preset, container, false);
+        if (getArguments() != null) {
+            presetModel = (PresetModel) getArguments().getSerializable("preset");
+        }
 
-        RecyclerView exRecycler = RootViewCreatePresetFragment.findViewById(R.id.ExerciseRecyclerViewPresets);
-        ImageButton backBtn = RootViewCreatePresetFragment.findViewById(R.id.imageButtonBack);
-        Button nextBtn = RootViewCreatePresetFragment.findViewById(R.id.nextBtn);
 
+        RecyclerView exRecycler = RootViewChangePresetFragment.findViewById(R.id.ExerciseRecyclerViewPresets);
+        ImageButton backBtn = RootViewChangePresetFragment.findViewById(R.id.imageButtonBack);
+        Button nextBtn = RootViewChangePresetFragment.findViewById(R.id.nextBtn);
+        TextView text = RootViewChangePresetFragment.findViewById(R.id.textView4);
+
+        text.setText(presetModel.getPresetName());
 
         exList = dataBase.getAllExercise();
-        ExAdapter exAdapter = new ExAdapter( CreatePresetFragment.this, true, exList);
+
+        for (ExModel a: presetModel.getExercises()) {
+            for (ExModel b: exList) {
+                if (Objects.equals(a.getExName(), b.getExName()) &&
+                        Objects.equals(a.getExType(), b.getExType()) &&
+                        Objects.equals(a.getBodyType(), b.getBodyType())) {
+                    b.setIsPressed(true);
+                    break; // Выход из внутреннего цикла, так как совпадение найдено
+                }
+            }
+        }
+
+        ExAdapter exAdapter = new ExAdapter( ChangePresetFragment.this, true, exList);
         exAdapter.updateExList(exList);
         exRecycler.setHasFixedSize(true);
         exRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         exRecycler.setAdapter(exAdapter);
-
-
 
         backBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -80,11 +99,8 @@ public class CreatePresetFragment extends Fragment {
             }
         });
 
-
-
-        return RootViewCreatePresetFragment;
+        return RootViewChangePresetFragment;
     }
-
 
     private void showDialogConfirmation(ExAdapter exAdapter){
         Dialog dialogCreatePreset = new Dialog(requireContext());
@@ -95,6 +111,13 @@ public class CreatePresetFragment extends Fragment {
         EditText namePreset = dialogCreatePreset.findViewById(R.id.editText);
         Button btnAdd = dialogCreatePreset.findViewById(R.id.btnAdd);
         Button btnChanel = dialogCreatePreset.findViewById(R.id.btnChanel);
+        TextView text1 = dialogCreatePreset.findViewById(R.id.textView);
+        TextView text2 = dialogCreatePreset.findViewById(R.id.text1);
+
+        text1.setText(presetModel.getPresetName());
+        text2.setText("Введите новое имя пресета");
+        namePreset.setText(presetModel.getPresetName());
+        btnAdd.setText("Изменить");
 
 
         if(dialogCreatePreset.getWindow() != null){
@@ -113,11 +136,19 @@ public class CreatePresetFragment extends Fragment {
                     namePreset.setError("Пожалуйста, введите название упражнения");
                     return;
                 }
-                PresetModel newPreset = new PresetModel(presetName,exAdapter.getList());
-                dataBase.addPreset(newPreset);
-                dialogCreatePreset.dismiss();
 
-                Toast.makeText(requireContext(), "Пресет создан!", Toast.LENGTH_SHORT).show();
+                PresetModel newPreset = new PresetModel(presetName,exAdapter.getList());
+                if (!presetModel.equals(newPreset)){
+                    dataBase.changePreset(presetModel.getPresetName(),newPreset);
+                    Toast.makeText(requireContext(), "Пресет создан!", Toast.LENGTH_SHORT).show();
+                    dialogCreatePreset.dismiss();
+
+                }else {dialogCreatePreset.dismiss();
+                    Toast.makeText(requireContext(), "Окно закрыто", Toast.LENGTH_SHORT).show();}
+
+
+
+
 
                 FragmentManager fragmentManager = getFragmentManager();
                 assert fragmentManager != null;
