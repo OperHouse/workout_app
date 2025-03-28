@@ -1,4 +1,4 @@
-package com.example.workoutapp;
+package com.example.workoutapp.Workout;
 
 import android.app.Dialog;
 import android.graphics.drawable.ColorDrawable;
@@ -17,14 +17,19 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.Adapters.ExAdapter;
+import com.example.workoutapp.DataBase;
+import com.example.workoutapp.Models.ExModel;
+import com.example.workoutapp.Models.PresetModel;
+import com.example.workoutapp.R;
+
 import java.util.List;
 import java.util.Objects;
 
 
 public class CreatePresetFragment extends Fragment {
     DataBase dataBase;
-    private List<ExModel> exList;  // основной список всех элементов
-    private List<ExModel> clickedList;  // список нажатых элементов
+    private List<ExModel> exList;
 
     public CreatePresetFragment() {
         // Required empty public constructor
@@ -51,7 +56,7 @@ public class CreatePresetFragment extends Fragment {
 
         exList = dataBase.getAllExercise();
         ExAdapter exAdapter = new ExAdapter( CreatePresetFragment.this, true, exList);
-        exAdapter.updateExList(exList);
+        exAdapter.updateExList2(exList);
         exRecycler.setHasFixedSize(true);
         exRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         exRecycler.setAdapter(exAdapter);

@@ -1,4 +1,4 @@
-package com.example.workoutapp;
+package com.example.workoutapp.Adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -10,6 +10,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.workoutapp.Models.ExModel;
+import com.example.workoutapp.Models.PresetModel;
+import com.example.workoutapp.R;
 
 import java.util.List;
 

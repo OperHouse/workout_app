@@ -1,4 +1,4 @@
-package com.example.workoutapp.WorkoutFragment;
+package com.example.workoutapp.Workout;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -11,7 +11,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import com.example.workoutapp.AddExFragment;
 import com.example.workoutapp.R;
 
 import java.text.SimpleDateFormat;
