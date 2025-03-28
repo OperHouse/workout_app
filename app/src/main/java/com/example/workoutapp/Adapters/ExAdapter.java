@@ -1,4 +1,4 @@
-package com.example.workoutapp;
+package com.example.workoutapp.Adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -14,6 +14,11 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.DataBase;
+import com.example.workoutapp.Models.ExModel;
+import com.example.workoutapp.R;
+import com.example.workoutapp.TempDataBaseEx;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -24,6 +29,7 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
 
     private final Context context;
     private DataBase dataBase;
+    private TempDataBaseEx tempDataBaseEx;
     private List<ExModel> exList;
     private List<ExModel> noClickedList;
     private boolean isSelectable;
@@ -36,6 +42,7 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
         this.exListMain = dataBase.getAllExercise();
         this.exList = new ArrayList<>();
         this.noClickedList = new ArrayList<>();
+        this.tempDataBaseEx = new TempDataBaseEx(context);
     }
 
     @NonNull
@@ -76,6 +83,23 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
                     noClickedList.clear();
                     notifyDataSetChanged();
                 });
+            }else {
+                 holder.itemView.setOnClickListener(v -> {
+                     // Получаем название упражнения из элемента
+                     String exerciseName = exListElm.getExName();
+
+                     // Проверяем, существует ли упражнение в базе данных
+                     boolean exerciseExists = tempDataBaseEx.checkIfExerciseExists(exerciseName);
+
+                     if (!exerciseExists) {
+                         // Если упражнения нет, добавляем его в базу данных
+                         tempDataBaseEx.addExercise(exerciseName, exListElm.getExType());  // Передаем название и тип упражнения
+                     }
+
+                     tempDataBaseEx.logAllExercisesAndSets();
+                 });
+
+
             }
         }
 
@@ -124,13 +148,15 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
                 return 0;
             }
         });
-
-
-
-
         notifyDataSetChanged();
     }
 
+
+    @SuppressLint("NotifyDataSetChanged")
+    public void updateExList2(List<ExModel> exModelList) {
+        this.exList = exModelList;
+        notifyDataSetChanged();
+    }
     public static class MyViewHolder extends RecyclerView.ViewHolder {
         public TextView nameEx, exType, bodyPart;
         public ImageView imageExType;
@@ -218,6 +244,8 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
             }
         }
     }
+
+
 }
 
 

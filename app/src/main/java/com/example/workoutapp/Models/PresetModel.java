@@ -1,4 +1,4 @@
-package com.example.workoutapp;
+package com.example.workoutapp.Models;
 
 import java.io.Serializable;
 import java.util.List;

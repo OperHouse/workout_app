@@ -1,4 +1,4 @@
-package com.example.workoutapp;
+package com.example.workoutapp.Workout;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
@@ -25,7 +25,12 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.workoutapp.WorkoutFragment.WorkoutFragment;
+import com.example.workoutapp.Adapters.ExAdapter;
+import com.example.workoutapp.Adapters.PresetsAdapter;
+import com.example.workoutapp.DataBase;
+import com.example.workoutapp.Models.ExModel;
+import com.example.workoutapp.Models.PresetModel;
+import com.example.workoutapp.R;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,7 +85,7 @@ public class AddExFragment extends Fragment {
         exRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         exRecycler.setAdapter(exAdapter);
 
-        exAdapter.updateExList(exList);
+        exAdapter.updateExList2(exList);
 
         SearchView SearchView = RootViewAddExFragment.findViewById(R.id.searchExercise2);
         Button CreateExBtn = RootViewAddExFragment.findViewById(R.id.ExerciseBtn);
@@ -342,7 +347,7 @@ public class AddExFragment extends Fragment {
                 exList.addAll(dataBase.getAllExercise());
                 exAdapter.notifyDataSetChanged();
 
-                exAdapter.updateExList(exList);
+                exAdapter.updateExList2(exList);
 
                 // Закрытие диалога
                 dialogCreateEx.dismiss();
@@ -453,7 +458,7 @@ public class AddExFragment extends Fragment {
                 exList.addAll(dataBase.getAllExercise());
                 exAdapter.notifyDataSetChanged();
 
-                exAdapter.updateExList(exList);
+                exAdapter.updateExList2(exList);
 
                 // Закрытие диалога
                 dialogCreateEx.dismiss();

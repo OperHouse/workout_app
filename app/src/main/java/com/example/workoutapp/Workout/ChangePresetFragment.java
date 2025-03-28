@@ -1,4 +1,4 @@
-package com.example.workoutapp;
+package com.example.workoutapp.Workout;
 
 import android.app.Dialog;
 import android.graphics.drawable.ColorDrawable;
@@ -18,6 +18,12 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.workoutapp.Adapters.ExAdapter;
+import com.example.workoutapp.DataBase;
+import com.example.workoutapp.Models.ExModel;
+import com.example.workoutapp.Models.PresetModel;
+import com.example.workoutapp.R;
 
 import java.util.List;
 import java.util.Objects;
