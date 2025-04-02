@@ -45,17 +45,26 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
             holder.name.setText(tempExModelElm.getExName());
             holder.type.setText(tempExModelElm.getTypeEx());
 
-            InnerAdapter innerAdapter = new InnerAdapter(tempExModelElm. getSetsList());
-            holder.innerRecycler.setAdapter(innerAdapter);
+            // Проверяем, есть ли уже адаптер для этого элемента
+            InnerAdapter innerAdapter = (InnerAdapter) holder.innerRecycler.getAdapter();
+            if (innerAdapter == null) {
+                // Если адаптер еще не установлен, создаем новый
+                innerAdapter = new InnerAdapter(tempExModelElm.getSetsList());
+                holder.innerRecycler.setAdapter(innerAdapter);
+            } else {
+                // Если адаптер уже существует, обновляем данные
+                innerAdapter.updateData(tempExModelElm.getSetsList());
+            }
 
             holder.addSet.setOnClickListener(v -> {
                 // Handle adding a new set (this is a simple example)
                 // You can replace this with a dialog to let the user choose the weight, reps, etc.
                 tempDataBaseEx.addSet(tempExModelElm.getEx_id());
+                tempExModelElm.setSetsList(tempDataBaseEx.getExerciseSets(tempExModelElm.getEx_id()));
+                notifyDataSetChanged();
                 tempDataBaseEx.logAllExercisesAndSets();
 
-                // Notify the inner RecyclerView's adapter to update
-                innerAdapter.notifyItemInserted(tempExModelElm.getSetsList().size() - 1);
+
             });
         }
     }
