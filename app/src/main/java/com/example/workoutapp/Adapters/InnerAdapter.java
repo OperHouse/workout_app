@@ -1,5 +1,6 @@
 package com.example.workoutapp.Adapters;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,7 +15,7 @@ import com.example.workoutapp.R;
 import java.util.List;
 
 public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHolder> {
-    private final List<SetsModel> setsList;
+    private List<SetsModel> setsList;
 
     public InnerAdapter(List<SetsModel> setList) {
         this.setsList = setList;
@@ -38,7 +39,12 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
     public int getItemCount() {
         return setsList.size();
     }
-
+    @SuppressLint("NotifyDataSetChanged")
+    public void updateData(List<SetsModel> newSetsList) {
+        this.setsList.clear();
+        this.setsList.addAll(newSetsList);
+        notifyDataSetChanged(); // Notify the adapter that the data has changed
+    }
     public static class InnerViewHolder extends RecyclerView.ViewHolder {
         EditText  weight, reps;
 
