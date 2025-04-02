@@ -12,12 +12,15 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.DataBase;
 import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.TempDataBaseEx;
+import com.example.workoutapp.Workout.WorkoutFragment;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -29,6 +32,7 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
 
     private final Context context;
     private DataBase dataBase;
+    private Fragment fragment;
     private TempDataBaseEx tempDataBaseEx;
     private List<ExModel> exList;
     private List<ExModel> noClickedList;
@@ -43,6 +47,7 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
         this.exList = new ArrayList<>();
         this.noClickedList = new ArrayList<>();
         this.tempDataBaseEx = new TempDataBaseEx(context);
+        this.fragment = fragment;  // Store the fragment reference
     }
 
     @NonNull
@@ -94,9 +99,17 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
                      if (!exerciseExists) {
                          // Если упражнения нет, добавляем его в базу данных
                          tempDataBaseEx.addExercise(exerciseName, exListElm.getExType());  // Передаем название и тип упражнения
+                         // Переход к новому фрагменту
+                         FragmentManager fragmentManager = fragment.getParentFragmentManager(); // Use the fragment reference to get FragmentManager
+                         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                         fragmentTransaction.replace(R.id.frameLayout, new WorkoutFragment()); // Replace with the new fragment
+                         fragmentTransaction.addToBackStack(null); // Add to back stack if you want to navigate back
+                         fragmentTransaction.commit();
                      }
-
+                     //Вывод в логи базы данных
                      tempDataBaseEx.logAllExercisesAndSets();
+
+
                  });
 
 
