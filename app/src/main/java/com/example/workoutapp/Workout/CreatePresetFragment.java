@@ -55,7 +55,7 @@ public class CreatePresetFragment extends Fragment {
 
 
         exList = dataBase.getAllExercise();
-        ExAdapter exAdapter = new ExAdapter( CreatePresetFragment.this, true, exList);
+        ExAdapter exAdapter = new ExAdapter( CreatePresetFragment.this, true);
         exAdapter.updateExList2(exList);
         exRecycler.setHasFixedSize(true);
         exRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));

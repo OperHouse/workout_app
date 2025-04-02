@@ -77,7 +77,7 @@ public class ChangePresetFragment extends Fragment {
             }
         }
 
-        ExAdapter exAdapter = new ExAdapter( ChangePresetFragment.this, true, exList);
+        ExAdapter exAdapter = new ExAdapter( ChangePresetFragment.this, true);
         exAdapter.updateExList(exList);
         exRecycler.setHasFixedSize(true);
         exRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));

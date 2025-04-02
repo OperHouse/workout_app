@@ -39,7 +39,7 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
     private boolean isSelectable;
     private final List<ExModel> exListMain; // Неизменяемый список
 
-    public ExAdapter(@NonNull Fragment fragment, boolean isSelectable, List<ExModel> initialList) {
+    public ExAdapter(@NonNull Fragment fragment, boolean isSelectable) {
         this.context = fragment.requireContext();
         this.isSelectable = isSelectable;
         this.dataBase = new DataBase(context);
