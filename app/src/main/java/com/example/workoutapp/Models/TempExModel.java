@@ -5,6 +5,12 @@ import java.util.List;
 public class TempExModel {
 
     String exName;
+
+
+
+
+
+    String typeEx;
     int ex_id;
     String data;
 
@@ -38,7 +44,20 @@ public class TempExModel {
     public void setData(String data) {
         this.data = data;
     }
+    public List<SetsModel> getSetsList() {
+        return setsList;
+    }
 
+    public void setSetsList(List<SetsModel> setsList) {
+        this.setsList = setsList;
+    }
+    public String getTypeEx() {
+        return typeEx;
+    }
+
+    public void setTypeEx(String typeEx) {
+        this.typeEx = typeEx;
+    }
 
 
 }

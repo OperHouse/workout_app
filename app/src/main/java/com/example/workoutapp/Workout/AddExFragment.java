@@ -79,7 +79,7 @@ public class AddExFragment extends Fragment {
 
         exRecycler = RootViewAddExFragment.findViewById(R.id.ExerciseRecyclerViewPresets);
         exList = dataBase.getAllExercise();
-        exAdapter = new ExAdapter(AddExFragment.this, false, exList);
+        exAdapter = new ExAdapter(AddExFragment.this, false);
 
         exRecycler.setHasFixedSize(true);
         exRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));

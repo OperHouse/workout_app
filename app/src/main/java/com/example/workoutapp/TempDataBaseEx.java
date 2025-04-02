@@ -52,8 +52,8 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
         String createSetsTableQuery = "CREATE TABLE IF NOT EXISTS " + TABLE_SETS + " (" +
                 SET_EXERCISE_ID + " INTEGER NOT NULL, " +
                 SET_NUMBER + " INTEGER NOT NULL, " +
-                SET_WEIGHT + " REAL NOT NULL, " +
-                SET_REPS + " INTEGER NOT NULL, " +
+                SET_WEIGHT + " REAL, " +
+                SET_REPS + " INTEGER, " +
                 "PRIMARY KEY(" + SET_EXERCISE_ID + ", " + SET_NUMBER + "), " +
                 "FOREIGN KEY(" + SET_EXERCISE_ID + ") REFERENCES " + TABLE_EXERCISES + "(" + EXERCISE_ID + "));";
 
@@ -105,17 +105,28 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
     }
 
     // Метод для добавления нового подхода в таблицу sets
-    public void addSet(int exerciseId, int setNumber, double weight, int reps) {
+    public void addSet(int exerciseId) {
         SQLiteDatabase db = this.getWritableDatabase();
 
-        // Подготовка данных для вставки
+        // First, get the highest set_number for the given exercise_id
+        String query = "SELECT MAX(set_number) FROM sets WHERE exercise_id = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(exerciseId)});
+
+        int setNumber = 1; // Default set number is 1 if no sets are found for the exercise
+
+        if (cursor != null && cursor.moveToFirst()) {
+            // Get the highest set_number and increment it by 1
+            setNumber = cursor.getInt(0) + 1;
+            cursor.close();
+        }
+
+        // Prepare the data to insert into the 'sets' table
         ContentValues values = new ContentValues();
         values.put("exercise_id", exerciseId);
         values.put("set_number", setNumber);
-        values.put("weight", weight);
-        values.put("reps", reps);
-
-        // Вставка данных
+        values.putNull("weight");  // Use putNull() to insert NULL for weight
+        values.putNull("reps");
+        // Insert the new set into the database
         db.insert("sets", null, values);
         db.close();
     }
@@ -144,26 +155,28 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
 
         // SQL-запрос для получения всех упражнений
-        String queryExercises = "SELECT exercise_id, exercise_name, description FROM exercises";
+        String queryExercises = "SELECT " + EXERCISE_ID + ", " + EXERCISE_NAME + ", " + EXERCISE_TYPE + ", " + EXERCISE_DATE + " FROM " + TABLE_EXERCISES;
         Cursor cursorExercises = db.rawQuery(queryExercises, null);
 
-        if (cursorExercises != null) {
-            while (cursorExercises.moveToNext()) {
-                // Извлекаем данные упражнения
-                @SuppressLint("Range") long exerciseId = cursorExercises.getLong(cursorExercises.getColumnIndex("exercise_id"));
-                @SuppressLint("Range") String exerciseName = cursorExercises.getString(cursorExercises.getColumnIndex("exercise_name"));
-                @SuppressLint("Range") String description = cursorExercises.getString(cursorExercises.getColumnIndex("description"));
+        if (cursorExercises != null && cursorExercises.moveToFirst()) {
+            do {
+                // Извлекаем данные упражнения с использованием констант
+                @SuppressLint("Range") long exerciseId = cursorExercises.getLong(cursorExercises.getColumnIndex(EXERCISE_ID));
+                @SuppressLint("Range") String exerciseName = cursorExercises.getString(cursorExercises.getColumnIndex(EXERCISE_NAME));
+                @SuppressLint("Range") String exType = cursorExercises.getString(cursorExercises.getColumnIndex(EXERCISE_TYPE));
+                @SuppressLint("Range") String dateAdded = cursorExercises.getString(cursorExercises.getColumnIndex(EXERCISE_DATE));
 
-                // Извлекаем подходы для этого упражнения
+                // Извлекаем сеты для этого упражнения
                 List<SetsModel> setsList = new ArrayList<>();
-                String querySets = "SELECT set_number, weight, reps FROM sets WHERE exercise_id = ?";
+                String querySets = "SELECT " + SET_NUMBER + ", " + SET_WEIGHT + ", " + SET_REPS + " FROM " + TABLE_SETS + " WHERE " + SET_EXERCISE_ID + " = ?";
                 Cursor cursorSets = db.rawQuery(querySets, new String[]{String.valueOf(exerciseId)});
 
-                if (cursorSets != null) {
-                    while (cursorSets.moveToNext()) {
-                        @SuppressLint("Range") int setNumber = cursorSets.getInt(cursorSets.getColumnIndex("set_number"));
-                        @SuppressLint("Range") double weight = cursorSets.getDouble(cursorSets.getColumnIndex("weight"));
-                        @SuppressLint("Range") int reps = cursorSets.getInt(cursorSets.getColumnIndex("reps"));
+                if (cursorSets != null && cursorSets.moveToFirst()) {
+                    do {
+                        // Извлекаем данные для каждого сета
+                        @SuppressLint("Range") int setNumber = cursorSets.getInt(cursorSets.getColumnIndex(SET_NUMBER));
+                        @SuppressLint("Range") double weight = cursorSets.getDouble(cursorSets.getColumnIndex(SET_WEIGHT));
+                        @SuppressLint("Range") int reps = cursorSets.getInt(cursorSets.getColumnIndex(SET_REPS));
 
                         // Создаем объект SetsModel и добавляем его в список
                         SetsModel set = new SetsModel();
@@ -171,18 +184,19 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
                         set.setWeight(weight);
                         set.setReps(reps);
                         setsList.add(set);
-                    }
+                    } while (cursorSets.moveToNext());
                     cursorSets.close(); // Закрываем курсор для сетов
                 }
 
                 // Создаем объект TempExModel и заполняем его
                 TempExModel tempExModel = new TempExModel(exerciseName, setsList);
                 tempExModel.setEx_id((int) exerciseId);  // Устанавливаем ID упражнения
-                tempExModel.setData(description);  // Устанавливаем описание упражнения
+                tempExModel.setData(dateAdded);
+                tempExModel.setTypeEx(exType);
 
                 // Добавляем объект TempExModel в список
                 exerciseList.add(tempExModel);
-            }
+            } while (cursorExercises.moveToNext());
             cursorExercises.close(); // Закрываем курсор для упражнений
         }
 
