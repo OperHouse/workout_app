@@ -2,6 +2,7 @@ package com.example.workoutapp.Adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.Models.SetsModel;
 import com.example.workoutapp.Models.TempExModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.TempDataBaseEx;
@@ -38,6 +40,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
         return new OutsideAdapter.MyViewHolder(v);
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onBindViewHolder(@NonNull OutsideAdapter.MyViewHolder holder, int position) {
         if(tempExModelList != null && !tempExModelList.isEmpty()){
@@ -49,24 +52,40 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
             InnerAdapter innerAdapter = (InnerAdapter) holder.innerRecycler.getAdapter();
             if (innerAdapter == null) {
                 // Если адаптер еще не установлен, создаем новый
-                innerAdapter = new InnerAdapter(tempExModelElm.getSetsList());
+                innerAdapter = new InnerAdapter(tempExModelElm.getSetsList(), tempDataBaseEx);
                 holder.innerRecycler.setAdapter(innerAdapter);
             } else {
                 // Если адаптер уже существует, обновляем данные
-                innerAdapter.updateData(tempExModelElm.getSetsList());
+                innerAdapter.updateData(tempExModelElm.getSetsList(), tempExModelElm.getEx_id());
+                innerAdapter.notifyDataSetChanged();
             }
 
+  
             holder.addSet.setOnClickListener(v -> {
                 // Handle adding a new set (this is a simple example)
                 // You can replace this with a dialog to let the user choose the weight, reps, etc.
                 tempDataBaseEx.addSet(tempExModelElm.getEx_id());
                 tempExModelElm.setSetsList(tempDataBaseEx.getExerciseSets(tempExModelElm.getEx_id()));
                 notifyDataSetChanged();
+
                 tempDataBaseEx.logAllExercisesAndSets();
 
 
             });
+
         }
+    }
+    // Метод для сохранения изменений в базе данных при уходе с фрагмента
+    public void saveChangesToDatabase() {
+        for (TempExModel exModel : tempExModelList) {
+            // Внутри каждого элемента сохраняем изменения через адаптер
+            if (exModel.getSetsList() != null && !exModel.getSetsList().isEmpty()) {
+                for (SetsModel set : exModel.getSetsList()) {
+                    tempDataBaseEx.updateOrInsertSet(set, exModel.getEx_id());
+                }
+            }
+        }
+        Log.d("OutsideAdapter", "All changes saved to the database");
     }
 
     @Override

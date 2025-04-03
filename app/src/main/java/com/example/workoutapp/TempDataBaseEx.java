@@ -262,6 +262,45 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
         db.close(); // Закрываем базу данных
     }
 
+    public void updateOrInsertSet(SetsModel set, int exerciseId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        try {
+            Log.d("DB_UPDATE", "Start updating or inserting set");
+
+            // Проверка, существует ли уже запись с таким упражнением и номером сета
+            String query = "SELECT * FROM " + TempDataBaseEx.TABLE_SETS +
+                    " WHERE " + TempDataBaseEx.SET_EXERCISE_ID + " = ?" +
+                    " AND " + TempDataBaseEx.SET_NUMBER + " = ?";
+            Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(exerciseId), String.valueOf(set.getSet())});
+
+            if (cursor.moveToFirst()) {
+                Log.d("DB_UPDATE", "Record exists, updating...");
+                // Запись существует, обновляем её
+                ContentValues values = new ContentValues();
+                values.put(TempDataBaseEx.SET_WEIGHT, set.getWeight());
+                values.put(TempDataBaseEx.SET_REPS, set.getReps());
+                db.update(TempDataBaseEx.TABLE_SETS, values,
+                        TempDataBaseEx.SET_EXERCISE_ID + " = ? AND " + TempDataBaseEx.SET_NUMBER + " = ?",
+                        new String[]{String.valueOf(exerciseId), String.valueOf(set.getSet())});
+            } else {
+                Log.d("DB_UPDATE", "Record not found, inserting...");
+                // Запись не найдена, вставляем новый подход
+                ContentValues values = new ContentValues();
+                values.put(TempDataBaseEx.SET_EXERCISE_ID, exerciseId);
+                values.put(TempDataBaseEx.SET_NUMBER, set.getSet());
+                values.put(TempDataBaseEx.SET_WEIGHT, set.getWeight());
+                values.put(TempDataBaseEx.SET_REPS, set.getReps());
+                db.insert(TempDataBaseEx.TABLE_SETS, null, values);
+            }
+
+            cursor.close();
+        } catch (Exception e) {
+            Log.e("DB_UPDATE", "Error updating or inserting set", e);
+        } finally {
+            db.close();
+        }
+    }
+
     private boolean checkIfTableExists(SQLiteDatabase db) {
         Cursor cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", new String[]{TempDataBaseEx.TABLE_EXERCISES});
         boolean exists = cursor.getCount() > 0;

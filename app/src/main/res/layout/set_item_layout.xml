@@ -21,11 +21,15 @@
 
             <EditText
                 android:id="@+id/kg_textEd"
-                android:layout_width="80dp"
-                android:layout_height="40dp"
+                android:layout_width="50dp"
+                android:layout_height="30dp"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="4dp"
                 android:layout_marginStart="50dp"
+                android:gravity="center"
+                android:textSize="15sp"
+                android:textColor="@color/white"
+                android:inputType="number"
                 android:background="@drawable/edit_text_back2"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -35,11 +39,15 @@
 
             <EditText
                 android:id="@+id/reps_textEd"
-                android:layout_width="80dp"
-                android:layout_height="40dp"
+                android:layout_width="50dp"
+                android:layout_height="30dp"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="4dp"
                 android:layout_marginStart="50dp"
+                android:gravity="center"
+                android:textSize="15sp"
+                android:textColor="@color/white"
+                android:inputType="number"
                 android:background="@drawable/edit_text_back2"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/kg_textEd"
@@ -48,8 +56,8 @@
             </EditText>
 
             <Button
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:background="@drawable/done_button"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"

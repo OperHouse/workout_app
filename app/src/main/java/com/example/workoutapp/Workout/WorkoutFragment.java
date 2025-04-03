@@ -69,7 +69,15 @@ public class WorkoutFragment extends Fragment {
 
         return workoutFragmentView;
     }
+    @Override
+    public void onPause() {
+        super.onPause();
 
+        // Сохраняем изменения в базу данных при уходе с фрагмента
+        if (outsideAdapter != null) {
+            outsideAdapter.saveChangesToDatabase();
+        }
+    }
     // Метод для замены фрагмента
     private void replaceFragment(Fragment newFragment) {
         // Получаем менеджер фрагментов
