@@ -5,11 +5,6 @@ import java.util.List;
 public class TempExModel {
 
     String exName;
-
-
-
-
-
     String typeEx;
     int ex_id;
     String data;
