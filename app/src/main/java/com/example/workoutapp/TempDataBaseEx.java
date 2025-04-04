@@ -52,7 +52,7 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
         String createSetsTableQuery = "CREATE TABLE IF NOT EXISTS " + TABLE_SETS + " (" +
                 SET_EXERCISE_ID + " INTEGER NOT NULL, " +
                 SET_NUMBER + " INTEGER NOT NULL, " +
-                SET_WEIGHT + " REAL, " +
+                SET_WEIGHT + " INTEGER, " +
                 SET_REPS + " INTEGER, " +
                 "PRIMARY KEY(" + SET_EXERCISE_ID + ", " + SET_NUMBER + "), " +
                 "FOREIGN KEY(" + SET_EXERCISE_ID + ") REFERENCES " + TABLE_EXERCISES + "(" + EXERCISE_ID + "));";
@@ -85,7 +85,7 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
             // Перебираем курсор и заполняем список SetsModel
             while (cursor.moveToNext()) {
                 @SuppressLint("Range") int setNumber = cursor.getInt(cursor.getColumnIndex("set_number"));
-                @SuppressLint("Range") double weight = cursor.getDouble(cursor.getColumnIndex("weight"));
+                @SuppressLint("Range") int weight = cursor.getInt(cursor.getColumnIndex("weight"));
                 @SuppressLint("Range") int reps = cursor.getInt(cursor.getColumnIndex("reps"));
 
                 // Создаем объект SetsModel и заполняем его данными
@@ -175,7 +175,7 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
                     do {
                         // Извлекаем данные для каждого сета
                         @SuppressLint("Range") int setNumber = cursorSets.getInt(cursorSets.getColumnIndex(SET_NUMBER));
-                        @SuppressLint("Range") double weight = cursorSets.getDouble(cursorSets.getColumnIndex(SET_WEIGHT));
+                        @SuppressLint("Range") int weight = cursorSets.getInt(cursorSets.getColumnIndex(SET_WEIGHT));
                         @SuppressLint("Range") int reps = cursorSets.getInt(cursorSets.getColumnIndex(SET_REPS));
 
                         // Создаем объект SetsModel и добавляем его в список
@@ -216,6 +216,57 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
         return exists;
     }
 
+    public void deleteSet(int exerciseId, int setId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // Удаляем конкретный сет по ID упражнения и номеру сета
+        db.delete(TABLE_SETS, "exercise_id=? AND set_number=?", new String[]{String.valueOf(exerciseId), String.valueOf(setId)});
+        db.close();
+    }
+
+    public void updateOrInsertSet(SetsModel set, int exerciseId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        try {
+            Log.d("DB_UPDATE", "Start updating or inserting set");
+
+
+            // Проверка, существует ли уже запись с таким упражнением и номером сета
+            String query = "SELECT * FROM " + TempDataBaseEx.TABLE_SETS +
+                    " WHERE " + TempDataBaseEx.SET_EXERCISE_ID + " = ?" +
+                    " AND " + TempDataBaseEx.SET_NUMBER + " = ?";
+            Cursor cursor = db.rawQuery(query, new String[]{
+                    String.valueOf(exerciseId), String.valueOf(set.getSet())
+            });
+
+            if (cursor.moveToFirst()) {
+                Log.d("DB_UPDATE", "Record exists...");
+
+                    Log.d("DB_UPDATE", "Updating record...");
+                    ContentValues values = new ContentValues();
+                    values.put(TempDataBaseEx.SET_WEIGHT, set.getWeight());
+                    values.put(TempDataBaseEx.SET_REPS, set.getReps());
+                    db.update(TempDataBaseEx.TABLE_SETS, values,
+                            TempDataBaseEx.SET_EXERCISE_ID + " = ? AND " + TempDataBaseEx.SET_NUMBER + " = ?",
+                            new String[]{String.valueOf(exerciseId), String.valueOf(set.getSet())});
+            } else {
+                    Log.d("DB_UPDATE", "Record not found, inserting...");
+                    ContentValues values = new ContentValues();
+                    values.put(TempDataBaseEx.SET_EXERCISE_ID, exerciseId);
+                    values.put(TempDataBaseEx.SET_NUMBER, set.getSet());
+                    values.put(TempDataBaseEx.SET_WEIGHT, set.getWeight());
+                    values.put(TempDataBaseEx.SET_REPS, set.getReps());
+                    db.insert(TempDataBaseEx.TABLE_SETS, null, values);
+
+            }
+
+            cursor.close();
+        } catch (Exception e) {
+            Log.e("DB_UPDATE", "Error updating or inserting set", e);
+        } finally {
+            db.close();
+        }
+    }
+
     //===================================================Check-Data===============================//
 
     public void logAllExercisesAndSets() {
@@ -246,7 +297,7 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
                         do {
                             // Извлекаем данные для каждого сета
                             @SuppressLint("Range") int setNumber = cursorSets.getInt(cursorSets.getColumnIndex(SET_NUMBER));
-                            @SuppressLint("Range") double weight = cursorSets.getDouble(cursorSets.getColumnIndex(SET_WEIGHT));
+                            @SuppressLint("Range") int weight = cursorSets.getInt(cursorSets.getColumnIndex(SET_WEIGHT));
                             @SuppressLint("Range") int reps = cursorSets.getInt(cursorSets.getColumnIndex(SET_REPS));
 
                             // Логируем информацию о подходе
@@ -262,44 +313,6 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
         db.close(); // Закрываем базу данных
     }
 
-    public void updateOrInsertSet(SetsModel set, int exerciseId) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        try {
-            Log.d("DB_UPDATE", "Start updating or inserting set");
-
-            // Проверка, существует ли уже запись с таким упражнением и номером сета
-            String query = "SELECT * FROM " + TempDataBaseEx.TABLE_SETS +
-                    " WHERE " + TempDataBaseEx.SET_EXERCISE_ID + " = ?" +
-                    " AND " + TempDataBaseEx.SET_NUMBER + " = ?";
-            Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(exerciseId), String.valueOf(set.getSet())});
-
-            if (cursor.moveToFirst()) {
-                Log.d("DB_UPDATE", "Record exists, updating...");
-                // Запись существует, обновляем её
-                ContentValues values = new ContentValues();
-                values.put(TempDataBaseEx.SET_WEIGHT, set.getWeight());
-                values.put(TempDataBaseEx.SET_REPS, set.getReps());
-                db.update(TempDataBaseEx.TABLE_SETS, values,
-                        TempDataBaseEx.SET_EXERCISE_ID + " = ? AND " + TempDataBaseEx.SET_NUMBER + " = ?",
-                        new String[]{String.valueOf(exerciseId), String.valueOf(set.getSet())});
-            } else {
-                Log.d("DB_UPDATE", "Record not found, inserting...");
-                // Запись не найдена, вставляем новый подход
-                ContentValues values = new ContentValues();
-                values.put(TempDataBaseEx.SET_EXERCISE_ID, exerciseId);
-                values.put(TempDataBaseEx.SET_NUMBER, set.getSet());
-                values.put(TempDataBaseEx.SET_WEIGHT, set.getWeight());
-                values.put(TempDataBaseEx.SET_REPS, set.getReps());
-                db.insert(TempDataBaseEx.TABLE_SETS, null, values);
-            }
-
-            cursor.close();
-        } catch (Exception e) {
-            Log.e("DB_UPDATE", "Error updating or inserting set", e);
-        } finally {
-            db.close();
-        }
-    }
 
     private boolean checkIfTableExists(SQLiteDatabase db) {
         Cursor cursor = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", new String[]{TempDataBaseEx.TABLE_EXERCISES});
