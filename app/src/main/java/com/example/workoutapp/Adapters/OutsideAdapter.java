@@ -19,14 +19,18 @@ import com.example.workoutapp.Models.TempExModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.TempDataBaseEx;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHolder> {
 
     private final Context context;
-    TempDataBaseEx tempDataBaseEx;
+    private TempDataBaseEx tempDataBaseEx;
     private List<TempExModel> tempExModelList;
 
+    // Список для хранения всех адаптеров InnerAdapter
+    private final Map<Integer, InnerAdapter> allInnerAdapters = new HashMap<>();  // Используем Map для хранения адаптеров
 
     public OutsideAdapter(@NonNull Fragment fragment) {
         this.context = fragment.requireContext();
@@ -43,49 +47,59 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onBindViewHolder(@NonNull OutsideAdapter.MyViewHolder holder, int position) {
-        if(tempExModelList != null && !tempExModelList.isEmpty()){
+        if (tempExModelList != null && !tempExModelList.isEmpty()) {
             TempExModel tempExModelElm = tempExModelList.get(position);
             holder.name.setText(tempExModelElm.getExName());
             holder.type.setText(tempExModelElm.getTypeEx());
 
             // Проверяем, есть ли уже адаптер для этого элемента
-            InnerAdapter innerAdapter = (InnerAdapter) holder.innerRecycler.getAdapter();
+
+            // Получаем ID упражнения
+            int exerciseId = tempExModelElm.getEx_id();
+
+            // Проверяем, существует ли адаптер для этого упражнения в Map
+            InnerAdapter innerAdapter = allInnerAdapters.get(exerciseId);
+
             if (innerAdapter == null) {
-                // Если адаптер еще не установлен, создаем новый
-                innerAdapter = new InnerAdapter(tempExModelElm.getSetsList(), tempDataBaseEx);
+                // Если адаптер еще не существует, создаем новый
+                innerAdapter = new InnerAdapter(tempExModelElm.getSetsList(), tempDataBaseEx, exerciseId);
                 holder.innerRecycler.setAdapter(innerAdapter);
+                innerAdapter.attachSwipeToDelete(holder.innerRecycler, exerciseId);
+
+                // Сохраняем адаптер в Map
+                allInnerAdapters.put(exerciseId, innerAdapter);
             } else {
                 // Если адаптер уже существует, обновляем данные
-                innerAdapter.updateData(tempExModelElm.getSetsList(), tempExModelElm.getEx_id());
+                innerAdapter.updateData(tempExModelElm.getSetsList(), exerciseId);
                 innerAdapter.notifyDataSetChanged();
             }
 
-  
+            // Обработчик нажатия на кнопку "Добавить сет"
             holder.addSet.setOnClickListener(v -> {
-                // Handle adding a new set (this is a simple example)
-                // You can replace this with a dialog to let the user choose the weight, reps, etc.
+                // Сохраняем изменения во всех адаптерах перед добавлением нового сета
+                saveAllInnerAdapters();
+
+                // Добавляем новый сет
                 tempDataBaseEx.addSet(tempExModelElm.getEx_id());
                 tempExModelElm.setSetsList(tempDataBaseEx.getExerciseSets(tempExModelElm.getEx_id()));
+
+                // Обновляем данные и уведомляем адаптер
                 notifyDataSetChanged();
 
+                // Логируем все упражнения и сеты
                 tempDataBaseEx.logAllExercisesAndSets();
-
-
             });
-
         }
     }
-    // Метод для сохранения изменений в базе данных при уходе с фрагмента
-    public void saveChangesToDatabase() {
-        for (TempExModel exModel : tempExModelList) {
-            // Внутри каждого элемента сохраняем изменения через адаптер
-            if (exModel.getSetsList() != null && !exModel.getSetsList().isEmpty()) {
-                for (SetsModel set : exModel.getSetsList()) {
-                    tempDataBaseEx.updateOrInsertSet(set, exModel.getEx_id());
-                }
-            }
+
+    // Метод для сохранения изменений во всех адаптерах
+    public void saveAllInnerAdapters() {
+        // Перебираем все адаптеры в Map, используя entrySet()
+        for (Map.Entry<Integer, InnerAdapter> entry : allInnerAdapters.entrySet()) {
+            InnerAdapter adapter = entry.getValue();
+            adapter.saveModifiedSetsToDb();
         }
-        Log.d("OutsideAdapter", "All changes saved to the database");
+        Log.d("OutsideAdapter", "All inner adapter changes saved");
     }
 
     @Override
@@ -99,6 +113,18 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
     @SuppressLint("NotifyDataSetChanged")
     public void updateExList(List<TempExModel> tempExModelList) {
         this.tempExModelList = tempExModelList;
+        notifyDataSetChanged();
+    }
+    public void saveChangesToDatabase() {
+        for (TempExModel exModel : tempExModelList) {
+            // Внутри каждого элемента сохраняем изменения через адаптер
+            if (exModel.getSetsList() != null && !exModel.getSetsList().isEmpty()) {
+                for (SetsModel set : exModel.getSetsList()) {
+                    tempDataBaseEx.updateOrInsertSet(set, exModel.getEx_id());
+                }
+            }
+        }
+        Log.d("OutsideAdapter", "All changes saved to the database");
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
@@ -115,7 +141,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
             type = itemView.findViewById(R.id.type);
             addSet = itemView.findViewById(R.id.addSetBtn);
             innerRecycler = itemView.findViewById(R.id.innerRecycle);
-            innerRecycler.setLayoutManager(new LinearLayoutManager(itemView.getContext())); // Set the layout manager for the inner RecyclerVie
+            innerRecycler.setLayoutManager(new LinearLayoutManager(itemView.getContext())); // Устанавливаем LayoutManager для внутреннего RecyclerView
         }
     }
 }

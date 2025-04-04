@@ -4,7 +4,7 @@ public class SetsModel {
     int set;
     int reps;
 
-    double weight;
+    int weight;
 
     public int getSet() {
         return set;
@@ -22,11 +22,11 @@ public class SetsModel {
         this.reps = reps;
     }
 
-    public double getWeight() {
+    public int getWeight() {
         return weight;
     }
 
-    public void setWeight(double weight) {
+    public void setWeight(int weight) {
         this.weight = weight;
     }
 
