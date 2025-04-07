@@ -15,4 +15,5 @@
     <color name="black_overlay">#66000000</color>
     <color name="yellow">#FFEB3B</color>
     <color name="red">#F44336</color>
+    <color name="lime">#00FF00 </color>
 </resources>

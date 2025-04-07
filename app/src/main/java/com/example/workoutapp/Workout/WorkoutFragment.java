@@ -1,6 +1,5 @@
 package com.example.workoutapp.Workout;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,34 +39,6 @@ public class WorkoutFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Инфлейтим разметку фрагмента
         View workoutFragmentView = inflater.inflate(R.layout.fragment_workout, container, false);
-
-        @SuppressLint({"MissingInflatedId", "LocalSuppress"})
-        View rootLayout = workoutFragmentView.findViewById(R.id.fragment_root_layout); // Убедитесь, что добавили ID в XML
-
-        // Устанавливаем обработчик касания на корневой контейнер
-        /*rootLayout.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                // Получаем текущий фокусированный элемент
-                View focusedView = getActivity().getCurrentFocus();
-
-                // Проверяем, был ли клик на пустой части экрана (не на редактируемом поле)
-                if (focusedView instanceof EditText) {
-                    // Если фокус на EditText и событие не является прокруткой, скрываем клавиатуру
-                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                        // Скрыть клавиатуру, если было нажато на пустую область
-                        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(focusedView.getWindowToken(), 0);
-                        // Убираем фокус с EditText
-                        focusedView.clearFocus();
-                        return true; // Событие было обработано
-                    }
-                }
-                return false; // Событие передается дальше (т.е. прокрутка)
-            }
-        });*/
-
-
 
         exWorkoutRecyclerView = workoutFragmentView.findViewById(R.id.WorkoutRecyclerView);
         tempExModelList = tempDataBaseEx.getAllExercisesWithSets();

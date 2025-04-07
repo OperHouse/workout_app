@@ -59,14 +59,19 @@
 
             </EditText>
 
-            <Button
+            <CheckBox
+                android:id="@+id/isSelected"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
-                android:background="@drawable/done_button"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                android:button="@null"
                 app:layout_constraintStart_toEndOf="@+id/reps_textEd"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:background="@drawable/checkbox_bg"
+                app:layout_constraintTop_toTopOf="parent">
+
+            </CheckBox>
+
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>
