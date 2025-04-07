@@ -1,5 +1,6 @@
 package com.example.workoutapp.Workout;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,10 +41,37 @@ public class WorkoutFragment extends Fragment {
         // Инфлейтим разметку фрагмента
         View workoutFragmentView = inflater.inflate(R.layout.fragment_workout, container, false);
 
+        @SuppressLint({"MissingInflatedId", "LocalSuppress"})
+        View rootLayout = workoutFragmentView.findViewById(R.id.fragment_root_layout); // Убедитесь, что добавили ID в XML
+
+        // Устанавливаем обработчик касания на корневой контейнер
+        /*rootLayout.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                // Получаем текущий фокусированный элемент
+                View focusedView = getActivity().getCurrentFocus();
+
+                // Проверяем, был ли клик на пустой части экрана (не на редактируемом поле)
+                if (focusedView instanceof EditText) {
+                    // Если фокус на EditText и событие не является прокруткой, скрываем клавиатуру
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        // Скрыть клавиатуру, если было нажато на пустую область
+                        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(focusedView.getWindowToken(), 0);
+                        // Убираем фокус с EditText
+                        focusedView.clearFocus();
+                        return true; // Событие было обработано
+                    }
+                }
+                return false; // Событие передается дальше (т.е. прокрутка)
+            }
+        });*/
+
+
 
         exWorkoutRecyclerView = workoutFragmentView.findViewById(R.id.WorkoutRecyclerView);
         tempExModelList = tempDataBaseEx.getAllExercisesWithSets();
-        outsideAdapter = new OutsideAdapter(WorkoutFragment.this);
+        outsideAdapter = new OutsideAdapter(WorkoutFragment.this, exWorkoutRecyclerView);
 
         exWorkoutRecyclerView.setHasFixedSize(true);
         exWorkoutRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -75,9 +103,19 @@ public class WorkoutFragment extends Fragment {
 
         // Сохраняем изменения в базу данных при уходе с фрагмента
         if (outsideAdapter != null) {
-            outsideAdapter.saveChangesToDatabase();
+            outsideAdapter.saveAllInnerAdapters();
         }
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // Сохраняем изменения в базу данных при уходе с фрагмента
+        if (outsideAdapter != null) {
+            outsideAdapter.saveAllInnerAdapters();
+        }
+    }
+
     // Метод для замены фрагмента
     private void replaceFragment(Fragment newFragment) {
         // Получаем менеджер фрагментов
@@ -93,4 +131,5 @@ public class WorkoutFragment extends Fragment {
             fragmentTransaction.commit();
         }
     }
+
 }
