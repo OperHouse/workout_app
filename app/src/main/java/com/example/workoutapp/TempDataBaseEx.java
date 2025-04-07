@@ -90,7 +90,7 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
 
                 // Создаем объект SetsModel и заполняем его данными
                 SetsModel set = new SetsModel();
-                set.setSet(setNumber);  // Устанавливаем номер подхода
+                set.setSet_id(setNumber);  // Устанавливаем номер подхода
                 set.setWeight(weight);  // Устанавливаем вес
                 set.setReps(reps);      // Устанавливаем количество повторений
 
@@ -180,7 +180,7 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
 
                         // Создаем объект SetsModel и добавляем его в список
                         SetsModel set = new SetsModel();
-                        set.setSet(setNumber);
+                        set.setSet_id(setNumber);
                         set.setWeight(weight);
                         set.setReps(reps);
                         setsList.add(set);
@@ -216,11 +216,20 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
         return exists;
     }
 
-    public void deleteSet(int exerciseId, int setId) {
+    public void deleteSetAndRearrangeNumbers(int exerciseId, int setId) {
         SQLiteDatabase db = this.getWritableDatabase();
 
-        // Удаляем конкретный сет по ID упражнения и номеру сета
+        // 1. Удаляем конкретный сет по ID упражнения и номеру сета
         db.delete(TABLE_SETS, "exercise_id=? AND set_number=?", new String[]{String.valueOf(exerciseId), String.valueOf(setId)});
+
+        // 2. Перенумеровываем все оставшиеся сеты с номерами больше удаленного
+        String updateQuery = "UPDATE " + TABLE_SETS +
+                " SET set_number = set_number - 1" +
+                " WHERE exercise_id = ? AND set_number > ?";
+
+        // Выполняем обновление всех сетов, чьи номера больше удаленного
+        db.execSQL(updateQuery, new String[]{String.valueOf(exerciseId), String.valueOf(setId)});
+
         db.close();
     }
 
@@ -235,7 +244,7 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
                     " WHERE " + TempDataBaseEx.SET_EXERCISE_ID + " = ?" +
                     " AND " + TempDataBaseEx.SET_NUMBER + " = ?";
             Cursor cursor = db.rawQuery(query, new String[]{
-                    String.valueOf(exerciseId), String.valueOf(set.getSet())
+                    String.valueOf(exerciseId), String.valueOf(set.getSet_id())
             });
 
             if (cursor.moveToFirst()) {
@@ -247,12 +256,12 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
                     values.put(TempDataBaseEx.SET_REPS, set.getReps());
                     db.update(TempDataBaseEx.TABLE_SETS, values,
                             TempDataBaseEx.SET_EXERCISE_ID + " = ? AND " + TempDataBaseEx.SET_NUMBER + " = ?",
-                            new String[]{String.valueOf(exerciseId), String.valueOf(set.getSet())});
+                            new String[]{String.valueOf(exerciseId), String.valueOf(set.getSet_id())});
             } else {
                     Log.d("DB_UPDATE", "Record not found, inserting...");
                     ContentValues values = new ContentValues();
                     values.put(TempDataBaseEx.SET_EXERCISE_ID, exerciseId);
-                    values.put(TempDataBaseEx.SET_NUMBER, set.getSet());
+                    values.put(TempDataBaseEx.SET_NUMBER, set.getSet_id());
                     values.put(TempDataBaseEx.SET_WEIGHT, set.getWeight());
                     values.put(TempDataBaseEx.SET_REPS, set.getReps());
                     db.insert(TempDataBaseEx.TABLE_SETS, null, values);

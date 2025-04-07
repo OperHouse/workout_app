@@ -1,17 +1,25 @@
 package com.example.workoutapp.Models;
 
 public class SetsModel {
-    int set;
+    int set_id;
     int reps;
 
     int weight;
-
-    public int getSet() {
-        return set;
+    // Конструктор, принимающий параметры для всех полей
+    public SetsModel(int set_id, int weight, int reps) {
+        this.set_id = set_id;
+        this.weight = weight;
+        this.reps = reps;
+    }
+    public SetsModel() {
     }
 
-    public void setSet(int set) {
-        this.set = set;
+    public int getSet_id() {
+        return set_id;
+    }
+
+    public void setSet_id(int set_id) {
+        this.set_id = set_id;
     }
 
     public int getReps() {

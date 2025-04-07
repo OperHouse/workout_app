@@ -14,7 +14,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.workoutapp.Models.SetsModel;
 import com.example.workoutapp.Models.TempExModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.TempDataBaseEx;
@@ -30,11 +29,13 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
     private List<TempExModel> tempExModelList;
 
     // Список для хранения всех адаптеров InnerAdapter
+    private RecyclerView outerRecyclerView;
     private final Map<Integer, InnerAdapter> allInnerAdapters = new HashMap<>();  // Используем Map для хранения адаптеров
 
-    public OutsideAdapter(@NonNull Fragment fragment) {
+    public OutsideAdapter(@NonNull Fragment fragment, RecyclerView recyclerView) {
         this.context = fragment.requireContext();
         this.tempDataBaseEx = new TempDataBaseEx(context);
+        this.outerRecyclerView = recyclerView; // сохраняем ссылку
     }
 
     @NonNull
@@ -86,6 +87,10 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
                 // Обновляем данные и уведомляем адаптер
                 notifyDataSetChanged();
 
+                if (outerRecyclerView != null) {
+                    outerRecyclerView.scrollToPosition(0);
+                }
+
                 // Логируем все упражнения и сеты
                 tempDataBaseEx.logAllExercisesAndSets();
             });
@@ -115,17 +120,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
         this.tempExModelList = tempExModelList;
         notifyDataSetChanged();
     }
-    public void saveChangesToDatabase() {
-        for (TempExModel exModel : tempExModelList) {
-            // Внутри каждого элемента сохраняем изменения через адаптер
-            if (exModel.getSetsList() != null && !exModel.getSetsList().isEmpty()) {
-                for (SetsModel set : exModel.getSetsList()) {
-                    tempDataBaseEx.updateOrInsertSet(set, exModel.getEx_id());
-                }
-            }
-        }
-        Log.d("OutsideAdapter", "All changes saved to the database");
-    }
+
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
 
