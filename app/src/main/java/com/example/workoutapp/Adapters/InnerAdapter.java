@@ -10,7 +10,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -46,7 +49,7 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
 
     @SuppressLint("RestrictedApi")
     @Override
-    public void onBindViewHolder(@NonNull InnerViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull InnerViewHolder holder, @SuppressLint("RecyclerView") int position) {
         SetsModel set = setsList.get(position);
 
         // Удаляем старые TextWatcher'ы если есть
@@ -61,147 +64,139 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
         holder.weight.setText(set.getWeight() > 0 ? String.valueOf(set.getWeight()) : "");
         holder.reps.setText(set.getReps() > 0 ? String.valueOf(set.getReps()) : "");
 
+        if(!set.getIsSelected()) {
 
-        // Создаём новый TextWatcher для веса
-        holder.weightWatcher = new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void afterTextChanged(Editable s) {}
+            // Создаём новый TextWatcher для веса
+            holder.weightWatcher = new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                try {
-                    int weight = Integer.parseInt(s.toString());
-                    // Если новое значение отличается от текущего, обновляем его
-                    if (weight != set.getWeight()) {
-                        if(modifiedSets.isEmpty()){
-                            modifiedSets.add(findSetById(set.getSet_id()));
-                            modifiedSets.get(0).setWeight(weight);
-                        } else if (getSetId(set.getSet_id())) {
-                            for (SetsModel a: modifiedSets) {
-                                if(a.getSet_id() == set.getSet_id()){
-                                    a.setWeight(weight);
-                                    break;
+                @Override
+                public void afterTextChanged(Editable s) {
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    try {
+                        int weight = Integer.parseInt(s.toString());
+                        // Если новое значение отличается от текущего, обновляем его
+                        if (weight != set.getWeight()) {
+                            if (modifiedSets.isEmpty()) {
+                                modifiedSets.add(findSetById(set.getSet_id()));
+                                modifiedSets.get(0).setWeight(weight);
+                            } else if (getSetId(set.getSet_id())) {
+                                for (SetsModel a : modifiedSets) {
+                                    if (a.getSet_id() == set.getSet_id()) {
+                                        a.setWeight(weight);
+                                        break;
+                                    }
+                                }
+                            } else {
+                                modifiedSets.add(findSetById(set.getSet_id()));
+                                for (SetsModel a : modifiedSets) {
+                                    if (a.getSet_id() == set.getSet_id()) {
+                                        a.setWeight(weight);
+                                        break;
+                                    }
                                 }
                             }
-                        }else{
-                            modifiedSets.add(findSetById(set.getSet_id()));
-                            for (SetsModel a: modifiedSets) {
-                                if(a.getSet_id() == set.getSet_id()){
-                                    a.setWeight(weight);
-                                    break;
+
+                        }
+                    } catch (NumberFormatException e) {
+                        set.setWeight(0); // если пользователь очистил поле, ставим 0
+                    }
+                }
+            };
+            holder.weight.addTextChangedListener(holder.weightWatcher);
+
+            // Создаем новый TextWatcher для изменения повторений
+            holder.repsWatcher = new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    try {
+                        int reps = Integer.parseInt(s.toString());
+                        // Если новое значение отличается от текущего, обновляем его
+                        if (reps != set.getReps()) {
+                            if (modifiedSets.isEmpty()) {
+                                modifiedSets.add(findSetById(set.getSet_id()));
+                                modifiedSets.get(0).setReps(reps);
+                            } else if (getSetId(set.getSet_id())) {
+                                for (SetsModel a : modifiedSets) {
+                                    if (a.getSet_id() == set.getSet_id()) {
+                                        a.setReps(reps);
+                                        break;
+                                    }
+                                }
+                            } else {
+                                modifiedSets.add(findSetById(set.getSet_id()));
+                                for (SetsModel a : modifiedSets) {
+                                    if (a.getSet_id() == set.getSet_id()) {
+                                        a.setReps(reps);
+                                        break;
+                                    }
                                 }
                             }
                         }
-
+                    } catch (NumberFormatException e) {
+                        set.setReps(0); // если пользователь очистил поле, ставим 0
                     }
-                } catch (NumberFormatException e) {
-                    set.setWeight(0); // если пользователь очистил поле, ставим 0
                 }
-            }
-        };
-        holder.weight.addTextChangedListener(holder.weightWatcher);
+            };
+            holder.reps.addTextChangedListener(holder.repsWatcher);
 
-        // Создаем новый TextWatcher для изменения повторений
-        holder.repsWatcher = new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void afterTextChanged(Editable s) {}
+            holder.reps.setEnabled(true);
+            holder.weight.setEnabled(true);
 
+            hideKeyboardOnFocusLost(holder.weight);
+            hideKeyboardOnFocusLost(holder.reps);
+
+            // Устанавливаем состояние Checkbox как не выбранное
+            holder.isSelected.setChecked(false);  // Здесь убираем флаг "выбрано"
+            holder.isSelected.setBackgroundResource(R.drawable.checkbox_unchecked);
+
+            holder.liner.setBackgroundResource(R.drawable.card_border2);
+        }else {
+            // Блокируем редактирование поля ввода для веса
+            holder.weight.setEnabled(false);
+            holder.weight.removeTextChangedListener(holder.weightWatcher);  // Убираем TextWatcher, чтобы предотвратить изменение
+
+
+            // Блокируем редактирование поля ввода для повторений
+            holder.reps.setEnabled(false);
+            holder.reps.removeTextChangedListener(holder.repsWatcher);  // Убираем TextWatcher, чтобы предотвратить изменение
+
+
+            // Устанавливаем фон для заблокированного состояния
+            holder.isSelected.setBackgroundResource(R.drawable.checkbox_checked);
+            holder.isSelected.setChecked(true);
+
+            holder.liner.setBackgroundResource(R.drawable.card_border3);
+        }
+
+
+        holder.isSelected.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                try {
-                    int reps = Integer.parseInt(s.toString());
-                    // Если новое значение отличается от текущего, обновляем его
-                    if (reps != set.getReps()) {
-                        if (modifiedSets.isEmpty()) {
-                            modifiedSets.add(findSetById(set.getSet_id()));
-                            modifiedSets.get(0).setReps(reps);
-                        } else if (getSetId(set.getSet_id())) {
-                            for (SetsModel a : modifiedSets) {
-                                if (a.getSet_id() == set.getSet_id()) {
-                                    a.setReps(reps);
-                                    break;
-                                }
-                            }
-                        } else {
-                            modifiedSets.add(findSetById(set.getSet_id()));
-                            for (SetsModel a : modifiedSets) {
-                                if (a.getSet_id() == set.getSet_id()) {
-                                    a.setReps(reps);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                } catch (NumberFormatException e) {
-                    set.setReps(0); // если пользователь очистил поле, ставим 0
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    tempDataBaseEx.updateIsSelected(exerciseId, set.getSet_id(), true);
+                    set.setIsSelected(true);
+                }else{
+                    tempDataBaseEx.updateIsSelected(exerciseId, set.getSet_id(), false);
+                    set.setIsSelected(false);
+
                 }
+                notifyItemChanged(position);
             }
-        };
-        holder.reps.addTextChangedListener(holder.repsWatcher);
-        /*// Создаём новый TextWatcher для веса
-        holder.weightWatcher = new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void afterTextChanged(Editable s) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                try {
-                    int weight = Integer.parseInt(s.toString());
-                    // Если новое значение отличается от текущего, обновляем его
-                    if (weight != set.getWeight()) {
-                        // Создаем новый объект с измененным значением веса
-                        SetsModel modifiedSet = findSetById(set.getSet_id());
-                        if (modifiedSet != null) {
-                            modifiedSet.setWeight(weight); // Обновляем вес только в modifiedSets
-                            // Добавляем в список измененных данных, если это не было добавлено ранее
-                            if (!modifiedSets.contains(modifiedSet)) {
-                                modifiedSets.add(modifiedSet);
-                            }
-                        }
-                    }
-                } catch (NumberFormatException e) {
-                    // Если пользователь очистил поле, ставим 0
-                    set.setWeight(0);
-                }
-            }
-
-        };
-        holder.weight.addTextChangedListener(holder.weightWatcher);
-
-        // Создаем новый TextWatcher для изменения повторений
-        holder.repsWatcher = new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void afterTextChanged(Editable s) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                try {
-                    int reps = Integer.parseInt(s.toString());
-                    // Если новое значение отличается от текущего, обновляем его
-                    if (reps != set.getReps()) {
-                        // Создаем новый объект с измененным значением повторений
-                        SetsModel modifiedSet = findSetById(set.getSet_id());
-                        if (modifiedSet != null) {
-                            modifiedSet.setReps(reps); // Обновляем повторения только в modifiedSets
-                            // Добавляем в список измененных данных, если это не было добавлено ранее
-                            if (!modifiedSets.contains(modifiedSet)) {
-                                modifiedSets.add(modifiedSet);
-                            }
-                        }
-                    }
-                } catch (NumberFormatException e) {
-                    // Если пользователь очистил поле, ставим 0
-                    set.setReps(0);
-                }
-            }
-        };
-        holder.reps.addTextChangedListener(holder.repsWatcher);*/
-
-
-
-        hideKeyboardOnFocusLost(holder.weight);
-        hideKeyboardOnFocusLost(holder.reps);
-
+        });
 
     }
 
@@ -227,49 +222,10 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
         }
     }
 
-    /*@Override
-    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
-        super.onDetachedFromRecyclerView(recyclerView);
 
-        if (!modifiedSets.isEmpty()) {
-            for (SetsModel modifiedSet : modifiedSets) {
-                // Поиск этого сета в setsList по set_id
-                SetsModel originalSet = findSetById(modifiedSet.getSet_id());
-
-                if (originalSet != null) {
-                    boolean isChanged = false;
-
-                    // Сравниваем значения в originalSet и modifiedSet
-                    if (originalSet.getWeight() != modifiedSet.getWeight()) {
-                        isChanged = true;
-                    }
-                    if (originalSet.getReps() != modifiedSet.getReps()) {
-                        isChanged = true;
-                    }
-
-                    // Если данные изменены, то обновляем их в базе данных
-                    if (isChanged) {
-                        tempDataBaseEx.updateOrInsertSet(modifiedSet, exerciseId);
-                        Log.d("InnerAdapter", "Changes saved to the database for set: " + modifiedSet.getSet_id());
-                    } else {
-                        Log.d("InnerAdapter", "No changes for set: " + modifiedSet.getSet_id());
-                    }
-                }
-            }
-        }
-    }
-    // Метод для поиска сета по set_id в setsList
-    private SetsModel findSetById(int setId) {
-        for (SetsModel set : setsList) {
-            if (set.getSet_id() == setId) {
-                return set;
-            }
-        }
-        return null;  // Если не нашли
-    }*/
     public void attachSwipeToDelete(RecyclerView recyclerView, int ex_id) {
         recyclerView.setItemAnimator(null);
-        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
             @Override
             public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
                 return false;
@@ -360,17 +316,6 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
     }
     // Метод для скрытия клавиатуры
     private void hideKeyboardOnFocusLost(EditText editText) {
-        editText.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) {
-                InputMethodManager imm = (InputMethodManager) v.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                if (imm != null) {
-                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-                    editText.clearFocus();
-                }
-            }
-        });
-
-        //====ЗДЕСЬ ДОБАВИТЬ ОБНОВЛЕНИЕ СЕТА В БД======//
         editText.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 // Скрыть клавиатуру
@@ -378,8 +323,9 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
                 if (imm != null) {
                     imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
                 }
-                // Снять фокус с EditText
-                v.clearFocus();
+
+                saveModifiedSetsToDb(); //Обновление БД
+                v.clearFocus(); // Снять фокус с EditText
                 return true; // Обработка завершена
             }
             return false;
@@ -392,11 +338,15 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
         EditText weight, reps;
         TextWatcher weightWatcher;
         TextWatcher repsWatcher;
+        CheckBox isSelected;
+        LinearLayout liner;
 
         public InnerViewHolder(View itemView) {
             super(itemView);
             weight = itemView.findViewById(R.id.kg_textEd);
             reps = itemView.findViewById(R.id.reps_textEd);
+            isSelected = itemView.findViewById(R.id.isSelected);
+            liner = itemView.findViewById(R.id.linearLayout);
         }
     }
 

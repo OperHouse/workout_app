@@ -34,6 +34,7 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
     public static final String SET_NUMBER = "set_number";
     public static final String SET_WEIGHT = "weight";
     public static final String SET_REPS = "reps";
+    public static final String SET_IS_SELECTED = "is_selected";
 
     public TempDataBaseEx(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -54,6 +55,7 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
                 SET_NUMBER + " INTEGER NOT NULL, " +
                 SET_WEIGHT + " INTEGER, " +
                 SET_REPS + " INTEGER, " +
+                SET_IS_SELECTED +" INTEGER NOT NULL DEFAULT 0, " +
                 "PRIMARY KEY(" + SET_EXERCISE_ID + ", " + SET_NUMBER + "), " +
                 "FOREIGN KEY(" + SET_EXERCISE_ID + ") REFERENCES " + TABLE_EXERCISES + "(" + EXERCISE_ID + "));";
 
@@ -78,7 +80,7 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
 
         // SQL-запрос для получения подходов для конкретного упражнения
-        String query = "SELECT set_number, weight, reps FROM sets WHERE exercise_id = ?";
+        String query = "SELECT set_number, weight, reps, is_selected FROM sets WHERE exercise_id = ?";
         Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(exerciseId)});
 
         if (cursor != null) {
@@ -87,13 +89,14 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
                 @SuppressLint("Range") int setNumber = cursor.getInt(cursor.getColumnIndex("set_number"));
                 @SuppressLint("Range") int weight = cursor.getInt(cursor.getColumnIndex("weight"));
                 @SuppressLint("Range") int reps = cursor.getInt(cursor.getColumnIndex("reps"));
+                @SuppressLint("Range") int isSelected = cursor.getInt(cursor.getColumnIndex("is_selected"));
 
                 // Создаем объект SetsModel и заполняем его данными
                 SetsModel set = new SetsModel();
                 set.setSet_id(setNumber);  // Устанавливаем номер подхода
                 set.setWeight(weight);  // Устанавливаем вес
                 set.setReps(reps);      // Устанавливаем количество повторений
-
+                set.setIsSelected(isSelected == 1);
                 // Добавляем объект в список
                 setsList.add(set);
             }
@@ -126,9 +129,32 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
         values.put("set_number", setNumber);
         values.putNull("weight");  // Use putNull() to insert NULL for weight
         values.putNull("reps");
+        values.put("is_selected", 0);
         // Insert the new set into the database
         db.insert("sets", null, values);
         db.close();
+    }
+
+    public void updateIsSelected(int exerciseId, int setNumber, boolean isSelected) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        try {
+            // Подготовка данных для обновления
+            ContentValues values = new ContentValues();
+            values.put(SET_IS_SELECTED, isSelected ? 1 : 0);  // Преобразуем boolean в 1 или 0
+
+            // Выполнение обновления
+            int rowsUpdated = db.update(TABLE_SETS, values,
+                    SET_EXERCISE_ID + " = ? AND " + SET_NUMBER + " = ?",
+                    new String[]{String.valueOf(exerciseId), String.valueOf(setNumber)});
+
+            // Логируем количество обновленных строк
+            Log.d("DB_UPDATE", "Rows updated: " + rowsUpdated);
+        } catch (Exception e) {
+            Log.e("DB_UPDATE", "Error updating isSelected", e);
+        } finally {
+            db.close();
+        }
     }
 
     // Метод для добавления нового упражнения в таблицу exercises
@@ -168,7 +194,7 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
 
                 // Извлекаем сеты для этого упражнения
                 List<SetsModel> setsList = new ArrayList<>();
-                String querySets = "SELECT " + SET_NUMBER + ", " + SET_WEIGHT + ", " + SET_REPS + " FROM " + TABLE_SETS + " WHERE " + SET_EXERCISE_ID + " = ?";
+                String querySets = "SELECT " + SET_NUMBER + ", " + SET_WEIGHT + ", " + SET_REPS + ", " + SET_IS_SELECTED + " FROM " + TABLE_SETS + " WHERE " + SET_EXERCISE_ID + " = ?";
                 Cursor cursorSets = db.rawQuery(querySets, new String[]{String.valueOf(exerciseId)});
 
                 if (cursorSets != null && cursorSets.moveToFirst()) {
@@ -177,12 +203,14 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
                         @SuppressLint("Range") int setNumber = cursorSets.getInt(cursorSets.getColumnIndex(SET_NUMBER));
                         @SuppressLint("Range") int weight = cursorSets.getInt(cursorSets.getColumnIndex(SET_WEIGHT));
                         @SuppressLint("Range") int reps = cursorSets.getInt(cursorSets.getColumnIndex(SET_REPS));
+                        @SuppressLint("Range") int isSelected = cursorSets.getInt(cursorSets.getColumnIndex(SET_IS_SELECTED));
 
                         // Создаем объект SetsModel и добавляем его в список
                         SetsModel set = new SetsModel();
                         set.setSet_id(setNumber);
                         set.setWeight(weight);
                         set.setReps(reps);
+                        set.setIsSelected(isSelected == 1);
                         setsList.add(set);
                     } while (cursorSets.moveToNext());
                     cursorSets.close(); // Закрываем курсор для сетов
@@ -299,7 +327,7 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
                     Log.d("Exercise", "ID: " + exerciseId + ", Name: " + exerciseName + ", Type: " + exType + ", Date: " + dateAdded);
 
                     // Извлекаем сеты для этого упражнения
-                    String querySets = "SELECT " + SET_NUMBER + ", " + SET_WEIGHT + ", " + SET_REPS + " FROM " + TABLE_SETS + " WHERE " + SET_EXERCISE_ID + " = ?";
+                    String querySets = "SELECT " + SET_NUMBER + ", " + SET_WEIGHT + ", " + SET_REPS + ", " + SET_IS_SELECTED + " FROM " + TABLE_SETS + " WHERE " + SET_EXERCISE_ID + " = ?";
                     Cursor cursorSets = db.rawQuery(querySets, new String[]{String.valueOf(exerciseId)});
 
                     if (cursorSets != null && cursorSets.moveToFirst()) {
@@ -308,9 +336,10 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
                             @SuppressLint("Range") int setNumber = cursorSets.getInt(cursorSets.getColumnIndex(SET_NUMBER));
                             @SuppressLint("Range") int weight = cursorSets.getInt(cursorSets.getColumnIndex(SET_WEIGHT));
                             @SuppressLint("Range") int reps = cursorSets.getInt(cursorSets.getColumnIndex(SET_REPS));
+                            @SuppressLint("Range") int isSelected = cursorSets.getInt(cursorSets.getColumnIndex(SET_IS_SELECTED));
 
                             // Логируем информацию о подходе
-                            Log.d("Set", "Exercise ID: " + exerciseId + ", Set Number: " + setNumber + ", Weight: " + weight + ", Reps: " + reps);
+                            Log.d("Set", "Exercise ID: " + exerciseId + ", Set Number: " + setNumber + ", Weight: " + weight + ", Reps: " + reps + ", IsSelected: " + isSelected);
                         } while (cursorSets.moveToNext());
                         cursorSets.close(); // Закрываем курсор для сетов
                     }

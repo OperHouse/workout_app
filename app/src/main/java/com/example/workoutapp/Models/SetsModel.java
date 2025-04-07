@@ -4,6 +4,10 @@ public class SetsModel {
     int set_id;
     int reps;
 
+
+
+    boolean isSelected;
+
     int weight;
     // Конструктор, принимающий параметры для всех полей
     public SetsModel(int set_id, int weight, int reps) {
@@ -36,6 +40,14 @@ public class SetsModel {
 
     public void setWeight(int weight) {
         this.weight = weight;
+    }
+
+    public boolean getIsSelected() {
+        return isSelected;
+    }
+
+    public void setIsSelected(boolean selected) {
+        isSelected = selected;
     }
 
 }
