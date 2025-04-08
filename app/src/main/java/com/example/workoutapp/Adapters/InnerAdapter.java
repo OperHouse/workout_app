@@ -164,6 +164,7 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
             holder.isSelected.setBackgroundResource(R.drawable.checkbox_unchecked);
 
             holder.liner.setBackgroundResource(R.drawable.card_border2);
+
         }else {
             // Блокируем редактирование поля ввода для веса
             holder.weight.setEnabled(false);
@@ -180,21 +181,48 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
             holder.isSelected.setChecked(true);
 
             holder.liner.setBackgroundResource(R.drawable.card_border3);
+
         }
 
 
         holder.isSelected.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked){
-                    tempDataBaseEx.updateIsSelected(exerciseId, set.getSet_id(), true);
-                    set.setIsSelected(true);
-                }else{
-                    tempDataBaseEx.updateIsSelected(exerciseId, set.getSet_id(), false);
-                    set.setIsSelected(false);
 
+                // Получаем текущее значение вес и повторений из EditText
+                String weightText = holder.weight.getText().toString().trim();
+                String repsText = holder.reps.getText().toString().trim();
+
+                // Проверяем, что оба поля не пустые и не равны нулю
+                boolean isValid = !weightText.isEmpty() && !repsText.isEmpty() &&
+                        Integer.parseInt(weightText) != 0 && Integer.parseInt(repsText) != 0;
+
+                if(isValid){
+                // Если условия выполнены, продолжаем обработку
+                    if(isChecked ){
+                        tempDataBaseEx.updateIsSelected(exerciseId, set.getSet_id(), true);
+                        set.setIsSelected(true);
+                        for (SetsModel s: modifiedSets) {
+                            if(s.getSet_id() == set.getSet_id()){
+                                s.setIsSelected(true); // это лишнее действие и надо подумать как его упрознить
+                                tempDataBaseEx.updateOrInsertSet(s, exerciseId);
+                                set.setWeight(s.getWeight());
+                                set.setReps(s.getReps());
+                                modifiedSets.remove(s);
+                            }
+                        }
+                    }else{
+                        tempDataBaseEx.updateIsSelected(exerciseId, set.getSet_id(), false);
+                        set.setIsSelected(false);
+                    }
+
+                    notifyItemChanged(position);
+
+                }else {
+                    holder.weight.setBackgroundResource(R.drawable.edit_text_back3);
+                    holder.reps.setBackgroundResource(R.drawable.edit_text_back3);
+                    holder.isSelected.setChecked(true);
                 }
-                notifyItemChanged(position);
             }
         });
 
