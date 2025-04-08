@@ -165,6 +165,10 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
 
             holder.liner.setBackgroundResource(R.drawable.card_border2);
 
+
+            holder.weight.setBackgroundResource(R.drawable.edit_text_back2);
+            holder.reps.setBackgroundResource(R.drawable.edit_text_back2);
+
         }else {
             // Блокируем редактирование поля ввода для веса
             holder.weight.setEnabled(false);
@@ -181,6 +185,9 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
             holder.isSelected.setChecked(true);
 
             holder.liner.setBackgroundResource(R.drawable.card_border3);
+
+            holder.weight.setBackgroundResource(R.drawable.edit_text_back2);
+            holder.reps.setBackgroundResource(R.drawable.edit_text_back2);
 
         }
 
@@ -209,9 +216,10 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
                                 set.setWeight(s.getWeight());
                                 set.setReps(s.getReps());
                                 modifiedSets.remove(s);
+                                break;
                             }
                         }
-                    }else{
+                    }else if(set.getIsSelected()){
                         tempDataBaseEx.updateIsSelected(exerciseId, set.getSet_id(), false);
                         set.setIsSelected(false);
                     }
@@ -221,7 +229,7 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
                 }else {
                     holder.weight.setBackgroundResource(R.drawable.edit_text_back3);
                     holder.reps.setBackgroundResource(R.drawable.edit_text_back3);
-                    holder.isSelected.setChecked(true);
+                    holder.isSelected.setChecked(false);
                 }
             }
         });
