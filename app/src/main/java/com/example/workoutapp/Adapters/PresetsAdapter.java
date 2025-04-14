@@ -9,11 +9,15 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.Models.PresetModel;
 import com.example.workoutapp.R;
+import com.example.workoutapp.TempDataBaseEx;
+import com.example.workoutapp.Workout.WorkoutFragment;
 
 import java.util.List;
 
@@ -21,9 +25,13 @@ public class PresetsAdapter  extends RecyclerView.Adapter<PresetsAdapter.MyViewH
 
     private final Context context;
     private List<PresetModel> presetsList;
+    private TempDataBaseEx tempDataBaseEx;
+    private Fragment fragment;
 
     public PresetsAdapter(@NonNull Fragment fragment) {
         this.context = fragment.requireContext();
+        this.tempDataBaseEx = new TempDataBaseEx(context);
+        this.fragment = fragment;
     }
 
     @NonNull
@@ -35,7 +43,6 @@ public class PresetsAdapter  extends RecyclerView.Adapter<PresetsAdapter.MyViewH
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        if (presetsList != null && !presetsList.isEmpty()) {
             PresetModel currentPresetModel = presetsList.get(position);
 
             holder.namePreset.setText(currentPresetModel.getPresetName());
@@ -50,7 +57,25 @@ public class PresetsAdapter  extends RecyclerView.Adapter<PresetsAdapter.MyViewH
             }
 
             holder.exListText.setText(exercisesListText.toString());
-        }
+
+        holder.itemView.setOnClickListener(v ->{
+                for (ExModel s:currentPresetModel.getExercises()) {
+                    String exName = s.getExName();
+                    boolean exerciseExists = tempDataBaseEx.checkIfExerciseExists(exName);
+                    if(!exerciseExists){
+                        tempDataBaseEx.addExercise(s.getExName(), s.getExType());
+                    }
+                }
+                // Переход к новому фрагменту
+                FragmentManager fragmentManager = fragment.getParentFragmentManager(); // Use the fragment reference to get FragmentManager
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.replace(R.id.frameLayout, new WorkoutFragment()); // Replace with the new fragment
+                fragmentTransaction.addToBackStack(null); // Add to back stack if you want to navigate back
+                fragmentTransaction.commit();
+            });
+
+
+
     }
     @SuppressLint("NotifyDataSetChanged")
     public void updatePresetsList(List<PresetModel> PresetModelList) {

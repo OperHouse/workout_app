@@ -48,53 +48,51 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
     @SuppressLint("NotifyDataSetChanged")
     @Override
     public void onBindViewHolder(@NonNull OutsideAdapter.MyViewHolder holder, int position) {
-        if (tempExModelList != null && !tempExModelList.isEmpty()) {
-            TempExModel tempExModelElm = tempExModelList.get(position);
-            holder.name.setText(tempExModelElm.getExName());
-            holder.type.setText(tempExModelElm.getTypeEx());
+        if (tempExModelList == null || tempExModelList.isEmpty()) return;
 
-            // Проверяем, есть ли уже адаптер для этого элемента
+        TempExModel tempExModelElm = tempExModelList.get(position);
+        holder.name.setText(tempExModelElm.getExName());
+        holder.type.setText(tempExModelElm.getTypeEx());
 
-            // Получаем ID упражнения
-            int exerciseId = tempExModelElm.getEx_id();
+        final int exerciseId = tempExModelElm.getEx_id();
 
-            // Проверяем, существует ли адаптер для этого упражнения в Map
-            InnerAdapter innerAdapter = allInnerAdapters.get(exerciseId);
-
-            if (innerAdapter == null) {
-                // Если адаптер еще не существует, создаем новый
-                innerAdapter = new InnerAdapter(tempExModelElm.getSetsList(), tempDataBaseEx, exerciseId);
-                holder.innerRecycler.setAdapter(innerAdapter);
-                innerAdapter.attachSwipeToDelete(holder.innerRecycler, exerciseId);
-
-                // Сохраняем адаптер в Map
-                allInnerAdapters.put(exerciseId, innerAdapter);
-            } else {
-                // Если адаптер уже существует, обновляем данные
-                innerAdapter.updateData(tempExModelElm.getSetsList(), exerciseId);
-                innerAdapter.notifyDataSetChanged();
-            }
-
-            // Обработчик нажатия на кнопку "Добавить сет"
-            holder.addSet.setOnClickListener(v -> {
-                // Сохраняем изменения во всех адаптерах перед добавлением нового сета
-                saveAllInnerAdapters();
-
-                // Добавляем новый сет
-                tempDataBaseEx.addSet(tempExModelElm.getEx_id());
-                tempExModelElm.setSetsList(tempDataBaseEx.getExerciseSets(tempExModelElm.getEx_id()));
-
-                // Обновляем данные и уведомляем адаптер
-                notifyDataSetChanged();
-
-                if (outerRecyclerView != null) {
-                    outerRecyclerView.scrollToPosition(0);
-                }
-
-                // Логируем все упражнения и сеты
-                tempDataBaseEx.logAllExercisesAndSets();
-            });
+        // Получаем или создаём адаптер
+        InnerAdapter innerAdapter = allInnerAdapters.get(exerciseId);
+        if (innerAdapter == null) {
+            innerAdapter = new InnerAdapter(tempExModelElm.getSetsList(), tempDataBaseEx, exerciseId);
+            allInnerAdapters.put(exerciseId, innerAdapter);
+        } else {
+            innerAdapter.updateData(tempExModelElm.getSetsList(), exerciseId);
         }
+
+        // Назначаем адаптер ТОЛЬКО если он ещё не установлен
+        if (holder.innerRecycler.getAdapter() == null) {
+            holder.innerRecycler.setAdapter(innerAdapter);
+            innerAdapter.attachSwipeToDelete(holder.innerRecycler, exerciseId);
+        }
+
+        // Обработчик кнопки добавления сета
+        InnerAdapter finalInnerAdapter = innerAdapter;
+        holder.addSet.setOnClickListener(v -> {
+            // Сохраняем изменения перед добавлением
+            saveAllInnerAdapters();
+
+            // Добавляем новый сет в базу
+            tempDataBaseEx.addSet(tempExModelElm.getEx_id());
+
+            // Обновляем список сетов
+            tempExModelElm.setSetsList(tempDataBaseEx.getExerciseSets(exerciseId));
+
+            // Обновляем данные адаптера без пересоздания ViewHolder
+            finalInnerAdapter.updateData(tempExModelElm.getSetsList(), exerciseId);
+            finalInnerAdapter.notifyItemInserted(finalInnerAdapter.getItemCount() - 1);
+
+            // Прокручиваем к первому элементу внешнего списка (если нужно)
+            outerRecyclerView.scrollToPosition(0);
+
+            // Логируем
+            tempDataBaseEx.logAllExercisesAndSets();
+        });
     }
 
     // Метод для сохранения изменений во всех адаптерах
@@ -138,5 +136,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
             innerRecycler = itemView.findViewById(R.id.innerRecycle);
             innerRecycler.setLayoutManager(new LinearLayoutManager(itemView.getContext())); // Устанавливаем LayoutManager для внутреннего RecyclerView
         }
+        
+        
     }
 }
