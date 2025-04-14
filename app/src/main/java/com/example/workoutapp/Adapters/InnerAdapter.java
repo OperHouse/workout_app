@@ -51,7 +51,6 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
     @Override
     public void onBindViewHolder(@NonNull InnerViewHolder holder, @SuppressLint("RecyclerView") int position) {
         SetsModel set = setsList.get(position);
-
         // Удаляем старые TextWatcher'ы если есть
         if (holder.weightWatcher != null) {
             holder.weight.removeTextChangedListener(holder.weightWatcher);
@@ -59,6 +58,28 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
         if (holder.repsWatcher != null) {
             holder.reps.removeTextChangedListener(holder.repsWatcher);
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         // Устанавливаем значения
         holder.weight.setText(set.getWeight() > 0 ? String.valueOf(set.getWeight()) : "");
@@ -166,9 +187,6 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
             holder.liner.setBackgroundResource(R.drawable.card_border2);
 
 
-            holder.weight.setBackgroundResource(R.drawable.edit_text_back2);
-            holder.reps.setBackgroundResource(R.drawable.edit_text_back2);
-
         }else {
             // Блокируем редактирование поля ввода для веса
             holder.weight.setEnabled(false);
@@ -186,10 +204,9 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
 
             holder.liner.setBackgroundResource(R.drawable.card_border3);
 
-            holder.weight.setBackgroundResource(R.drawable.edit_text_back2);
-            holder.reps.setBackgroundResource(R.drawable.edit_text_back2);
-
         }
+        holder.weight.setBackgroundResource(R.drawable.edit_text_back2);
+        holder.reps.setBackgroundResource(R.drawable.edit_text_back2);
 
 
         holder.isSelected.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -234,6 +251,8 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
             }
         });
 
+
+
     }
 
     private boolean getSetId(int setId) {
@@ -257,8 +276,6 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
             notifyDataSetChanged(); // Notify the adapter that the data has changed
         }
     }
-
-
     public void attachSwipeToDelete(RecyclerView recyclerView, int ex_id) {
         recyclerView.setItemAnimator(null);
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
@@ -269,6 +286,9 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                if(ex_id != exerciseId){
+                    return;
+                }
                 int position = viewHolder.getAdapterPosition();
                 SetsModel set = setsList.get(position);
                 tempDataBaseEx.deleteSetAndRearrangeNumbers(ex_id, set.getSet_id());
@@ -288,6 +308,12 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
         });
         itemTouchHelper.attachToRecyclerView(recyclerView);
     }
+
+
+
+
+
+
     public void saveModifiedSetsToDb() {
         Log.d("InnerAdapter", "Processing exercise: " + exerciseId);
         if (setsList != null && !setsList.isEmpty() && modifiedSets != null && !modifiedSets.isEmpty()) {
@@ -320,8 +346,11 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
                 }
             }
             updateSets();
+            Log.d("InnerAdapter", "Changes saved to the database via method");
+        }else {
+            Log.d("InnerAdapter", "Nothing to save");
         }
-        Log.d("InnerAdapter", "Changes saved to the database via method");
+
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -336,7 +365,7 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
             }
         }
             modifiedSets.clear();
-            notifyDataSetChanged(); // Notify the adapter that the data has changed
+        //notifyDataSetChanged(); // Notify the adapter that the data has changed
 
     }
 
