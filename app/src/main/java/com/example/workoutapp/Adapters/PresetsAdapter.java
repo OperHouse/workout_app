@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.Models.PresetModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.TempDataBaseEx;
+import com.example.workoutapp.Data.TempDataBaseEx;
 import com.example.workoutapp.Workout.WorkoutFragment;
 
 import java.util.List;
@@ -63,7 +63,7 @@ public class PresetsAdapter  extends RecyclerView.Adapter<PresetsAdapter.MyViewH
                     String exName = s.getExName();
                     boolean exerciseExists = tempDataBaseEx.checkIfExerciseExists(exName);
                     if(!exerciseExists){
-                        tempDataBaseEx.addExercise(s.getExName(), s.getExType());
+                        tempDataBaseEx.addExercise(s.getExName(), s.getExType(), s.getBodyType());
                     }
                 }
                 // Переход к новому фрагменту

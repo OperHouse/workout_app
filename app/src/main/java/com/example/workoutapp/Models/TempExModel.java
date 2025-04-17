@@ -6,6 +6,10 @@ public class TempExModel {
 
     String exName;
     String typeEx;
+
+
+
+    String bodyType;
     int ex_id;
     String data;
 
@@ -52,6 +56,13 @@ public class TempExModel {
 
     public void setTypeEx(String typeEx) {
         this.typeEx = typeEx;
+    }
+    public String getBodyType() {
+        return bodyType;
+    }
+
+    public void setBodyType(String bodyType) {
+        this.bodyType = bodyType;
     }
 
 

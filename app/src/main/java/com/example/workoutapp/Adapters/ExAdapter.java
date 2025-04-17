@@ -16,10 +16,10 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.workoutapp.DataBase;
+import com.example.workoutapp.Data.DataBase;
 import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.TempDataBaseEx;
+import com.example.workoutapp.Data.TempDataBaseEx;
 import com.example.workoutapp.Workout.WorkoutFragment;
 
 import java.util.ArrayList;
@@ -98,7 +98,7 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
 
                      if (!exerciseExists) {
                          // Если упражнения нет, добавляем его в базу данных
-                         tempDataBaseEx.addExercise(exerciseName, exListElm.getExType());  // Передаем название и тип упражнения
+                         tempDataBaseEx.addExercise(exerciseName, exListElm.getExType(), exListElm.getBodyType());  // Передаем название и тип упражнения
                          // Переход к новому фрагменту
                          FragmentManager fragmentManager = fragment.getParentFragmentManager(); // Use the fragment reference to get FragmentManager
                          FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();

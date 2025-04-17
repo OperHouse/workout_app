@@ -149,17 +149,17 @@
         </TextView>
 
         <Button
-            android:id="@+id/pastWorkBtn"
+            android:id="@+id/finalWorkBtn"
             android:layout_width="match_parent"
             android:layout_height="36dp"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
             android:layout_marginTop="20dp"
             android:layout_marginBottom="50dp"
-            android:background="@drawable/btn_2"
-            android:text="Прошлые тренировки"
+            android:background="@drawable/btn_3_green"
+            android:text="Завершить тренировку"
             android:textAllCaps="false"
-            android:textColor="@color/white"
+            android:textColor="@color/black"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
