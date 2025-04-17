@@ -3,12 +3,13 @@ package com.example.workoutapp.Models;
 public class SetsModel {
     int set_id;
     int reps;
+    int weight;
 
 
 
     boolean isSelected;
 
-    int weight;
+
     // Конструктор, принимающий параметры для всех полей
     public SetsModel(int set_id, int weight, int reps) {
         this.set_id = set_id;

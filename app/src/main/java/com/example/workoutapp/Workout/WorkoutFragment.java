@@ -117,6 +117,11 @@ public class WorkoutFragment extends Fragment {
         deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                outsideAdapter.saveAllInnerAdapters();
+                tempDataBaseEx.moveTempToOfflineAndClear();
+                tempDataBaseEx.logAllExercisesAndSets();
+                tempDataBaseEx.logAllOfflineWorkoutsAndSets();
+                refreshAdapter();
                 dialogCreateEx.dismiss();
             }
         });
