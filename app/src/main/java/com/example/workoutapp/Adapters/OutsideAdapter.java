@@ -61,7 +61,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
 
         final int exerciseId = tempExModelElm.getEx_id();
 
-        // Получаем адаптер по позиции (а не по exerciseId!)
+
         InnerAdapter innerAdapter = allInnerAdapters.get(exerciseId);
         if (innerAdapter == null) {
             innerAdapter = new InnerAdapter(tempExModelElm.getSetsList(), tempDataBaseEx, exerciseId);
@@ -139,7 +139,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
                 }
             }
 
-
+            //Вот тут я удаляю RecyclerView и потом пересоздаю его
             outerRecyclerView.setAdapter(null);
             ((WorkoutFragment) fragment).refreshAdapter();
 

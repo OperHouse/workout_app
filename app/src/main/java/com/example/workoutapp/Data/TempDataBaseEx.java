@@ -61,9 +61,31 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
                 "PRIMARY KEY(" + SET_EXERCISE_ID + ", " + SET_NUMBER + "), " +
                 "FOREIGN KEY(" + SET_EXERCISE_ID + ") REFERENCES " + TABLE_EXERCISES + "(" + EXERCISE_ID + "));";
 
+        // Таблица завершённых тренировок
+        String createCompletedWorkoutTable = "CREATE TABLE IF NOT EXISTS workouts_offline (" +
+                "workout_id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "nameEx TEXT NOT NULL, " +
+                "exType TEXT NOT NULL, " +
+                "bodyType TEXT NOT NULL, " +
+                "date TEXT NOT NULL);";
+
+// Таблица сетов для завершённых тренировок
+        String createCompletedSetsTable = "CREATE TABLE IF NOT EXISTS sets_offline (" +
+                "workout_id INTEGER NOT NULL," +
+                "set_number INTEGER NOT NULL," +
+                "weight INTEGER," +
+                "reps INTEGER," +
+                "is_selected INTEGER DEFAULT 0," +
+                "PRIMARY KEY(workout_id, set_number)," +
+                "FOREIGN KEY(workout_id) REFERENCES workouts_offline(workout_id));";
+
         // Выполнение запросов на создание таблиц
         db.execSQL(createExercisesTableQuery);
         db.execSQL(createSetsTableQuery);
+
+        // Выполняем создание
+        db.execSQL(createCompletedWorkoutTable);
+        db.execSQL(createCompletedSetsTable);
     }
 
     @Override
@@ -334,6 +356,90 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void moveTempToOfflineAndClear() {
+        List<TempExModel> tempList = getAllExercisesWithSets();
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        for (TempExModel ex : tempList) {
+
+            // Фильтруем сеты с валидными значениями
+            List<SetsModel> filteredSets = new ArrayList<>();
+            for (SetsModel set : ex.getSetsList()) {
+                if(set.getIsSelected() || (set.getReps() > 0 && set.getWeight() > 0)) {
+                    filteredSets.add(set);
+                }
+            }
+
+            if (!filteredSets.isEmpty()) {
+                // Вставляем упражнение в offline-таблицу
+                ContentValues workoutValues = new ContentValues();
+                workoutValues.put("nameEx", ex.getExName());
+                workoutValues.put("exType", ex.getTypeEx());
+                workoutValues.put("bodyType", ex.getBodyType());
+                workoutValues.put("date", ex.getData());
+
+                long workoutId = db.insert("workouts_offline", null, workoutValues);
+
+                // Вставляем сеты
+                for (SetsModel set : filteredSets) {
+                    ContentValues setValues = new ContentValues();
+                    setValues.put("workout_id", workoutId);
+                    setValues.put("set_number", set.getSet_id());
+                    setValues.put("weight", set.getWeight());
+                    setValues.put("reps", set.getReps());
+                    setValues.put("is_selected", set.getIsSelected() ? 1 : 0);
+                    db.insert("sets_offline", null, setValues);
+                }
+            }
+        }
+        // Чистим временные таблицы
+        db.delete(TABLE_SETS, null, null);
+        db.delete(TABLE_EXERCISES, null, null);
+        resetExerciseIdSequenceIfEmpty();
+        //resetSetsOfflineIdSequenceIfEmpty();
+        db.close();
+    }
+
+    public void clearOfflineWorkouts() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("sets_offline", null, null);
+        db.delete("workouts_offline", null, null);
+        db.close();
+    }
+
+    public void resetExerciseIdSequenceIfEmpty() {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // Проверяем, пустая ли таблица упражнений
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_EXERCISES, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            int count = cursor.getInt(0);
+            cursor.close();
+
+            if (count == 0) {
+                // Сбрасываем sequence (начнёт с 1)
+                db.execSQL("DELETE FROM sqlite_sequence WHERE name='" + TABLE_EXERCISES + "'");
+                Log.d("DB_RESET", "AUTOINCREMENT для exercises сброшен");
+            }
+        }
+
+
+    }
+    /*public void resetSetsOfflineIdSequenceIfEmpty() {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE_SETS, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            int count = cursor.getInt(0);
+            cursor.close();
+
+            if (count == 0) {
+                db.execSQL("DELETE FROM sqlite_sequence WHERE name='" + TABLE_SETS + "'");
+                Log.d("DB_RESET", "AUTOINCREMENT для sets сброшен");
+            }
+        }
+    }*/ //Лишняя логика получается. Надо будет удалить, но пока оставил, мб пригодится
+
     //===================================================Check-Data===============================//
 
     public void logAllExercisesAndSets() {
@@ -382,6 +488,47 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
         }
 
         db.close(); // Закрываем базу данных
+    }
+
+    public void logAllOfflineWorkoutsAndSets() {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String queryWorkouts = "SELECT * FROM workouts_offline";
+        Cursor cursorWorkouts = db.rawQuery(queryWorkouts, null);
+
+        if (cursorWorkouts != null && cursorWorkouts.moveToFirst()) {
+            do {
+                @SuppressLint("Range") int workoutId = cursorWorkouts.getInt(cursorWorkouts.getColumnIndex("workout_id"));
+                @SuppressLint("Range") String exerciseName = cursorWorkouts.getString(cursorWorkouts.getColumnIndex("nameEx"));
+                @SuppressLint("Range") String exType = cursorWorkouts.getString(cursorWorkouts.getColumnIndex("exType"));
+                @SuppressLint("Range") String bodyType = cursorWorkouts.getString(cursorWorkouts.getColumnIndex("bodyType"));
+                @SuppressLint("Range") String date = cursorWorkouts.getString(cursorWorkouts.getColumnIndex("date"));
+
+                Log.d("OFFLINE_WORKOUT", "ID: " + workoutId + ", Name: " + exerciseName + ", ExType: " + exType + ", BodyType: " + bodyType + ", Date: " + date);
+
+                // Получаем сеты для этой тренировки
+                String querySets = "SELECT * FROM sets_offline WHERE workout_id = ?";
+                Cursor cursorSets = db.rawQuery(querySets, new String[]{String.valueOf(workoutId)});
+
+                if (cursorSets != null && cursorSets.moveToFirst()) {
+                    do {
+                        @SuppressLint("Range") int setNumber = cursorSets.getInt(cursorSets.getColumnIndex("set_number"));
+                        @SuppressLint("Range") int weight = cursorSets.getInt(cursorSets.getColumnIndex("weight"));
+                        @SuppressLint("Range") int reps = cursorSets.getInt(cursorSets.getColumnIndex("reps"));
+                        @SuppressLint("Range") int isSelected = cursorSets.getInt(cursorSets.getColumnIndex("is_selected"));
+
+                        Log.d("OFFLINE_SET", "Workout ID: " + workoutId + ", Set Number: " + setNumber + ", Weight: " + weight + ", Reps: " + reps + ", IsSelected: " + isSelected);
+                    } while (cursorSets.moveToNext());
+                    cursorSets.close();
+                }
+
+            } while (cursorWorkouts.moveToNext());
+            cursorWorkouts.close();
+        } else {
+            Log.d("OFFLINE_LOG", "Таблица workouts_offline пуста");
+        }
+
+        db.close();
     }
 
 
