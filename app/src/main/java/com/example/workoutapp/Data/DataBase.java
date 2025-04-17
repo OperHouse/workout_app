@@ -1,4 +1,4 @@
-package com.example.workoutapp;
+package com.example.workoutapp.Data;
 
 import android.annotation.SuppressLint;
 import android.content.ContentValues;

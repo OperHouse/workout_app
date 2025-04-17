@@ -1,5 +1,7 @@
 package com.example.workoutapp.Workout;
 
+import android.app.Dialog;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -16,12 +19,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.workoutapp.Adapters.OutsideAdapter;
 import com.example.workoutapp.Models.TempExModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.TempDataBaseEx;
+import com.example.workoutapp.Data.TempDataBaseEx;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WorkoutFragment extends Fragment {
 
@@ -51,12 +56,19 @@ public class WorkoutFragment extends Fragment {
         outsideAdapter.updateExList(tempExModelList);
         // Находим кнопку для добавления упражнения
         Button addExBtn = workoutFragmentView.findViewById(R.id.addExBtn);
+        Button finalWorkoutBtn = workoutFragmentView.findViewById(R.id.finalWorkBtn);
+
+
+        finalWorkoutBtn.setOnClickListener(v -> {
+            showDialogConfirm();
+        });
 
         // Устанавливаем обработчик нажатия на кнопку
         addExBtn.setOnClickListener(v -> {
             // Заменяем текущий фрагмент на FullscreenFragment
             replaceFragment(new AddExFragment());
         });
+
 
         // Настройка отображения даты
         TextView dateTextView = workoutFragmentView.findViewById(R.id.dateTextWorkout);
@@ -68,6 +80,54 @@ public class WorkoutFragment extends Fragment {
 
         return workoutFragmentView;
     }
+
+    private void showDialogConfirm() {
+        Dialog dialogCreateEx = new Dialog(requireContext());
+        dialogCreateEx.setContentView(R.layout.confirm_dialog_layout);
+        Objects.requireNonNull(dialogCreateEx.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        AtomicBoolean isDialogClosedByOutsideClick = new AtomicBoolean(false);
+        // Разрешаем закрытие диалога при нажатии вне его
+        dialogCreateEx.setCancelable(true); // Делаем диалог закрываемым
+        dialogCreateEx.setCanceledOnTouchOutside(true); // Закрыть при клике вне диалога
+
+        Button deleteBtn = dialogCreateEx.findViewById(R.id.btnDelete);
+        Button chanelBtn = dialogCreateEx.findViewById(R.id.btnChanel);
+        TextView text1 = dialogCreateEx.findViewById(R.id.textView);
+        TextView text2 = dialogCreateEx.findViewById(R.id.text1);
+
+        deleteBtn.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.lime));
+        deleteBtn.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
+        deleteBtn.setText("Подтвердить");
+        text1.setText("Завершение тренировки");
+        text2.setText("Вы действительно хотите завершить тренировку?");
+
+
+        if(dialogCreateEx.getWindow() != null){
+            dialogCreateEx.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+        }
+
+        chanelBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialogCreateEx.dismiss();
+
+            }
+        });
+
+        deleteBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialogCreateEx.dismiss();
+            }
+        });
+
+
+
+        // Слушаем закрытие по клику вне
+        dialogCreateEx.setOnCancelListener(dialog -> isDialogClosedByOutsideClick.set(true));
+        dialogCreateEx.show();
+    }
+
     @Override
     public void onPause() {
         super.onPause();
@@ -85,6 +145,12 @@ public class WorkoutFragment extends Fragment {
         if (outsideAdapter != null) {
             outsideAdapter.saveAllInnerAdapters();
         }
+    }
+    public void refreshAdapter() {
+        tempExModelList = tempDataBaseEx.getAllExercisesWithSets();
+        outsideAdapter = new OutsideAdapter(WorkoutFragment.this, exWorkoutRecyclerView);
+        outsideAdapter.updateExList(tempExModelList);
+        exWorkoutRecyclerView.setAdapter(outsideAdapter);
     }
 
     // Метод для замены фрагмента

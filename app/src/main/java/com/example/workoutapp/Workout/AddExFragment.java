@@ -27,7 +27,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Adapters.ExAdapter;
 import com.example.workoutapp.Adapters.PresetsAdapter;
-import com.example.workoutapp.DataBase;
+import com.example.workoutapp.Data.DataBase;
 import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.Models.PresetModel;
 import com.example.workoutapp.R;
@@ -305,7 +305,7 @@ public class AddExFragment extends Fragment {
         spinnerTypeEx.setAdapter(adapter1);
 
         // Список частей тела
-        String[] BodyPart = {"Грудь", "Плечи", "Ноги", "Руки", "Тренажер", "Спина", "Пресс", "Кардио", "Другое"};
+        String[] BodyPart = {"Грудь", "Плечи", "Ноги", "Руки", "Спина", "Пресс", "Кардио", "Другое"};
         ArrayList<String> List2 = new ArrayList<>(Arrays.asList(BodyPart));
         ArrayAdapter<String> adapter2 = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, List2);
         adapter2.setDropDownViewResource(R.layout.spinners_style);

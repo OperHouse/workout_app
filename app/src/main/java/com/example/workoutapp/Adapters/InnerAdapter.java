@@ -21,7 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Models.SetsModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.TempDataBaseEx;
+import com.example.workoutapp.Data.TempDataBaseEx;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +33,13 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
 
     // Список для хранения измененных данных, которые будут записаны в БД
     private List<SetsModel> modifiedSets = new ArrayList<>();
+
+
+    public interface OnSetListChangedListener {
+        void onSetListChanged(int exerciseId, boolean isEmpty);
+    }
+
+    private OnSetListChangedListener setListChangedListener;
 
     public InnerAdapter(List<SetsModel> setList, TempDataBaseEx tempDb, int ex_id) {
         this.setsList = setList;
@@ -58,26 +65,6 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
         if (holder.repsWatcher != null) {
             holder.reps.removeTextChangedListener(holder.repsWatcher);
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -241,7 +228,7 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
                         set.setIsSelected(false);
                     }
 
-                    notifyItemChanged(position);
+                    holder.itemView.post(() -> notifyItemChanged(position));
 
                 }else {
                     holder.weight.setBackgroundResource(R.drawable.edit_text_back3);
@@ -273,11 +260,13 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
         if (setsList.size() != newSetsList.size()) {
             this.setsList.clear();
             this.setsList.addAll(newSetsList);
-            notifyDataSetChanged(); // Notify the adapter that the data has changed
+            notifyDataSetChanged();// Notify the adapter that the data has changed
+            notifyDataChanged();
         }
     }
     public void attachSwipeToDelete(RecyclerView recyclerView, int ex_id) {
         recyclerView.setItemAnimator(null);
+
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
             @Override
             public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
@@ -286,28 +275,50 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                if(ex_id != exerciseId){
+                int position = viewHolder.getBindingAdapterPosition();
+
+                // Проверка на соответствие exerciseId
+                if (ex_id != exerciseId) {
+                    notifyItemChanged(position); // отменяем свайп
                     return;
                 }
-                int position = viewHolder.getAdapterPosition();
-                SetsModel set = setsList.get(position);
-                tempDataBaseEx.deleteSetAndRearrangeNumbers(ex_id, set.getSet_id());
-                setsList.remove(position);
-                notifyItemRemoved(position);
-                // Перенумеруем оставшиеся сеты в списке setsList, обновив их set_id
-                for (int i = 0; i <setsList.size(); i++) {
-                    SetsModel updatedSet = setsList.get(i);
-                    updatedSet.setSet_id(i+1);  // Обновляем set_id (нумерация с 1)
-                }
 
-                // Оповещаем адаптер о том, что данные изменились
-                notifyItemRangeChanged(0, setsList.size());
-                tempDataBaseEx.logAllExercisesAndSets();
-                Log.d("InnerAdapter", "Set deleted: " + set.getSet_id());
+                // Проверка на границы
+                if (position >= 0 && position < setsList.size()) {
+                    SetsModel set = setsList.get(position);
+
+                    // Удаление из БД
+                    tempDataBaseEx.deleteSetAndRearrangeNumbers(ex_id, set.getSet_id());
+
+                    // Удаление из списка
+                    setsList.remove(position);
+                    notifyItemRemoved(position);
+
+                    // Перенумерация оставшихся
+                    for (int i = 0; i < setsList.size(); i++) {
+                        SetsModel updatedSet = setsList.get(i);
+                        updatedSet.setSet_id(i + 1); // Нумерация с 1
+                    }
+
+                    notifyItemRangeChanged(0, setsList.size());
+
+                    notifyDataChanged();
+
+                    // Логирование
+                    Log.d("InnerAdapter", "Set deleted: " + set.getSet_id());
+                    tempDataBaseEx.logAllExercisesAndSets();
+                } else {
+                    Log.w("InnerAdapter", "Swipe position out of bounds: " + position);
+                    // Отмена свайпа, так как позиция невалидная
+                    notifyItemChanged(position);
+                }
             }
         });
+
         itemTouchHelper.attachToRecyclerView(recyclerView);
     }
+
+
 
 
 
@@ -397,6 +408,14 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
         });
     }
 
+    public void setOnSetListChangedListener(OnSetListChangedListener listener) {
+        this.setListChangedListener = listener;
+    }
+    private void notifyDataChanged() {
+        if (setListChangedListener != null) {
+            setListChangedListener.onSetListChanged(exerciseId, setsList.isEmpty());
+        }
+    }
 
 
     public static class InnerViewHolder extends RecyclerView.ViewHolder {
