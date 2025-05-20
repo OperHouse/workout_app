@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
@@ -34,6 +35,9 @@ public class WorkoutFragment extends Fragment {
     List<TempExModel> tempExModelList;
     OutsideAdapter outsideAdapter;
     RecyclerView exWorkoutRecyclerView;
+    private Button finalWorkoutBtn;
+    private TextView text1, text2;
+    private ImageView image;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -56,7 +60,12 @@ public class WorkoutFragment extends Fragment {
         outsideAdapter.updateExList(tempExModelList);
         // Находим кнопку для добавления упражнения
         Button addExBtn = workoutFragmentView.findViewById(R.id.addExBtn);
-        Button finalWorkoutBtn = workoutFragmentView.findViewById(R.id.finalWorkBtn);
+        finalWorkoutBtn = workoutFragmentView.findViewById(R.id.finalWorkBtn);
+        text1 = workoutFragmentView.findViewById(R.id.textView1);
+        text2 = workoutFragmentView.findViewById(R.id.textView2);
+        image = workoutFragmentView.findViewById(R.id.imageView);
+
+        setVisibility(finalWorkoutBtn,text1,text2,image);
 
 
         finalWorkoutBtn.setOnClickListener(v -> {
@@ -156,6 +165,7 @@ public class WorkoutFragment extends Fragment {
         outsideAdapter = new OutsideAdapter(WorkoutFragment.this, exWorkoutRecyclerView);
         outsideAdapter.updateExList(tempExModelList);
         exWorkoutRecyclerView.setAdapter(outsideAdapter);
+        setVisibility(finalWorkoutBtn, text1, text2, image);
     }
 
     // Метод для замены фрагмента
@@ -171,6 +181,22 @@ public class WorkoutFragment extends Fragment {
             fragmentTransaction.addToBackStack(null);
             // Выполняем транзакцию
             fragmentTransaction.commit();
+        }
+    }
+
+    private void setVisibility(Button b, TextView t1, TextView t2, ImageView im){
+        if (tempExModelList.isEmpty()) {
+            // Показываем заглушку (тексты и изображение), скрываем кнопку
+            finalWorkoutBtn.setVisibility(View.GONE);
+            t1.setVisibility(View.VISIBLE);
+            t2.setVisibility(View.VISIBLE);
+            im.setVisibility(View.VISIBLE);
+        } else {
+            // Скрываем заглушку, показываем кнопку
+            finalWorkoutBtn.setVisibility(View.VISIBLE);
+            t1.setVisibility(View.GONE);
+            t2.setVisibility(View.GONE);
+            im.setVisibility(View.GONE);
         }
     }
 

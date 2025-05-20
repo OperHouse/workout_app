@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
@@ -23,6 +24,7 @@ import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.Models.PresetModel;
 import com.example.workoutapp.R;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -30,6 +32,7 @@ import java.util.Objects;
 public class CreatePresetFragment extends Fragment {
     DataBase dataBase;
     private List<ExModel> exList;
+    SearchView searchView;
 
     public CreatePresetFragment() {
         // Required empty public constructor
@@ -52,6 +55,7 @@ public class CreatePresetFragment extends Fragment {
         RecyclerView exRecycler = RootViewCreatePresetFragment.findViewById(R.id.ExerciseRecyclerViewPresets);
         ImageButton backBtn = RootViewCreatePresetFragment.findViewById(R.id.imageButtonBack);
         Button nextBtn = RootViewCreatePresetFragment.findViewById(R.id.nextBtn);
+        searchView = RootViewCreatePresetFragment.findViewById(R.id.searchExercise3);
 
 
         exList = dataBase.getAllExercise();
@@ -81,7 +85,29 @@ public class CreatePresetFragment extends Fragment {
         nextBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (exAdapter.getList().isEmpty()) {
+                    Toast.makeText(requireContext(), "Выберите хотя бы одно упражнение", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                searchView.clearFocus();
+                exRecycler.requestFocus();
                 showDialogConfirmation(exAdapter);
+            }
+        });
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                // Убираем фокус после отправки
+                searchView.clearFocus();
+                exRecycler.requestFocus();
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                exAdapter.updateExListFiltered(newText);
+                return true;
             }
         });
 
@@ -90,12 +116,24 @@ public class CreatePresetFragment extends Fragment {
         return RootViewCreatePresetFragment;
     }
 
+    private void filterExerciseList(String query, ExAdapter adapter) {
+        List<ExModel> filteredList = new ArrayList<>();
+        for (ExModel ex : exList) {
+            if (ex.getExName().toLowerCase().contains(query.toLowerCase())) {
+                filteredList.add(ex);
+            }
+        }
+        //adapter.updateExListFiltered(query, filteredList);
+
+    }
+
 
     private void showDialogConfirmation(ExAdapter exAdapter){
         Dialog dialogCreatePreset = new Dialog(requireContext());
         dialogCreatePreset.setContentView(R.layout.confirm_dialog_preset);
         Objects.requireNonNull(dialogCreatePreset.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dialogCreatePreset.show();
+        searchView.clearFocus();
 
         EditText namePreset = dialogCreatePreset.findViewById(R.id.editText);
         Button btnAdd = dialogCreatePreset.findViewById(R.id.btnAdd);
@@ -107,18 +145,29 @@ public class CreatePresetFragment extends Fragment {
         }
         btnChanel.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {dialogCreatePreset.dismiss();}
+            public void onClick(View v) {
+                dialogCreatePreset.dismiss();
+                searchView.clearFocus();
+                
+            }
         });
 
         btnAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String presetName = namePreset.getText().toString().trim();
+
                 if (presetName.isEmpty()) {
-                    namePreset.setError("Пожалуйста, введите название упражнения");
+                    namePreset.setError("Пожалуйста, введите название пресета");
                     return;
                 }
-                PresetModel newPreset = new PresetModel(presetName,exAdapter.getList());
+
+                if (exAdapter.getList().isEmpty()) {
+                    Toast.makeText(requireContext(), "Выберите хотя бы одно упражнение", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                PresetModel newPreset = new PresetModel(presetName, exAdapter.getList());
                 dataBase.addPreset(newPreset);
                 dialogCreatePreset.dismiss();
 
@@ -134,7 +183,12 @@ public class CreatePresetFragment extends Fragment {
                 }
                 fragmentTransaction.commit();
             }
-
         });
     }
+    public void clearSearchFocus() {
+        if (searchView != null) {
+            searchView.clearFocus();
+        }
+    }
+
 }
