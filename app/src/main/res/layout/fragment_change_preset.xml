@@ -54,7 +54,7 @@ android:background="#2E3042">
         </TextView>
 
         <SearchView
-            android:id="@+id/searchExercise2"
+            android:id="@+id/searchExercise4"
             android:layout_width="0dp"
             android:layout_height="30dp"
             android:layout_marginStart="10dp"

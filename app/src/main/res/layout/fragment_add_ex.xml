@@ -113,11 +113,16 @@
 
     <TextView
         android:id="@+id/textView7"
-        android:layout_width="wrap_content"
-        android:layout_height="30dp"
-        android:gravity="start|center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="10dp"
         android:text="Жми '+ Добавить тренировку' чтобы начать"
         android:textColor="@color/white"
+        android:textAlignment="center"
+        android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/presetBtn">
@@ -131,7 +136,7 @@
             android:layout_marginTop="20dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/presetBtn"
+            app:layout_constraintTop_toBottomOf="@+id/textView7"
             tools:listitem="@layout/preset_item_layout">
 
         </androidx.recyclerview.widget.RecyclerView>
@@ -176,13 +181,17 @@
 
     <TextView
         android:id="@+id/textView8"
-        android:layout_width="wrap_content"
-        android:layout_height="30dp"
-        android:gravity="start|center"
-        android:text="Жми '+ Добавить упражнение' чтобы начать"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="10dp"
+        android:text="Жми '+ Добавить упражнение', чтобы начать"
         android:textColor="@color/white"
+        android:textAlignment="center"
+        android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.503"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/ExerciseBtn">
 
@@ -192,10 +201,11 @@
             android:id="@+id/ExerciseRecyclerViewPresets"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ExerciseBtn"
+            app:layout_constraintTop_toBottomOf="@+id/textView8"
             tools:listitem="@layout/ex_item_layout">
 
         </androidx.recyclerview.widget.RecyclerView>

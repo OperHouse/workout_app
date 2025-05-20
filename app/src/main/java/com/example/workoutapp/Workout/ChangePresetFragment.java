@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,6 +26,7 @@ import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.Models.PresetModel;
 import com.example.workoutapp.R;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,17 +37,17 @@ public class ChangePresetFragment extends Fragment {
     private DataBase dataBase;
     private ExAdapter exAdapter;
     private RecyclerView exRecycler;
+    private SearchView searchView;
+    private List<ExModel> selectedExercises = new ArrayList<>();  // Список выделенных элементов
+
     public ChangePresetFragment() {
         // Required empty public constructor
     }
-
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dataBase = new DataBase(requireContext());
-
     }
 
     @Override
@@ -56,52 +58,61 @@ public class ChangePresetFragment extends Fragment {
             presetModel = (PresetModel) getArguments().getSerializable("preset");
         }
 
-
         RecyclerView exRecycler = RootViewChangePresetFragment.findViewById(R.id.ExerciseRecyclerViewPresets);
         ImageButton backBtn = RootViewChangePresetFragment.findViewById(R.id.imageButtonBack);
         Button nextBtn = RootViewChangePresetFragment.findViewById(R.id.nextBtn);
         TextView text = RootViewChangePresetFragment.findViewById(R.id.textView4);
+        searchView = RootViewChangePresetFragment.findViewById(R.id.searchExercise4);
 
         text.setText(presetModel.getPresetName());
 
         exList = dataBase.getAllExercise();
 
-        for (ExModel a: presetModel.getExercises()) {
-            for (ExModel b: exList) {
+        // Установка состояния выделения для упражнений в списке
+        for (ExModel a : presetModel.getExercises()) {
+            for (ExModel b : exList) {
                 if (Objects.equals(a.getExName(), b.getExName()) &&
                         Objects.equals(a.getExType(), b.getExType()) &&
                         Objects.equals(a.getBodyType(), b.getBodyType())) {
                     b.setIsPressed(true);
-                    break; // Выход из внутреннего цикла, так как совпадение найдено
+                    break;
                 }
             }
         }
 
-        ExAdapter exAdapter = new ExAdapter( ChangePresetFragment.this, true);
-        exAdapter.updateExList(exList);
+        // Инициализация адаптера
+        exAdapter = new ExAdapter(ChangePresetFragment.this, true);
+        exAdapter.updateExList(exList); // Заполняем адаптер списком упражнений
         exRecycler.setHasFixedSize(true);
         exRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         exRecycler.setAdapter(exAdapter);
 
-        backBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentManager fragmentManager = getFragmentManager();
-                assert fragmentManager != null;
-                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                try {
-                    fragmentTransaction.replace(R.id.frameLayout, AddExFragment.class.newInstance());
-                } catch (IllegalAccessException | java.lang.InstantiationException e) {
-                    throw new RuntimeException(e);
-                }
-                fragmentTransaction.commit();
+        backBtn.setOnClickListener(v -> {
+            FragmentManager fragmentManager = getFragmentManager();
+            assert fragmentManager != null;
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            try {
+                fragmentTransaction.replace(R.id.frameLayout, AddExFragment.class.newInstance());
+            } catch (IllegalAccessException | java.lang.InstantiationException e) {
+                throw new RuntimeException(e);
             }
+            fragmentTransaction.commit();
         });
 
-        nextBtn.setOnClickListener(new View.OnClickListener() {
+        nextBtn.setOnClickListener(v -> showDialogConfirmation(exAdapter));
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public void onClick(View v) {
-                showDialogConfirmation(exAdapter);
+            public boolean onQueryTextSubmit(String query) {
+                searchView.clearFocus(); // Убираем клавиатуру
+                exRecycler.requestFocus();
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                exAdapter.updateExListFiltered(newText);
+                return true;
             }
         });
 
@@ -113,6 +124,7 @@ public class ChangePresetFragment extends Fragment {
         dialogCreatePreset.setContentView(R.layout.confirm_dialog_preset);
         Objects.requireNonNull(dialogCreatePreset.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dialogCreatePreset.show();
+        searchView.clearFocus();
 
         EditText namePreset = dialogCreatePreset.findViewById(R.id.editText);
         Button btnAdd = dialogCreatePreset.findViewById(R.id.btnAdd);
@@ -125,48 +137,58 @@ public class ChangePresetFragment extends Fragment {
         namePreset.setText(presetModel.getPresetName());
         btnAdd.setText("Изменить");
 
-
         if(dialogCreatePreset.getWindow() != null){
             dialogCreatePreset.getWindow().setBackgroundDrawable(new ColorDrawable(0));
         }
-        btnChanel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {dialogCreatePreset.dismiss();}
+
+        btnChanel.setOnClickListener(v -> {
+            dialogCreatePreset.dismiss();
+            searchView.clearFocus();
         });
 
-        btnAdd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String presetName = namePreset.getText().toString().trim();
-                if (presetName.isEmpty()) {
-                    namePreset.setError("Пожалуйста, введите название упражнения");
-                    return;
-                }
-
-                PresetModel newPreset = new PresetModel(presetName,exAdapter.getList());
-                if (!presetModel.equals(newPreset)){
-                    dataBase.changePreset(presetModel.getPresetName(),newPreset);
-                    Toast.makeText(requireContext(), "Пресет создан!", Toast.LENGTH_SHORT).show();
-                    dialogCreatePreset.dismiss();
-
-                }else {dialogCreatePreset.dismiss();
-                    Toast.makeText(requireContext(), "Окно закрыто", Toast.LENGTH_SHORT).show();}
-
-
-
-
-
-                FragmentManager fragmentManager = getFragmentManager();
-                assert fragmentManager != null;
-                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                try {
-                    fragmentTransaction.replace(R.id.frameLayout, AddExFragment.class.newInstance());
-                } catch (IllegalAccessException | java.lang.InstantiationException e) {
-                    throw new RuntimeException(e);
-                }
-                fragmentTransaction.commit();
+        btnAdd.setOnClickListener(v -> {
+            String presetName = namePreset.getText().toString().trim();
+            if (presetName.isEmpty()) {
+                namePreset.setError("Пожалуйста, введите название упражнения");
+                return;
             }
 
+            PresetModel newPreset = new PresetModel(presetName,exAdapter.getList());
+            if (!presetModel.equals(newPreset)){
+                dataBase.changePreset(presetModel.getPresetName(),newPreset);
+                Toast.makeText(requireContext(), "Пресет изменен!", Toast.LENGTH_SHORT).show();
+                dialogCreatePreset.dismiss();
+            } else {
+                dialogCreatePreset.dismiss();
+                Toast.makeText(requireContext(), "Окно закрыто", Toast.LENGTH_SHORT).show();
+            }
+
+            FragmentManager fragmentManager = getFragmentManager();
+            assert fragmentManager != null;
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            try {
+                fragmentTransaction.replace(R.id.frameLayout, AddExFragment.class.newInstance());
+            } catch (IllegalAccessException | java.lang.InstantiationException e) {
+                throw new RuntimeException(e);
+            }
+            fragmentTransaction.commit();
         });
+    }
+
+    private void filterExerciseList(String query, ExAdapter adapter) {
+        List<ExModel> filteredList = new ArrayList<>();
+        for (ExModel ex : exList) {
+            if (ex.getExName().toLowerCase().contains(query.toLowerCase())) {
+                filteredList.add(ex);
+            }
+        }
+        //adapter.updateExListFiltered(query, filteredList);
+
+    }
+
+    public void clearSearchFocus() {
+        if (searchView != null) {
+            searchView.clearFocus();
+        }
     }
 }
