@@ -400,12 +400,7 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
         db.close();
     }
 
-    public void clearOfflineWorkouts() {
-        SQLiteDatabase db = this.getWritableDatabase();
-        db.delete("sets_offline", null, null);
-        db.delete("workouts_offline", null, null);
-        db.close();
-    }
+
 
     public void resetExerciseIdSequenceIfEmpty() {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -424,6 +419,13 @@ public class TempDataBaseEx extends SQLiteOpenHelper {
         }
 
 
+    }
+
+    public void clearOfflineWorkouts() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("sets_offline", null, null);
+        db.delete("workouts_offline", null, null);
+        db.close();
     }
     /*public void resetSetsOfflineIdSequenceIfEmpty() {
         SQLiteDatabase db = this.getWritableDatabase();

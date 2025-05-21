@@ -1,25 +1,22 @@
 package com.example.workoutapp;
 
 import android.annotation.SuppressLint;
-
 import android.os.Bundle;
-
-
-import androidx.fragment.app.Fragment;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.example.workoutapp.Data.AppDataBase;
 import com.example.workoutapp.Workout.WorkoutFragment;
 import com.example.workoutapp.databinding.ActivityMainBinding;
 
 
 public class MainActivity extends AppCompatActivity {
     public ActivityMainBinding bindingMain;
-
+    private static AppDataBase appDataBase;
 
     @SuppressLint("NonConstantResourceId")
     @Override
@@ -29,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
         bindingMain = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(bindingMain.getRoot());
 
+        // Инициализация базы данных
+        appDataBase = AppDataBase.getInstance(getApplicationContext());
 
         bindingMain.bottomNavView.setBackground(null);
 
@@ -67,6 +66,10 @@ public class MainActivity extends AppCompatActivity {
         fragmentTransaction.commit();
 
 
+    }
+
+    public static AppDataBase getAppDataBase() {
+        return appDataBase;
     }
 
 

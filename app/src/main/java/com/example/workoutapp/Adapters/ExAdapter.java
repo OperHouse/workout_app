@@ -16,8 +16,10 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.DAO.ExerciseDao;
 import com.example.workoutapp.Data.DataBase;
 import com.example.workoutapp.Data.TempDataBaseEx;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Workout.WorkoutFragment;
@@ -31,6 +33,7 @@ import java.util.Objects;
 public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
 
     private final Context context;
+    private ExerciseDao ExDao;
     private DataBase dataBase;
     private Fragment fragment;
     private TempDataBaseEx tempDataBaseEx;
@@ -49,6 +52,7 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
         this.noClickedList = new ArrayList<>();
         this.tempDataBaseEx = new TempDataBaseEx(context);
         this.fragment = fragment;  // Store the fragment reference
+        this.ExDao = new ExerciseDao(MainActivity.getAppDataBase());
     }
 
     @NonNull

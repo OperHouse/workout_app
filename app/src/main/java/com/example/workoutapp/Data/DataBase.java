@@ -48,7 +48,7 @@ public class DataBase extends SQLiteOpenHelper {
                 + " TEXT, " + EXERCISE_TYPE + " TEXT, " + BODY_TYPE + " TEXT)";
         String createPresetsTableQuery = "CREATE TABLE IF NOT EXISTS " + TABLE_PRESETS + " ("
                 + PRESET_NAME + " TEXT, "
-                + EXERCISE_NAME2 + " TEXT, "   // правильное имя столбца для имени упражнения
+                + EXERCISE_NAME2 + " TEXT, "
                 + EXERCISE_TYPE2 + " TEXT, "
                 + BODY_TYPE2 + " TEXT)";
         db.execSQL(createExerciseTableQuery);
