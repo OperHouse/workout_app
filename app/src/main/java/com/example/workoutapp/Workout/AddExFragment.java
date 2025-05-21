@@ -27,7 +27,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Adapters.ExAdapter;
 import com.example.workoutapp.Adapters.PresetsAdapter;
+import com.example.workoutapp.DAO.ExerciseDao;
 import com.example.workoutapp.Data.DataBase;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.Models.PresetModel;
 import com.example.workoutapp.R;
@@ -43,6 +45,7 @@ import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator
 
 public class AddExFragment extends Fragment {
     private DataBase dataBase;
+    private ExerciseDao ExDao;
     private List<ExModel> exList;
     private List<PresetModel> presetsList;
     private ExAdapter exAdapter;
@@ -63,6 +66,7 @@ public class AddExFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dataBase = new DataBase(requireContext());
+        this.ExDao = new ExerciseDao(MainActivity.getAppDataBase());
     }
 
     @Override
@@ -83,7 +87,7 @@ public class AddExFragment extends Fragment {
         presetAdapter.updatePresetsList(presetsList);
 
         exRecycler = RootViewAddExFragment.findViewById(R.id.ExerciseRecyclerViewPresets);
-        exList = dataBase.getAllExercise();
+        exList = ExDao.getAllExercises();
         exAdapter = new ExAdapter(AddExFragment.this, false);
 
         exRecycler.setHasFixedSize(true);
@@ -229,10 +233,10 @@ public class AddExFragment extends Fragment {
                 newExercise.setBodyType(bodyType);
 
                 // Добавление упражнения в базу данных
-                dataBase.addExercise(newExercise);
+                ExDao.addExercise(newExercise);
 
                 exList.clear();
-                exList.addAll(dataBase.getAllExercise());
+                exList.addAll(ExDao.getAllExercises());
                 exAdapter.notifyDataSetChanged();
                 exerciseVisibility(textEx, "Жми '+ Добавить упражнение' чтобы начать", exList.isEmpty());
 
