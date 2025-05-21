@@ -1,4 +1,4 @@
-package com.example.workoutapp;
+package com.example.workoutapp.Adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -12,7 +12,15 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.workoutapp.Data.DataBase;
+import com.example.workoutapp.Data.TempDataBaseEx;
+import com.example.workoutapp.Models.ExModel;
+import com.example.workoutapp.R;
+import com.example.workoutapp.Workout.WorkoutFragment;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -24,18 +32,23 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
 
     private final Context context;
     private DataBase dataBase;
+    private Fragment fragment;
+    private TempDataBaseEx tempDataBaseEx;
     private List<ExModel> exList;
     private List<ExModel> noClickedList;
     private boolean isSelectable;
     private final List<ExModel> exListMain; // Неизменяемый список
+    private String currentFilter = "";
 
-    public ExAdapter(@NonNull Fragment fragment, boolean isSelectable, List<ExModel> initialList) {
+    public ExAdapter(@NonNull Fragment fragment, boolean isSelectable) {
         this.context = fragment.requireContext();
         this.isSelectable = isSelectable;
         this.dataBase = new DataBase(context);
         this.exListMain = dataBase.getAllExercise();
         this.exList = new ArrayList<>();
         this.noClickedList = new ArrayList<>();
+        this.tempDataBaseEx = new TempDataBaseEx(context);
+        this.fragment = fragment;  // Store the fragment reference
     }
 
     @NonNull
@@ -73,9 +86,42 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
                     } else {
                         handleItemDeselected(exListElm);
                     }
+
+                    if (fragment != null) {
+                        try {
+                            fragment.getClass().getMethod("clearSearchFocus").invoke(fragment);
+                        } catch (Exception e) {
+                            e.printStackTrace(); // метод не найден или произошла ошибка
+                        }
+                    }
                     noClickedList.clear();
                     notifyDataSetChanged();
                 });
+            }else {
+                 holder.itemView.setOnClickListener(v -> {
+                     // Получаем название упражнения из элемента
+                     String exerciseName = exListElm.getExName();
+
+                     // Проверяем, существует ли упражнение в базе данных
+                     boolean exerciseExists = tempDataBaseEx.checkIfExerciseExists(exerciseName);
+
+                     if (!exerciseExists) {
+                         // Если упражнения нет, добавляем его в базу данных
+                         tempDataBaseEx.addExercise(exerciseName, exListElm.getExType(), exListElm.getBodyType());  // Передаем название и тип упражнения
+                         // Переход к новому фрагменту
+                         FragmentManager fragmentManager = fragment.getParentFragmentManager(); // Use the fragment reference to get FragmentManager
+                         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                         fragmentTransaction.replace(R.id.frameLayout, new WorkoutFragment()); // Replace with the new fragment
+                         fragmentTransaction.addToBackStack(null); // Add to back stack if you want to navigate back
+                         fragmentTransaction.commit();
+                     }
+                     //Вывод в логи базы данных
+                     tempDataBaseEx.logAllExercisesAndSets();
+
+
+                 });
+
+
             }
         }
 
@@ -124,10 +170,72 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
                 return 0;
             }
         });
+        notifyDataSetChanged();
+    }
 
 
 
+    @SuppressLint("NotifyDataSetChanged")
+    public void updateExList2(List<ExModel> exModelList) {
+        this.exList = exModelList;
+        notifyDataSetChanged();
+    }
 
+    @SuppressLint("NotifyDataSetChanged")
+    public void updateExListFiltered(String filter) {
+        this.currentFilter = filter.toLowerCase();// сохраняем текущий фильтр
+        if(filter.isEmpty()) {
+            this.exList = new ArrayList<>();
+            for (ExModel ex : exListMain) {
+                // Создаём копию объекта, чтобы избежать общей ссылки (если нужно)
+                this.exList.add(new ExModel(
+                        ex.getExName(),
+                        ex.getExType(),
+                        ex.getBodyType(),
+                        ex.getIsPressed()
+                ));
+            }
+        }else {
+            exList.clear();
+            for (ExModel elm : exListMain) {
+                if (currentFilter.isEmpty()) {
+                    exList.add(elm);
+                } else if (matchesFilter(elm)) {
+                    exList.add(elm);
+                }
+            }
+        }
+
+        // Проходим по exList и для каждого элемента проверяем, если он нажат
+        for (int i = 0; i < exList.size(); i++) {
+            ExModel exListItem = exList.get(i);
+
+            // Если элемент нажат в exList, то ищем его в exListMain и устанавливаем нажатым
+            for (ExModel mainItem : exListMain) {
+                if (Objects.equals(exListItem.getExName(), mainItem.getExName()) &&
+                        Objects.equals(exListItem.getExType(), mainItem.getExType()) &&
+                        Objects.equals(exListItem.getBodyType(), mainItem.getBodyType())) {
+
+                    // Если exListItem нажат, делаем такой же элемент в exListMain нажатым
+                    if (exListItem.getIsPressed()) {
+                        mainItem.setIsPressed(true);
+                    }
+                    break; // Выход из внутреннего цикла, так как элемент найден
+                }
+            }
+        }
+
+        exList.sort(new Comparator<ExModel>() {
+            @Override
+            public int compare(ExModel ex1, ExModel ex2) {
+                if (ex1.getIsPressed() && !ex2.getIsPressed()) {
+                    return -1;
+                } else if (!ex1.getIsPressed() && ex2.getIsPressed()) {
+                    return 1;
+                }
+                return 0;
+            }
+        });
         notifyDataSetChanged();
     }
 
@@ -185,13 +293,13 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
     }
 
     private void handleItemDeselected(ExModel exListElm) {
-        // Убираем элемент из exList
+        // Убираем из видимого списка
         exList.remove(exListElm);
 
-        // Обновляем состояние элемента в exListMain
+        // Обновляем состояние
         updateExListMainState(exListElm, false);
 
-        // Удаляем невзаимодействующие элементы из exList
+        // Удаляем все невыбранные элементы
         List<ExModel> toRemove = new ArrayList<>();
         for (ExModel elm : exList) {
             if (!elm.getIsPressed()) {
@@ -199,12 +307,26 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
             }
         }
         exList.removeAll(toRemove);
-        // Добавляем обратно невзаимодействующие элементы из exListMain
+
+
+        // Добавляем обратно подходящие элементы из основного списка
         for (ExModel elm : exListMain) {
             if (!elm.getIsPressed()) {
-                exList.add(elm);
+                if (currentFilter.isEmpty()) {
+                    exList.add(elm);
+                } else if (matchesFilter(elm)) {
+                    exList.add(elm);
+                }
             }
         }
+
+
+        notifyDataSetChanged();
+    }
+
+    private boolean matchesFilter(ExModel elm) {
+        // Проверяем, соответствует ли элемент текущему фильтру
+        return elm.getExName().toLowerCase().contains(currentFilter);
     }
 
     private void updateExListMainState(ExModel exListElm, boolean isPressed) {
@@ -218,6 +340,26 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
             }
         }
     }
+    @SuppressLint("NotifyDataSetChanged")
+    public void filter(String query) {
+        currentFilter = query.toLowerCase();
+        List<ExModel> filteredList = new ArrayList<>();
+
+        for (ExModel ex : exListMain) {
+            if (ex.getExName().toLowerCase().contains(currentFilter)) {
+                filteredList.add(new ExModel(
+                        ex.getExName(),
+                        ex.getExType(),
+                        ex.getBodyType(),
+                        ex.getIsPressed()
+                ));
+            }
+        }
+
+        this.exList = filteredList;
+        notifyDataSetChanged();
+    }
+
 }
 
 

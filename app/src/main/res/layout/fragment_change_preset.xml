@@ -5,7 +5,7 @@ xmlns:android="http://schemas.android.com/apk/res/android"
 xmlns:tools="http://schemas.android.com/tools"
 android:layout_width="match_parent"
 android:layout_height="match_parent"
-tools:context=".ChangePresetFragment"
+tools:context=".Workout.ChangePresetFragment"
 android:background="#2E3042">
 
 <androidx.constraintlayout.widget.ConstraintLayout
@@ -54,7 +54,7 @@ android:background="#2E3042">
         </TextView>
 
         <SearchView
-            android:id="@+id/searchExercise2"
+            android:id="@+id/searchExercise4"
             android:layout_width="0dp"
             android:layout_height="30dp"
             android:layout_marginStart="10dp"

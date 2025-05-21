@@ -13,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import com.example.workoutapp.WorkoutFragment.WorkoutFragment;
+import com.example.workoutapp.Workout.WorkoutFragment;
 import com.example.workoutapp.databinding.ActivityMainBinding;
 
 

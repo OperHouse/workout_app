@@ -1,4 +1,4 @@
-package com.example.workoutapp;
+package com.example.workoutapp.Models;
 
 import java.io.Serializable;
 
@@ -8,6 +8,17 @@ public class ExModel implements Serializable {
     String exType;
     String bodyType;
     boolean isPressed = false;
+
+    public ExModel(String exName, String exType, String bodyType, boolean isPressed) {
+        this.exName = exName;
+        this.exType = exType;
+        this.bodyType = bodyType;
+        this.isPressed = isPressed;
+    }
+
+    public ExModel() {
+
+    }
 
     public boolean getIsPressed() {
         return isPressed;
