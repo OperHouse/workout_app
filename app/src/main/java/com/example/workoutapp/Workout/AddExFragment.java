@@ -28,7 +28,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.workoutapp.Adapters.ExAdapter;
 import com.example.workoutapp.Adapters.PresetsAdapter;
 import com.example.workoutapp.DAO.ExerciseDao;
-import com.example.workoutapp.Data.DataBase;
+import com.example.workoutapp.DAO.PresetDao;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.Models.PresetModel;
@@ -44,8 +44,8 @@ import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator
 
 
 public class AddExFragment extends Fragment {
-    private DataBase dataBase;
     private ExerciseDao ExDao;
+    private PresetDao PresetDao;
     private List<ExModel> exList;
     private List<PresetModel> presetsList;
     private ExAdapter exAdapter;
@@ -65,8 +65,8 @@ public class AddExFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        dataBase = new DataBase(requireContext());
         this.ExDao = new ExerciseDao(MainActivity.getAppDataBase());
+        this.PresetDao = new PresetDao(MainActivity.getAppDataBase());
     }
 
     @Override
@@ -77,7 +77,7 @@ public class AddExFragment extends Fragment {
 
 
         presetRecycler = RootViewAddExFragment.findViewById(R.id.presetRecycler);
-        presetsList = dataBase.getAllPresets();
+        presetsList = PresetDao.getAllPresets();
         presetAdapter = new PresetsAdapter(AddExFragment.this);
 
         presetRecycler.setHasFixedSize(true);
@@ -344,10 +344,10 @@ public class AddExFragment extends Fragment {
                 newExercise.setBodyType(bodyType);
 
                 // Добавление упражнения в базу данных
-                dataBase.changeExercise(oldName,newExercise);
+                ExDao.updateExercise(oldName,newExercise);
 
                 exList.clear();
-                exList.addAll(dataBase.getAllExercise());
+                exList.addAll(ExDao.getAllExercises());
                 exAdapter.notifyDataSetChanged();
 
                 exAdapter.updateExList2(exList);
@@ -451,7 +451,7 @@ public class AddExFragment extends Fragment {
                 List<ExModel> p = new ArrayList<>(presetToDelete.getExercises());
 
                 for (ExModel elm: p) {
-                    dataBase.deletePreset(presetToDelete.getPresetName(),elm.getExName());
+                    PresetDao.deletePreset(presetToDelete.getPresetName(),elm.getExName());
                 }
                 presetsList.remove(position);
                 presetVisibility(textPreset, "Жми '+ Добавить тренировку' чтобы начать", presetsList.isEmpty());
@@ -563,7 +563,7 @@ public class AddExFragment extends Fragment {
 
     private void filterExerciseList(String text) {
         List<ExModel> filteredList = new ArrayList<>();
-        for (ExModel ex : dataBase.getAllExercise()) {
+        for (ExModel ex : ExDao.getAllExercises()) {
             if (ex.getExName().toLowerCase().contains(text.toLowerCase())) {
                 filteredList.add(ex);
             }
@@ -584,7 +584,7 @@ public class AddExFragment extends Fragment {
 
     private void filterPresetsList(String text) {
         List<PresetModel> filteredPresets = new ArrayList<>();
-        for (PresetModel preset : dataBase.getAllPresets()) {
+        for (PresetModel preset : PresetDao.getAllPresets()) {
             for (ExModel ex : preset.getExercises()) {
                 if (ex.getExName().toLowerCase().contains(text.toLowerCase())) {
                     filteredPresets.add(preset);
@@ -614,7 +614,7 @@ public class AddExFragment extends Fragment {
         String exerciseName = exerciseToDelete.getExName();
 
         // Удаляем упражнение из базы данных
-        dataBase.deleteExercise(exerciseName);
+        ExDao.deleteExercise(exerciseName);
 
         // Удаляем упражнение из списка
         exList.remove(position);

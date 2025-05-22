@@ -21,7 +21,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Adapters.ExAdapter;
-import com.example.workoutapp.Data.DataBase;
+import com.example.workoutapp.DAO.ExerciseDao;
+import com.example.workoutapp.DAO.PresetDao;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.Models.PresetModel;
 import com.example.workoutapp.R;
@@ -34,7 +36,8 @@ public class ChangePresetFragment extends Fragment {
 
     private PresetModel presetModel;
     private List<ExModel> exList;
-    private DataBase dataBase;
+    private ExerciseDao ExDao;
+    private PresetDao PresetDao;
     private ExAdapter exAdapter;
     private RecyclerView exRecycler;
     private SearchView searchView;
@@ -47,7 +50,8 @@ public class ChangePresetFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        dataBase = new DataBase(requireContext());
+        this.ExDao = new ExerciseDao(MainActivity.getAppDataBase());
+        this.PresetDao = new PresetDao(MainActivity.getAppDataBase());
     }
 
     @Override
@@ -66,7 +70,7 @@ public class ChangePresetFragment extends Fragment {
 
         text.setText(presetModel.getPresetName());
 
-        exList = dataBase.getAllExercise();
+        exList = ExDao.getAllExercises();
 
         // Установка состояния выделения для упражнений в списке
         for (ExModel a : presetModel.getExercises()) {
@@ -155,7 +159,7 @@ public class ChangePresetFragment extends Fragment {
 
             PresetModel newPreset = new PresetModel(presetName,exAdapter.getList());
             if (!presetModel.equals(newPreset)){
-                dataBase.changePreset(presetModel.getPresetName(),newPreset);
+                PresetDao.updatePreset(presetModel.getPresetName(),newPreset);
                 Toast.makeText(requireContext(), "Пресет изменен!", Toast.LENGTH_SHORT).show();
                 dialogCreatePreset.dismiss();
             } else {
