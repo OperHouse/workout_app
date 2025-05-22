@@ -1,7 +1,6 @@
 package com.example.workoutapp.Adapters;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,25 +12,24 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.DAO.TempWorkoutDao;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.Models.PresetModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.Data.TempDataBaseEx;
 import com.example.workoutapp.Workout.WorkoutFragment;
 
 import java.util.List;
 
 public class PresetsAdapter  extends RecyclerView.Adapter<PresetsAdapter.MyViewHolder> {
 
-    private final Context context;
     private List<PresetModel> presetsList;
-    private TempDataBaseEx tempDataBaseEx;
+    private TempWorkoutDao TempWorkDao;
     private Fragment fragment;
 
     public PresetsAdapter(@NonNull Fragment fragment) {
-        this.context = fragment.requireContext();
-        this.tempDataBaseEx = new TempDataBaseEx(context);
         this.fragment = fragment;
+        this.TempWorkDao = new TempWorkoutDao(MainActivity.getAppDataBase());
     }
 
     @NonNull
@@ -61,9 +59,9 @@ public class PresetsAdapter  extends RecyclerView.Adapter<PresetsAdapter.MyViewH
         holder.itemView.setOnClickListener(v ->{
                 for (ExModel s:currentPresetModel.getExercises()) {
                     String exName = s.getExName();
-                    boolean exerciseExists = tempDataBaseEx.checkIfExerciseExists(exName);
+                    boolean exerciseExists = TempWorkDao.checkIfTempExerciseExists(exName);
                     if(!exerciseExists){
-                        tempDataBaseEx.addExercise(s.getExName(), s.getExType(), s.getBodyType());
+                        TempWorkDao.addTempExercise(s.getExName(), s.getExType(), s.getBodyType());
                     }
                 }
                 // Переход к новому фрагменту

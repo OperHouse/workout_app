@@ -18,7 +18,8 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.workoutapp.Data.TempDataBaseEx;
+import com.example.workoutapp.DAO.TempWorkoutDao;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.TempExModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Workout.WorkoutFragment;
@@ -29,7 +30,7 @@ import java.util.Objects;
 public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHolder> {
 
     private final Context context;
-    private TempDataBaseEx tempDataBaseEx;
+    private TempWorkoutDao TempWorkDao;
     private List<TempExModel> tempExModelList;
     private Fragment fragment;
 
@@ -40,7 +41,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
     public OutsideAdapter(@NonNull Fragment fragment, RecyclerView recyclerView) {
         this.context = fragment.requireContext();
         this.fragment = fragment;
-        this.tempDataBaseEx = new TempDataBaseEx(context);
+        this.TempWorkDao = new TempWorkoutDao(MainActivity.getAppDataBase());
         this.outerRecyclerView = recyclerView; // сохраняем ссылку
     }
 
@@ -64,7 +65,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
 
         InnerAdapter innerAdapter = allInnerAdapters.get(exerciseId);
         if (innerAdapter == null) {
-            innerAdapter = new InnerAdapter(tempExModelElm.getSetsList(), tempDataBaseEx, exerciseId);
+            innerAdapter = new InnerAdapter(tempExModelElm.getSetsList(), exerciseId);
             allInnerAdapters.put(exerciseId, innerAdapter);
         } else {
             innerAdapter.updateData(tempExModelElm.getSetsList(), exerciseId);
@@ -87,12 +88,11 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
         InnerAdapter finalInnerAdapter = innerAdapter;
         holder.addSet.setOnClickListener(v -> {
             saveAllInnerAdapters();
-            tempDataBaseEx.addSet(exerciseId);
-            tempExModelElm.setSetsList(tempDataBaseEx.getExerciseSets(exerciseId));
+            TempWorkDao.addTempSet(exerciseId);
+            tempExModelElm.setSetsList(TempWorkDao.getTempSetsByExercise(exerciseId));
             finalInnerAdapter.updateData(tempExModelElm.getSetsList(), exerciseId);
             finalInnerAdapter.notifyItemInserted(finalInnerAdapter.getItemCount() - 1);
             outerRecyclerView.scrollToPosition(0);
-            tempDataBaseEx.logAllExercisesAndSets();
         });
 
         holder.delEx.setOnClickListener(v -> delConfirmDialog(tempExModelElm, position));
@@ -125,7 +125,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
             dialogCreateEx.dismiss();
 
             int exIdToDelete = elm.getEx_id();
-            tempDataBaseEx.deleteExerciseWithSets(exIdToDelete);
+            TempWorkDao.deleteTempExerciseWithSets(exIdToDelete);
 
             // Обновляем ID всех упражнений
             tempExModelList.remove(position);
@@ -134,8 +134,8 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
                 int newId = i;
                 int oldId = model.getEx_id();
                 if (oldId != newId) {
-                    tempDataBaseEx.updateExerciseId(oldId, newId);
-                    tempDataBaseEx.updateSetsExerciseId(oldId, newId);
+                    TempWorkDao.updateTempExerciseId(oldId, newId);
+                    TempWorkDao.updateTempSetsExerciseId(oldId, newId);
                 }
             }
 
@@ -143,7 +143,6 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
             outerRecyclerView.setAdapter(null);
             ((WorkoutFragment) fragment).refreshAdapter();
 
-            tempDataBaseEx.logAllExercisesAndSets();
         });
 
         dialogCreateEx.show();

@@ -32,7 +32,7 @@ public class TempWorkoutDao {
 
     private final AppDataBase dbHelper;
 
-    public TempWorkoutDao(AppDataBase dbHelper, CompletedWorkoutDao completedWorkoutDao) {
+    public TempWorkoutDao(AppDataBase dbHelper) {
         this.dbHelper = dbHelper;
     }
 
@@ -116,6 +116,19 @@ public class TempWorkoutDao {
         db.close();
     }
 
+    public boolean checkIfTempExerciseExists(String exerciseName) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String query = "SELECT * FROM " + TEMP_WORKOUT_EXERCISE_TABLE + " WHERE " + TEMP_WORKOUT_EXERCISE_NAME + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{exerciseName});
+
+        boolean exists = cursor.moveToFirst();
+
+        cursor.close();
+        db.close();
+
+        return exists;
+    }
+
     // Получить список всех упражнений с подходами
     public ArrayList<TempExModel> getAllTempExercisesWithSets() {
         ArrayList<TempExModel> list = new ArrayList<>();
@@ -146,6 +159,23 @@ public class TempWorkoutDao {
         cursor.close();
         db.close();
         return list;
+    }
+
+    public void deleteTempSetAndRearrangeNumbers(int exerciseId, int setId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        // Удаляем конкретный сет по ID упражнения и номеру сета
+        db.delete(TEMP_WORKOUT_SET_TABLE,
+                TEMP_WORKOUT_SET_EXERCISE_ID + "=? AND " + TEMP_WORKOUT_SET_NUMBER + "=?",
+                new String[]{String.valueOf(exerciseId), String.valueOf(setId)});
+
+        // Обновляем номера сетов, которые были выше удалённого
+        String updateQuery = "UPDATE " + TEMP_WORKOUT_SET_TABLE +
+                " SET " + TEMP_WORKOUT_SET_NUMBER + " = " + TEMP_WORKOUT_SET_NUMBER + " - 1" +
+                " WHERE " + TEMP_WORKOUT_SET_EXERCISE_ID + " = ? AND " + TEMP_WORKOUT_SET_NUMBER + " > ?";
+
+        db.execSQL(updateQuery, new String[]{String.valueOf(exerciseId), String.valueOf(setId)});
+        db.close();
     }
 
     // Удалить упражнение и все его сеты
@@ -224,6 +254,22 @@ public class TempWorkoutDao {
         }
 
         cursor.close();
+        db.close();
+    }
+
+    public void updateTempSetsExerciseId(int oldExId, int newExId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(TEMP_WORKOUT_SET_EXERCISE_ID, newExId);
+        db.update(TEMP_WORKOUT_SET_TABLE, cv, TEMP_WORKOUT_SET_EXERCISE_ID + "=?", new String[]{String.valueOf(oldExId)});
+        db.close();
+    }
+
+    public void updateTempExerciseId(int oldId, int newId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(TEMP_WORKOUT_EXERCISE_ID, newId);
+        db.update(TEMP_WORKOUT_EXERCISE_TABLE, cv, TEMP_WORKOUT_EXERCISE_ID + "=?", new String[]{String.valueOf(oldId)});
         db.close();
     }
 
