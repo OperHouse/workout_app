@@ -1,4 +1,4 @@
-package com.example.workoutapp.Workout;
+package com.example.workoutapp.WorkoutFragments;
 
 import android.app.Dialog;
 import android.graphics.drawable.ColorDrawable;
@@ -19,7 +19,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Adapters.ExAdapter;
-import com.example.workoutapp.Data.DataBase;
+import com.example.workoutapp.DAO.ExerciseDao;
+import com.example.workoutapp.DAO.PresetDao;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.Models.PresetModel;
 import com.example.workoutapp.R;
@@ -30,7 +32,9 @@ import java.util.Objects;
 
 
 public class CreatePresetFragment extends Fragment {
-    DataBase dataBase;
+    ExerciseDao ExDao;
+    PresetDao PresetDao;
+
     private List<ExModel> exList;
     SearchView searchView;
 
@@ -43,7 +47,8 @@ public class CreatePresetFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        dataBase = new DataBase(requireContext());
+        this.ExDao = new ExerciseDao(MainActivity.getAppDataBase());
+        this.PresetDao = new PresetDao(MainActivity.getAppDataBase());
     }
 
     @Override
@@ -58,7 +63,7 @@ public class CreatePresetFragment extends Fragment {
         searchView = RootViewCreatePresetFragment.findViewById(R.id.searchExercise3);
 
 
-        exList = dataBase.getAllExercise();
+        exList = ExDao.getAllExercises();
         ExAdapter exAdapter = new ExAdapter( CreatePresetFragment.this, true);
         exAdapter.updateExList2(exList);
         exRecycler.setHasFixedSize(true);
@@ -168,7 +173,7 @@ public class CreatePresetFragment extends Fragment {
                 }
 
                 PresetModel newPreset = new PresetModel(presetName, exAdapter.getList());
-                dataBase.addPreset(newPreset);
+                PresetDao.addPreset(newPreset);
                 dialogCreatePreset.dismiss();
 
                 Toast.makeText(requireContext(), "Пресет создан!", Toast.LENGTH_SHORT).show();

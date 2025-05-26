@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -16,11 +17,12 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.workoutapp.Data.DataBase;
-import com.example.workoutapp.Data.TempDataBaseEx;
+import com.example.workoutapp.DAO.ExerciseDao;
+import com.example.workoutapp.DAO.TempWorkoutDao;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.Workout.WorkoutFragment;
+import com.example.workoutapp.WorkoutFragments.WorkoutFragment;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -31,9 +33,9 @@ import java.util.Objects;
 public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
 
     private final Context context;
-    private DataBase dataBase;
+    private ExerciseDao ExDao;
+    private TempWorkoutDao TempWorkDao;
     private Fragment fragment;
-    private TempDataBaseEx tempDataBaseEx;
     private List<ExModel> exList;
     private List<ExModel> noClickedList;
     private boolean isSelectable;
@@ -42,13 +44,13 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
 
     public ExAdapter(@NonNull Fragment fragment, boolean isSelectable) {
         this.context = fragment.requireContext();
+        this.ExDao = new ExerciseDao(MainActivity.getAppDataBase());
+        this.TempWorkDao = new TempWorkoutDao(MainActivity.getAppDataBase());
         this.isSelectable = isSelectable;
-        this.dataBase = new DataBase(context);
-        this.exListMain = dataBase.getAllExercise();
         this.exList = new ArrayList<>();
         this.noClickedList = new ArrayList<>();
-        this.tempDataBaseEx = new TempDataBaseEx(context);
         this.fragment = fragment;  // Store the fragment reference
+        this.exListMain = ExDao.getAllExercises();
     }
 
     @NonNull
@@ -103,20 +105,22 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
                      String exerciseName = exListElm.getExName();
 
                      // Проверяем, существует ли упражнение в базе данных
-                     boolean exerciseExists = tempDataBaseEx.checkIfExerciseExists(exerciseName);
+                     boolean exerciseExists = TempWorkDao.checkIfTempExerciseExists(exerciseName);
 
                      if (!exerciseExists) {
                          // Если упражнения нет, добавляем его в базу данных
-                         tempDataBaseEx.addExercise(exerciseName, exListElm.getExType(), exListElm.getBodyType());  // Передаем название и тип упражнения
+                         TempWorkDao.addTempExercise(exerciseName, exListElm.getExType(), exListElm.getBodyType());  // Передаем название и тип упражнения
                          // Переход к новому фрагменту
                          FragmentManager fragmentManager = fragment.getParentFragmentManager(); // Use the fragment reference to get FragmentManager
                          FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                          fragmentTransaction.replace(R.id.frameLayout, new WorkoutFragment()); // Replace with the new fragment
                          fragmentTransaction.addToBackStack(null); // Add to back stack if you want to navigate back
                          fragmentTransaction.commit();
+                     }else{
+                         Toast.makeText(context, "Такое упражнение уже добавлено!", Toast.LENGTH_SHORT).show();
                      }
                      //Вывод в логи базы данных
-                     tempDataBaseEx.logAllExercisesAndSets();
+                     //tempDataBaseEx.logAllExercisesAndSets();
 
 
                  });

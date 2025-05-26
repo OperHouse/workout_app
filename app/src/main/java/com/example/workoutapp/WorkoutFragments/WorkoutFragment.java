@@ -1,4 +1,4 @@
-package com.example.workoutapp.Workout;
+package com.example.workoutapp.WorkoutFragments;
 
 import android.app.Dialog;
 import android.graphics.drawable.ColorDrawable;
@@ -18,9 +18,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Adapters.OutsideAdapter;
+import com.example.workoutapp.DAO.CompletedWorkoutDao;
+import com.example.workoutapp.DAO.TempWorkoutDao;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.TempExModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.Data.TempDataBaseEx;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -31,7 +33,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WorkoutFragment extends Fragment {
 
-    TempDataBaseEx tempDataBaseEx;
+    TempWorkoutDao TempWorkDao;
+    CompletedWorkoutDao CompletedDao;
     List<TempExModel> tempExModelList;
     OutsideAdapter outsideAdapter;
     RecyclerView exWorkoutRecyclerView;
@@ -42,7 +45,8 @@ public class WorkoutFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        tempDataBaseEx = new TempDataBaseEx(requireContext());
+        this.TempWorkDao = new TempWorkoutDao(MainActivity.getAppDataBase());
+        this.CompletedDao = new CompletedWorkoutDao(MainActivity.getAppDataBase());
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -50,7 +54,7 @@ public class WorkoutFragment extends Fragment {
         View workoutFragmentView = inflater.inflate(R.layout.fragment_workout, container, false);
 
         exWorkoutRecyclerView = workoutFragmentView.findViewById(R.id.WorkoutRecyclerView);
-        tempExModelList = tempDataBaseEx.getAllExercisesWithSets();
+        tempExModelList = TempWorkDao.getAllTempExercisesWithSets();
         outsideAdapter = new OutsideAdapter(WorkoutFragment.this, exWorkoutRecyclerView);
 
         exWorkoutRecyclerView.setHasFixedSize(true);
@@ -127,9 +131,8 @@ public class WorkoutFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 outsideAdapter.saveAllInnerAdapters();
-                tempDataBaseEx.moveTempToOfflineAndClear();
-                tempDataBaseEx.logAllExercisesAndSets();
-                tempDataBaseEx.logAllOfflineWorkoutsAndSets();
+                CompletedDao.insertCompletedWorkouts(TempWorkDao.extractCompletedWorkoutsFromTemp());
+                TempWorkDao.clearTempWorkoutData();
                 refreshAdapter();
                 dialogCreateEx.dismiss();
             }
@@ -161,7 +164,7 @@ public class WorkoutFragment extends Fragment {
         }
     }
     public void refreshAdapter() {
-        tempExModelList = tempDataBaseEx.getAllExercisesWithSets();
+        tempExModelList = TempWorkDao.getAllTempExercisesWithSets();
         outsideAdapter = new OutsideAdapter(WorkoutFragment.this, exWorkoutRecyclerView);
         outsideAdapter.updateExList(tempExModelList);
         exWorkoutRecyclerView.setAdapter(outsideAdapter);
