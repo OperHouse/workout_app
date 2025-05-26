@@ -1,4 +1,4 @@
-package com.example.workoutapp.Workout;
+package com.example.workoutapp.WorkoutFragments;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
