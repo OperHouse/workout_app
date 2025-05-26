@@ -17,7 +17,7 @@ import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ExModel;
 import com.example.workoutapp.Models.PresetModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.Workout.WorkoutFragment;
+import com.example.workoutapp.WorkoutFragments.WorkoutFragment;
 
 import java.util.List;
 

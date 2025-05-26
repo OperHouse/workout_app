@@ -1,4 +1,4 @@
-package com.example.workoutapp.Workout;
+package com.example.workoutapp.WorkoutFragments;
 
 import android.app.Dialog;
 import android.graphics.drawable.ColorDrawable;
