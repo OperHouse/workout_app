@@ -19,9 +19,10 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.DAO.TempWorkoutDao;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.SetsModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.Data.TempDataBaseEx;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.List;
 public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHolder> {
     private List<SetsModel> setsList;
     private int exerciseId;
-    private TempDataBaseEx tempDataBaseEx;
+    private TempWorkoutDao TempWorkDao;
 
     // Список для хранения измененных данных, которые будут записаны в БД
     private List<SetsModel> modifiedSets = new ArrayList<>();
@@ -41,9 +42,9 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
 
     private OnSetListChangedListener setListChangedListener;
 
-    public InnerAdapter(List<SetsModel> setList, TempDataBaseEx tempDb, int ex_id) {
+    public InnerAdapter(List<SetsModel> setList, int ex_id) {
         this.setsList = setList;
-        this.tempDataBaseEx = tempDb;
+        this.TempWorkDao = new TempWorkoutDao(MainActivity.getAppDataBase());
         this.exerciseId = ex_id;
     }
 
@@ -211,12 +212,12 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
                 if(isValid){
                 // Если условия выполнены, продолжаем обработку
                     if(isChecked ){
-                        tempDataBaseEx.updateIsSelected(exerciseId, set.getSet_id(), true);
+                        TempWorkDao.updateTempSetIsSelected(exerciseId, set.getSet_id(), true);
                         set.setIsSelected(true);
                         for (SetsModel s: modifiedSets) {
                             if(s.getSet_id() == set.getSet_id()){
                                 s.setIsSelected(true); // это лишнее действие и надо подумать как его упрознить
-                                tempDataBaseEx.updateOrInsertSet(s, exerciseId);
+                                TempWorkDao.updateOrInsertTempSet(s, exerciseId);
                                 set.setWeight(s.getWeight());
                                 set.setReps(s.getReps());
                                 modifiedSets.remove(s);
@@ -224,7 +225,7 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
                             }
                         }
                     }else if(set.getIsSelected()){
-                        tempDataBaseEx.updateIsSelected(exerciseId, set.getSet_id(), false);
+                        TempWorkDao.updateTempSetIsSelected(exerciseId, set.getSet_id(), false);
                         set.setIsSelected(false);
                     }
 
@@ -288,7 +289,7 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
                     SetsModel set = setsList.get(position);
 
                     // Удаление из БД
-                    tempDataBaseEx.deleteSetAndRearrangeNumbers(ex_id, set.getSet_id());
+                    TempWorkDao.deleteTempSetAndRearrangeNumbers(ex_id, set.getSet_id());
 
                     // Удаление из списка
                     setsList.remove(position);
@@ -306,7 +307,6 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
 
                     // Логирование
                     Log.d("InnerAdapter", "Set deleted: " + set.getSet_id());
-                    tempDataBaseEx.logAllExercisesAndSets();
                 } else {
                     Log.w("InnerAdapter", "Swipe position out of bounds: " + position);
                     // Отмена свайпа, так как позиция невалидная
@@ -347,7 +347,7 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
 
                     // Если данные изменены, сохраняем их в базе данных
                     if (isChanged) {
-                        tempDataBaseEx.updateOrInsertSet(modifiedSet, exerciseId);
+                        TempWorkDao.updateOrInsertTempSet(modifiedSet, exerciseId);
                         Log.d("InnerAdapter", "Changes saved to the database for set: " + modifiedSet.getSet_id());
                     } else {
                         Log.d("InnerAdapter", "No changes for set: " + modifiedSet.getSet_id());
