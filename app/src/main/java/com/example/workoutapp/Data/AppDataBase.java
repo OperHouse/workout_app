@@ -57,6 +57,20 @@ public class AppDataBase extends SQLiteOpenHelper {
     public static final String COMPLETED_WORKOUT_SET_REP = "completed_workout_set_rep";
     public static final String COMPLETED_WORKOUT_SET_IS_SELECTED = "completed_workout_set_is_selected";
 
+    //=========================EAT_TABLE============================//
+    public static final String EAT_TABLE = "eat_table";
+    public static final String EAT_ID = "eat_id";
+    public static final String EAT_NAME = "eat_name";
+    public static final String EAT_PROTEIN = "eat_protein";
+    public static final String EAT_FAT = "eat_fat";
+    public static final String EAT_CARB = "eat_carb";
+    public static final String EAT_CALORIES = "eat_calories";
+    public static final String EAT_AMOUNT = "eat_amount";
+    public static final String EAT_MEASUREMENT_TYPE = "eat_measurement_type";
+
+
+
+
 
 
     public AppDataBase(Context context) {
@@ -121,6 +135,16 @@ public class AppDataBase extends SQLiteOpenHelper {
                 "PRIMARY KEY(" + COMPLETED_WORKOUT_SET_EXERCISE_ID + ", " + COMPLETED_WORKOUT_SET_NUMBER + "), " +
                 "FOREIGN KEY(" + COMPLETED_WORKOUT_SET_EXERCISE_ID + ") REFERENCES " + COMPLETED_WORKOUT_EXERCISE_TABLE + "(" + COMPLETED_WORKOUT_EXERCISE_ID + "));";
 
+        // SQL-запрос для создания таблицы еды
+        String createEatTableQuery = "CREATE TABLE IF NOT EXISTS " + EAT_TABLE + " (" +
+                EAT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                EAT_NAME + " TEXT NOT NULL, " +
+                EAT_PROTEIN + " REAL NOT NULL, " +
+                EAT_FAT + " REAL NOT NULL, " +
+                EAT_CARB + " REAL NOT NULL, " +
+                EAT_CALORIES + " REAL NOT NULL, " +
+                EAT_AMOUNT + " INTEGER NOT NULL, " +
+                EAT_MEASUREMENT_TYPE + " TEXT NOT NULL);";
 
         //Exercise_Table's
         db.execSQL(createExerciseTableQuery);
@@ -131,6 +155,9 @@ public class AppDataBase extends SQLiteOpenHelper {
         //Complete_Workout_Table's
         db.execSQL(createCompletedWorkoutExerciseTableQuery);
         db.execSQL(createCompletedWorkoutSetTableQuery);
+
+        //Eat_table
+        db.execSQL(createEatTableQuery);
 
     }
 
@@ -143,6 +170,7 @@ public class AppDataBase extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + TEMP_WORKOUT_SET_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + COMPLETED_WORKOUT_EXERCISE_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + COMPLETED_WORKOUT_SET_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + EAT_TABLE);
 
         // Пересоздаём таблицы
         onCreate(db);
