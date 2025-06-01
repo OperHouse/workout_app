@@ -250,8 +250,8 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
-            nameEx = itemView.findViewById(R.id.nameEx);
-            exType = itemView.findViewById(R.id.exType);
+            nameEx = itemView.findViewById(R.id.nameEat);
+            exType = itemView.findViewById(R.id.amountEat);
             bodyPart = itemView.findViewById(R.id.bodyPart);
             imageExType = itemView.findViewById(R.id.imageExType);
             linearLayout = itemView.findViewById(R.id.linearLayout);

@@ -140,6 +140,7 @@ public class AddExFragment extends Fragment {
                     throw new RuntimeException(e);
                 }
                 fragmentTransaction.commit();
+                //PresetDao.logAllPresets();
             }
         });
 

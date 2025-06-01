@@ -1,10 +1,14 @@
 package com.example.workoutapp.NutritionFragments;
 
+import android.app.Dialog;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
@@ -16,6 +20,7 @@ import com.example.workoutapp.R;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Objects;
 
 
 public class NutritionFragment extends Fragment {
@@ -34,7 +39,7 @@ public class NutritionFragment extends Fragment {
         addMealBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                ShowDialogAddMeal();
             }
         });
 
@@ -49,7 +54,44 @@ public class NutritionFragment extends Fragment {
 
         return NutritionFragmentView;
     }
+    private void ShowDialogAddMeal() {
+        Dialog dialogAddMeal = new Dialog(requireContext());
+        dialogAddMeal.setContentView(R.layout.add_meal_dialog);
+        Objects.requireNonNull(dialogAddMeal.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialogAddMeal.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+        dialogAddMeal.show();
 
+        ImageButton backBtn = dialogAddMeal.findViewById(R.id.imageButtonBack1);
+        EditText nameMeal = dialogAddMeal.findViewById(R.id.editText);
+        Button createMealBtn = dialogAddMeal.findViewById(R.id.createWorkBtn);
+        Button goToPresetsBtn = dialogAddMeal.findViewById(R.id.presetsMealBtn);
+
+        // Обработчик кнопки "Назад"
+        backBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialogAddMeal.dismiss();
+            }
+        });
+
+        goToPresetsBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialogAddMeal.dismiss();
+                replaceFragment(new SelectionMealPresetsFragment());
+            }
+        });
+
+        createMealBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                //Заглушка
+                //Тут должна быть логика добавления ПУСТОГО ПРИЕМА ПИЩИ
+                dialogAddMeal.dismiss();
+            }
+        });
+    }
     private void replaceFragment(Fragment newFragment) {
         // Получаем менеджер фрагментов
         FragmentManager fragmentManager = getFragmentManager();
@@ -64,4 +106,6 @@ public class NutritionFragment extends Fragment {
             fragmentTransaction.commit();
         }
     }
+
+
 }

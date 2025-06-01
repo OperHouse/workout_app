@@ -9,6 +9,7 @@ import static com.example.workoutapp.Data.AppDataBase.PRESET_TABLE;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.example.workoutapp.Data.AppDataBase;
 import com.example.workoutapp.Models.ExModel;
@@ -110,6 +111,31 @@ public class PresetDao {
         cursor.close();
         db.close();
         return presetList;
+    }
+
+    public void logAllPresets() {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * FROM " + PRESET_TABLE, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                String presetName = cursor.getString(cursor.getColumnIndexOrThrow(PRESET_NAME));
+                String exerciseName = cursor.getString(cursor.getColumnIndexOrThrow(PRESET_EXERCISE_NAME));
+                String exerciseType = cursor.getString(cursor.getColumnIndexOrThrow(PRESET_EXERCISE_TYPE));
+                String bodyType = cursor.getString(cursor.getColumnIndexOrThrow(PRESET_EXERCISE_BODY_TYPE));
+
+                Log.d("PRESET_LOG", "Preset: " + presetName +
+                        ", Exercise: " + exerciseName +
+                        ", Type: " + exerciseType +
+                        ", BodyPart: " + bodyType);
+            } while (cursor.moveToNext());
+        } else {
+            Log.d("PRESET_LOG", "Preset table is empty.");
+        }
+
+        cursor.close();
+        db.close();
     }
 }
 
