@@ -9,6 +9,7 @@ public class EatModel {
     double calories;
     int amount;
     String measurement_type;
+    boolean isSelected = false;
 
     public EatModel(int eat_id, String eat_name, double protein, double fat, double carb, double calories, int amount, String measurement_type) {
         this.eat_id = eat_id;
@@ -19,6 +20,17 @@ public class EatModel {
         this.calories = calories;
         this.amount = amount;
         this.measurement_type = measurement_type;
+    }
+    public EatModel(int eat_id, String eat_name, double protein, double fat, double carb, double calories, int amount, String measurement_type, boolean isSelected) {
+        this.eat_id = eat_id;
+        this.eat_name = eat_name;
+        this.protein = protein;
+        this.fat = fat;
+        this.carb = carb;
+        this.calories = calories;
+        this.amount = amount;
+        this.measurement_type = measurement_type;
+        this.isSelected = isSelected;
     }
 
     public int getEat_id() {
@@ -84,5 +96,25 @@ public class EatModel {
     public void setMeasurement_type(String measurement_type) {
         this.measurement_type = measurement_type;
     }
+    public boolean getIsSelected() {
+        return isSelected;
+    }
 
+    public void setIsSelected(boolean selected) {
+        isSelected = selected;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        EatModel eat = (EatModel) obj;
+        return this.eat_id == eat.eat_id; // сравнение по ID, или по нужным полям
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(eat_id);
+    }
 }

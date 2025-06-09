@@ -57,16 +57,37 @@ public class AppDataBase extends SQLiteOpenHelper {
     public static final String COMPLETED_WORKOUT_SET_REP = "completed_workout_set_rep";
     public static final String COMPLETED_WORKOUT_SET_IS_SELECTED = "completed_workout_set_is_selected";
 
-    //=========================EAT_TABLE============================//
-    public static final String EAT_TABLE = "eat_table";
-    public static final String EAT_ID = "eat_id";
-    public static final String EAT_NAME = "eat_name";
-    public static final String EAT_PROTEIN = "eat_protein";
-    public static final String EAT_FAT = "eat_fat";
-    public static final String EAT_CARB = "eat_carb";
-    public static final String EAT_CALORIES = "eat_calories";
-    public static final String EAT_AMOUNT = "eat_amount";
-    public static final String EAT_MEASUREMENT_TYPE = "eat_measurement_type";
+    //=========================BASE_EAT_TABLE============================//
+    public static final String BASE_EAT_TABLE = "base_eat_table";
+    public static final String BASE_EAT_ID = "base_eat_id";
+    public static final String BASE_EAT_NAME = "base_eat_name";
+    public static final String BASE_EAT_PROTEIN = "base_eat_protein";
+    public static final String BASE_EAT_FAT = "base_eat_fat";
+    public static final String BASE_EAT_CARB = "base_eat_carb";
+    public static final String BASE_EAT_CALORIES = "base_eat_calories";
+    public static final String BASE_EAT_AMOUNT = "base_eat_amount";
+    public static final String BASE_EAT_MEASUREMENT_TYPE = "base_eat_measurement_type";
+
+    //=========================PRESET_EAT_TABLE============================//
+    public static final String PRESET_EAT_TABLE = "preset_eat_table";
+    public static final String PRESET_EAT_ID = "preset_eat_id";
+    public static final String PRESET_EAT_NAME = "preset_eat_name";
+    public static final String PRESET_EAT_PROTEIN = "preset_eat_protein";
+    public static final String PRESET_EAT_FAT = "preset_eat_fat";
+    public static final String PRESET_EAT_CARB = "preset_eat_carb";
+    public static final String PRESET_EAT_CALORIES = "preset_eat_calories";
+    public static final String PRESET_EAT_AMOUNT = "preset_eat_amount";
+    public static final String PRESET_EAT_MEASUREMENT_TYPE = "preset_eat_measurement_type";
+
+    //=========================MEAL_PRESET_NAME_TABLE============================//
+    public static final String MEAL_PRESET_NAME_TABLE = "meal_preset_name_table";
+    public static final String MEAL_PRESET_NAME_ID = "meal_preset_name_id";
+    public static final String MEAL_PRESET_NAME = "meal_preset_name";
+
+    //=========================CONNECTING_MEAL_PRESET_TABLE============================//
+    public static final String CONNECTING_MEAL_PRESET_TABLE = "connecting_meal_preset_table";
+    public static final String CONNECTING_MEAL_PRESET_NAME_ID = "connecting_meal_preset_name_id";
+    public static final String CONNECTING_MEAL_PRESET_EAT_ID = "connecting_meal_preset_eat_id";
 
 
 
@@ -136,15 +157,39 @@ public class AppDataBase extends SQLiteOpenHelper {
                 "FOREIGN KEY(" + COMPLETED_WORKOUT_SET_EXERCISE_ID + ") REFERENCES " + COMPLETED_WORKOUT_EXERCISE_TABLE + "(" + COMPLETED_WORKOUT_EXERCISE_ID + "));";
 
         // SQL-запрос для создания таблицы еды
-        String createEatTableQuery = "CREATE TABLE IF NOT EXISTS " + EAT_TABLE + " (" +
-                EAT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                EAT_NAME + " TEXT NOT NULL, " +
-                EAT_PROTEIN + " REAL NOT NULL, " +
-                EAT_FAT + " REAL NOT NULL, " +
-                EAT_CARB + " REAL NOT NULL, " +
-                EAT_CALORIES + " REAL NOT NULL, " +
-                EAT_AMOUNT + " INTEGER NOT NULL, " +
-                EAT_MEASUREMENT_TYPE + " TEXT NOT NULL);";
+        String createEatTableQuery = "CREATE TABLE IF NOT EXISTS " + BASE_EAT_TABLE + " (" +
+                BASE_EAT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                BASE_EAT_NAME + " TEXT NOT NULL, " +
+                BASE_EAT_PROTEIN + " REAL NOT NULL, " +
+                BASE_EAT_FAT + " REAL NOT NULL, " +
+                BASE_EAT_CARB + " REAL NOT NULL, " +
+                BASE_EAT_CALORIES + " REAL NOT NULL, " +
+                BASE_EAT_AMOUNT + " INTEGER NOT NULL, " +
+                BASE_EAT_MEASUREMENT_TYPE + " TEXT NOT NULL);";
+
+        // SQL-запрос для создания таблицы еды для пресета
+        String createPresetEatTableQuery = "CREATE TABLE IF NOT EXISTS " + PRESET_EAT_TABLE + " (" +
+                PRESET_EAT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                PRESET_EAT_NAME + " TEXT NOT NULL, " +
+                PRESET_EAT_PROTEIN + " REAL NOT NULL, " +
+                PRESET_EAT_FAT + " REAL NOT NULL, " +
+                PRESET_EAT_CARB + " REAL NOT NULL, " +
+                PRESET_EAT_CALORIES + " REAL NOT NULL, " +
+                PRESET_EAT_AMOUNT + " INTEGER NOT NULL, " +
+                PRESET_EAT_MEASUREMENT_TYPE + " TEXT NOT NULL);";
+
+        // SQL-запрос для создания таблицы имени пресета
+        String createMealPresetNameTableQuery = "CREATE TABLE IF NOT EXISTS " + MEAL_PRESET_NAME_TABLE + " (" +
+                MEAL_PRESET_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                MEAL_PRESET_NAME + " TEXT NOT NULL);";
+
+        // SQL-запрос для создания связывающей таблици для пресетов приемов пищи
+        String createConnectingMealPresetTableQuery = "CREATE TABLE IF NOT EXISTS " + CONNECTING_MEAL_PRESET_TABLE + " (" +
+                CONNECTING_MEAL_PRESET_NAME_ID + " INTEGER NOT NULL, " +
+                CONNECTING_MEAL_PRESET_EAT_ID + " INTEGER NOT NULL, " +
+                "PRIMARY KEY (" + CONNECTING_MEAL_PRESET_NAME_ID + ", " + CONNECTING_MEAL_PRESET_EAT_ID + "), " +
+                "FOREIGN KEY (" + CONNECTING_MEAL_PRESET_NAME_ID + ") REFERENCES " + MEAL_PRESET_NAME_TABLE + "(" + MEAL_PRESET_NAME_ID + "), " +
+                "FOREIGN KEY (" + CONNECTING_MEAL_PRESET_EAT_ID + ") REFERENCES " + PRESET_EAT_TABLE + "(" + PRESET_EAT_ID + "));";
 
         //Exercise_Table's
         db.execSQL(createExerciseTableQuery);
@@ -158,6 +203,12 @@ public class AppDataBase extends SQLiteOpenHelper {
 
         //Eat_table
         db.execSQL(createEatTableQuery);
+        //Preset_Eat_Table
+        db.execSQL(createPresetEatTableQuery);
+        //Meal_Preset_Name_Table
+        db.execSQL(createMealPresetNameTableQuery);
+        //Connecting_Table for Meal_Preset
+        db.execSQL(createConnectingMealPresetTableQuery);
 
     }
 
@@ -170,7 +221,10 @@ public class AppDataBase extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + TEMP_WORKOUT_SET_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + COMPLETED_WORKOUT_EXERCISE_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + COMPLETED_WORKOUT_SET_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + EAT_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + BASE_EAT_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + PRESET_EAT_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + MEAL_PRESET_NAME_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + CONNECTING_MEAL_PRESET_TABLE);
 
         // Пересоздаём таблицы
         onCreate(db);

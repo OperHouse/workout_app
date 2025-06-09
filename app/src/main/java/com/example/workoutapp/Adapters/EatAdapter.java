@@ -5,43 +5,45 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.workoutapp.DAO.EatDao;
+import com.example.workoutapp.DAO.BaseEatDao;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.NutritionModels.EatModel;
+import com.example.workoutapp.OnEatItemClickListener;
 import com.example.workoutapp.R;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 
 public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
 
     private final Context context;
-    private final EatDao eatDao;
-    private final Fragment fragment;
+    private final BaseEatDao baseEatDao;
     private List<EatModel> eatList;
+    public List<EatModel> noClickedList;
+    private final List<EatModel> eatListMain;
+    private final OnEatItemClickListener listener;
+    private final Fragment fragment;
+    private String currentFilter = "";
 
-    private boolean isAmountDropdownManuallyShown = false;
 
-    public EatAdapter(@NonNull Fragment fragment) {
-        this.context = fragment.requireContext();
-        this.eatDao = new EatDao(MainActivity.getAppDataBase());
-        this.fragment = fragment;  // Store the fragment reference
-        this.eatList = eatDao.getAllEat();
+
+    public EatAdapter(@NonNull Context context, @NonNull OnEatItemClickListener listener, Fragment fragment) {
+        this.context = context;
+        this.baseEatDao = new BaseEatDao(MainActivity.getAppDataBase());
+        this.listener = listener;
+        this.eatList = new ArrayList<>();
+        this.fragment = fragment;
+        this.noClickedList = new ArrayList<>();
+        this.eatListMain = baseEatDao.getAllEat();
 
     }
     @NonNull
@@ -57,15 +59,55 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
         if (eatList != null && !eatList.isEmpty()) {
             EatModel eat = eatList.get(position);
             holder.nameEat.setText(eat.getEat_name());
-            holder.amountEat.setText("(" + eat.getAmount() + "-" + eat.getMeasurement_type() + ")");
-            holder.pfcText.setText("Б: " + eat.getProtein() + " / Ж: " + eat.getFat() + " / У: " + eat.getCarb());
-            holder.eatCalories.setText(eat.getCalories() + " ккал");
+            holder.amountEat.setText("(" + eat.getAmount() + " " + eat.getMeasurement_type() + ")");
 
+            @SuppressLint("DefaultLocale") String protein = String.format("%.1f", eat.getProtein());
+            @SuppressLint("DefaultLocale") String fat = String.format("%.1f", eat.getFat());
+            @SuppressLint("DefaultLocale") String carb = String.format("%.1f", eat.getCarb());
+            @SuppressLint("DefaultLocale") String calories = String.format("%.0f", eat.getCalories());
+
+            holder.pfcText.setText("Б: " + protein + " / Ж: " + fat + " / У: " + carb);
+            holder.eatCalories.setText(calories + " ккал");
+
+            if (eat.getIsSelected()) {
+                holder.linerLayoutMain.setBackgroundResource(R.drawable.card_border4_blue);
+                holder.linerLayoutSecond.setBackgroundResource(R.drawable.card_border);
+            }else {
+                holder.linerLayoutMain.setBackgroundResource(R.drawable.card_border);
+                holder.linerLayoutSecond.setBackgroundResource(R.drawable.card_border2);
+            }
 
             holder.itemView.setOnClickListener(v -> {
-                showEatDialog(context, eat);
+                listener.onEatItemClick(context, eat);
+
+                // Только если еда уже была выбрана через диалог
+                if (eat.getIsSelected()) {
+                    if (!noClickedList.contains(eat)) {
+                        handleItemSelected(eat);
+                    } else {
+                        handleItemDeselected(eat);
+                    }
+
+                    if (fragment != null) {
+                        try {
+                            fragment.getClass().getMethod("clearSearchFocus").invoke(fragment);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    noClickedList.clear();
+                    notifyDataSetChanged();
+                }
             });
+
+
+
+
+
+
+
         }
+
     }
 
     @Override
@@ -78,213 +120,229 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
 
     @SuppressLint("NotifyDataSetChanged")
     public void updateEatList(List<EatModel> eatModelList) {
-        this.eatList = eatModelList;
+        if (!eatList.isEmpty()){
+            this.eatList = eatModelList;
+            isSelectedInMain();
+            sortUpdateEatListFiltered();
+            notifyDataSetChanged();
+        } else {
+            this.eatList = eatModelList;
+            notifyDataSetChanged();
+        }
+
+    }
+
+    public void handleItemSelected(EatModel eatElm) {
+        // Перемещаем выбранный элемент в начало списка
+        eatList.remove(eatElm);
+        eatList.add(0, eatElm);
+        eatList.get(0).setIsSelected(true);
+
+        // Обновляем состояние элемента в exListMain
+        updateExListMainState(eatElm.getEat_id(), true);
+
+        // Переносим невзаимодействующие элементы в noClickedList и удаляем их из exList
+        Iterator<EatModel> iterator = eatList.iterator();
+        while (iterator.hasNext()) {
+            EatModel elm = iterator.next();
+            if (!elm.getIsSelected()) {
+                iterator.remove();
+                noClickedList.add(elm);
+            }
+        }
+
+        // Добавляем оставшиеся элементы обратно в exList
+        eatList.addAll(noClickedList);
+    }
+
+    public void handleItemDeselected(EatModel eatElm) {
+        // Убираем из видимого списка
+        eatList.remove(eatElm);
+
+        // Обновляем состояние
+        updateExListMainState(eatElm.getEat_id(), false);
+
+        // Удаляем все невыбранные элементы
+        List<EatModel> toRemove = new ArrayList<>();
+        for (EatModel elm : eatList) {
+            if (!elm.getIsSelected()) {
+                toRemove.add(elm);
+            }
+        }
+        eatList.removeAll(toRemove);
+
+
+        // Добавляем обратно подходящие элементы из основного списка
+        for (EatModel elm : eatListMain) {
+            if (!elm.getIsSelected()) {
+                if (currentFilter.isEmpty()) {
+                    eatList.add(elm);
+                } else if (matchesFilter(elm)) {
+                    eatList.add(elm);
+                }
+            }
+        }
 
 
         notifyDataSetChanged();
     }
 
-    private void showEatDialog(Context context, EatModel eatModel) {
-        android.app.Dialog dialog = new android.app.Dialog(context);
-        dialog.setContentView(R.layout.amount_dialog);
-        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-
-        // View references
-        TextView title = dialog.findViewById(R.id.textView1);
-        TextView amountLabel = dialog.findViewById(R.id.textView2);
-        com.example.workoutapp.NutritionCircleView circle = dialog.findViewById(R.id.NutritionCircleView);
-        AutoCompleteTextView autoComplete = dialog.findViewById(R.id.autoCompleteAmount);
-        EditText editText = dialog.findViewById(R.id.editTextAmount);
-        Button createBtn = dialog.findViewById(R.id.createWorkBtn);
-        ImageButton closeBtn = dialog.findViewById(R.id.imageButtonBack1);
-
-        // Новые TextView для макросов
-        TextView textViewProtein = dialog.findViewById(R.id.textViewProtein);
-        TextView textViewFat = dialog.findViewById(R.id.textViewFat);
-        TextView textViewCarb = dialog.findViewById(R.id.textViewCarb);
-
-        // Заголовок и круг
-        title.setText("Добавить: " + eatModel.getEat_name());
-        circle.setMacros(
-                (float) eatModel.getProtein(),
-                (float) eatModel.getFat(),
-                (float) eatModel.getCarb()
-        );
-
-        // Обновляем текст с граммами
-        textViewProtein.setText("Белки (" + eatModel.getProtein() + " гр)");
-        textViewFat.setText("Жиры (" + eatModel.getFat() + " гр)");
-        textViewCarb.setText("Углеводы (" + eatModel.getCarb() + " гр)");
-
-        // Остальной твой код...
-        String measurementType = eatModel.getMeasurement_type().toLowerCase();
-        amountLabel.setText("Количество пищи в (" + measurementType + ")");
-
-        List<String> options = new ArrayList<>();
-        for (int i = 1; i <= 50; i++) {
-            options.add(i + " " + measurementType);
-        }
-
-        ArrayAdapter<String> adapter = createStyledAdapter(context, options);
-
-        if (measurementType.equals("гр") || measurementType.equals("грамм") ||
-                measurementType.equals("мл") || measurementType.equals("миллилитр")) {
-            autoComplete.setVisibility(View.GONE);
-            editText.setVisibility(View.VISIBLE);
-        } else {
-            editText.setVisibility(View.GONE);
-            autoComplete.setVisibility(View.VISIBLE);
-
-            setupAutoComplete(
-                    autoComplete,
-                    adapter,
-                    null,
-                    () -> isAmountDropdownManuallyShown,
-                    value -> isAmountDropdownManuallyShown = value,
-                    eatModel,
-                    textViewProtein,
-                    textViewFat,
-                    textViewCarb,
-                    circle
-            );
-            autoComplete.setText(options.get(0), false);
-        }
-
-        editText.addTextChangedListener(new android.text.TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String input = s.toString().trim();
-                int amount = parseIntOrZero(input);
-                if (amount > 0) {
-                    updateMacrosByAmount(eatModel, amount, textViewProtein, textViewFat, textViewCarb, circle);
-                }
+    private void updateExListMainState(int eat_id, boolean isPressed) {
+        for (int i = 0; i < eatListMain.size(); i++) {
+            EatModel mainElm = eatListMain.get(i);
+            if (mainElm.getEat_id() == eat_id) {
+                mainElm.setIsSelected(isPressed);
+                break;
             }
-
-            @Override
-            public void afterTextChanged(android.text.Editable s) {}
-        });
-
-        closeBtn.setOnClickListener(v -> dialog.dismiss());
-
-        createBtn.setOnClickListener(v -> {
-            int amount;
-            if (editText.getVisibility() == View.VISIBLE) {
-                String input = editText.getText().toString().trim();
-                if (input.isEmpty()) {
-                    Toast.makeText(context, "Введите количество", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                amount = parseIntOrZero(input);
-            } else {
-                String selected = autoComplete.getText().toString().trim();
-                if (selected.isEmpty()) {
-                    Toast.makeText(context, "Выберите количество", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                try {
-                    amount = Integer.parseInt(selected.split(" ")[0]);
-                } catch (Exception e) {
-                    Toast.makeText(context, "Неверный формат", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-
-            Toast.makeText(context, "Добавлено: " + amount + " " + measurementType, Toast.LENGTH_SHORT).show();
-            dialog.dismiss();
-        });
-
-        dialog.show();
-    }
-    private ArrayAdapter<String> createStyledAdapter(Context context, List<String> items) {
-        return new ArrayAdapter<String>(context, R.layout.item_dropdown_small_padding, items) {
-            @NonNull
-            @Override
-            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-                View view = super.getView(position, convertView, parent);
-                view.setBackgroundColor(ContextCompat.getColor(context, R.color.light_gray2));
-                return view;
-            }
-        };
-    }
-
-    private int parseIntOrZero(String value) {
-        try {
-            return Integer.parseInt(value.trim());
-        } catch (NumberFormatException e) {
-            return 0;
         }
     }
-    private void setupAutoComplete(
-            AutoCompleteTextView autoCompleteView,
-            ArrayAdapter<String> adapter,
-            Runnable onItemSelected,
-            BooleanSupplier isDropdownShownSupplier,
-            Consumer<Boolean> setDropdownState,
-            EatModel eatModel,
-            TextView proteinView,
-            TextView fatView,
-            TextView carbView,
-            com.example.workoutapp.NutritionCircleView circleView
-    ) {
-        autoCompleteView.setAdapter(adapter);
-        autoCompleteView.setDropDownVerticalOffset(2);
 
-        autoCompleteView.setOnClickListener(v -> {
-            boolean isShown = isDropdownShownSupplier.getAsBoolean();
-            if (isShown) {
-                autoCompleteView.dismissDropDown();
-            } else {
-                autoCompleteView.showDropDown();
-            }
-            setDropdownState.accept(!isShown);
-        });
-
-        autoCompleteView.setOnItemClickListener((parent, view, position, id) -> {
-            setDropdownState.accept(false);
-            if (onItemSelected != null) onItemSelected.run();
-            String selected = parent.getItemAtPosition(position).toString();
-            int amount = parseIntOrZero(selected.split(" ")[0]);
-            if (amount > 0) {
-                updateMacrosByAmount(eatModel, amount, proteinView, fatView, carbView, circleView);
-            }
-        });
-
-        autoCompleteView.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) {
-                setDropdownState.accept(false);
-                autoCompleteView.dismissDropDown();
-            }
-        });
+    private boolean matchesFilter(EatModel elm) {
+        // Проверяем, соответствует ли элемент текущему фильтру
+        return elm.getEat_name().toLowerCase().contains(currentFilter);
     }
 
-    private void updateMacrosByAmount(
-            EatModel eatModel,
-            int amount,
-            TextView proteinView,
-            TextView fatView,
-            TextView carbView,
-            com.example.workoutapp.NutritionCircleView circleView
-    ) {
-        double multiplier = (double) amount / eatModel.getAmount();
-        float protein = (float) (eatModel.getProtein() * multiplier);
-        float fat = (float) (eatModel.getFat() * multiplier);
-        float carb = (float) (eatModel.getCarb() * multiplier);
+    @SuppressLint("NotifyDataSetChanged")
+    public void updateEatListFiltered(String filter) {
+        this.currentFilter = filter.toLowerCase();// сохраняем текущий фильтр
+        if(filter.isEmpty()) {
+            this.eatList = new ArrayList<>();
+            for (EatModel eatMain: eatListMain){
+                this.eatList.add(new EatModel(
+                        eatMain.getEat_id(),
+                        eatMain.getEat_name(),
+                        eatMain.getProtein(),
+                        eatMain.getFat(),
+                        eatMain.getCarb(),
+                        eatMain.getCalories(),
+                        eatMain.getAmount(),
+                        eatMain.getMeasurement_type(),
+                        eatMain.getIsSelected()
 
-        proteinView.setText(String.format("Белки (%.1f гр)", protein));
-        fatView.setText(String.format("Жиры (%.1f гр)", fat));
-        carbView.setText(String.format("Углеводы (%.1f гр)", carb));
+                ));
+            }
+        }else {
+            eatList.clear();
+            for (EatModel eat : eatListMain) {
+                if (currentFilter.isEmpty()) {
+                    eatList.add(eat);
+                } else if (matchesFilter(eat)) {
+                    eatList.add(eat);
+                }
+            }
+        }
+        sortUpdateEatListFiltered();
 
-        circleView.setMacros(protein, fat, carb);
+
+        notifyDataSetChanged();
     }
+
+    private void sortUpdateEatListFiltered() {
+        for (int i = 0; i < eatList.size(); i++) {
+            EatModel eatListItem = eatList.get(i);
+
+
+            for (EatModel mainItem : eatListMain) {
+                if (eatListItem.getEat_id() == mainItem.getEat_id()) {
+
+
+                    if (eatListItem.getIsSelected()) {
+                        mainItem.setIsSelected(true);
+                    }
+                    break;
+                }
+            }
+        }
+
+        eatList.sort(new Comparator<EatModel>() {
+            @Override
+            public int compare(EatModel eat1, EatModel eat2) {
+                if (eat1.getIsSelected() && !eat2.getIsSelected()) {
+                    return -1;
+                } else if (!eat1.getIsSelected() && eat2.getIsSelected()) {
+                    return 1;
+                }
+                return 0;
+            }
+        });
+
+    }
+
+
+    public List<EatModel> getList() {
+        return eatList;
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    public void changeEatListMain(EatModel eatToDell){
+            this.eatListMain.remove(eatToDell);
+
+    }
+
+    void isSelectedInMain(){
+
+        for (int i = 0; i < eatList.size(); i++) {
+            EatModel eatListItem = eatList.get(i);
+
+
+            for (EatModel mainItem : eatListMain) {
+                if (eatListItem.getEat_id() == mainItem.getEat_id()) {
+                    if(!eatListItem.getIsSelected() && mainItem.getIsSelected()){
+                        eatListItem.setIsSelected(true);
+                    }
+                }
+            }
+        }
+    }
+
+    void handleSort(){
+        // Переносим невзаимодействующие элементы в noClickedList и удаляем их из exList
+        Iterator<EatModel> iterator = eatList.iterator();
+        while (iterator.hasNext()) {
+            EatModel elm = iterator.next();
+            if (!elm.getIsSelected()) {
+                iterator.remove();
+                noClickedList.add(elm);
+            }
+        }
+
+        // Добавляем оставшиеся элементы обратно в exList
+        eatList.addAll(noClickedList);
+    }
+
+    public List<EatModel> getPressedEat(){
+        List<EatModel> eatPressedList = new ArrayList<>();
+
+        for (EatModel elm: eatListMain) {
+            if(elm.getIsSelected()){
+                eatPressedList.add(elm);
+            }
+        }
+
+        return eatPressedList;
+    }
+
+    public void updateStatsMainEat(EatModel eatElm){
+        for (EatModel mainElm: eatListMain) {
+            if(mainElm.getEat_id() == eatElm.getEat_id()){
+                mainElm.setAmount(eatElm.getAmount());
+                mainElm.setCalories(eatElm.getCalories());
+                mainElm.setProtein(eatElm.getProtein());
+                mainElm.setFat(eatElm.getFat());
+                mainElm.setCarb(eatElm.getCarb());
+            }
+        }
+    }
+
+
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
         TextView nameEat;
         TextView amountEat;
         TextView pfcText;
         TextView eatCalories;
+        LinearLayout linerLayoutSecond;
+        LinearLayout linerLayoutMain;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -292,6 +350,8 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
             amountEat = itemView.findViewById(R.id.amountEat);
             pfcText = itemView.findViewById(R.id.pfcText);
             eatCalories = itemView.findViewById(R.id.eatCalories);
+            linerLayoutSecond = itemView.findViewById(R.id.linearLayout);
+            linerLayoutMain = itemView.findViewById(R.id.linearLayoutMain);
         }
     }
 }

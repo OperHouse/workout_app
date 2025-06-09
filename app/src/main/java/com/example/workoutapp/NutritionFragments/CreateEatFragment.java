@@ -19,7 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.example.workoutapp.DAO.EatDao;
+import com.example.workoutapp.DAO.BaseEatDao;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.NutritionModels.EatModel;
 import com.example.workoutapp.R;
@@ -35,7 +35,7 @@ public class CreateEatFragment extends Fragment {
 
     private boolean isAmountDropdownManuallyShown = false;
     private boolean isTypeDropdownManuallyShown = false;
-    private EatDao eatDao;
+    private BaseEatDao baseEatDao;
 
     public CreateEatFragment() {
         // Required empty public constructor
@@ -46,7 +46,7 @@ public class CreateEatFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.eatDao = new EatDao(MainActivity.getAppDataBase());
+        this.baseEatDao = new BaseEatDao(MainActivity.getAppDataBase());
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -157,8 +157,8 @@ public class CreateEatFragment extends Fragment {
                         amount,
                         measurementType
                 );
-                eatDao.addEat(newEat);
-                eatDao.logAllEat();
+                baseEatDao.addEat(newEat);
+                baseEatDao.logAllEat();
                 // Теперь можешь передать его в БД, ViewModel и т.д.
                 requireActivity().getSupportFragmentManager().popBackStack();
 
