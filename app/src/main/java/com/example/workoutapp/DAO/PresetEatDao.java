@@ -108,6 +108,34 @@ public class PresetEatDao {
         return lastId;
     }
 
+    public EatModel getPresetEatById(int id) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM " + PRESET_EAT_TABLE + " WHERE " + PRESET_EAT_ID + " = ?",
+                new String[]{String.valueOf(id)}
+        );
+
+        EatModel eat = null;
+        if (cursor.moveToFirst()) {
+            eat = new EatModel(
+                    cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_EAT_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(PRESET_EAT_NAME)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_PROTEIN)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_FAT)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_CARB)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_CALORIES)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_EAT_AMOUNT)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(PRESET_EAT_MEASUREMENT_TYPE))
+            );
+        }
+
+        cursor.close();
+        db.close();
+        return eat;
+    }
+
+
     // Логирование всех preset eat записей
     public void logAllPresetEat() {
         List<EatModel> allEats = getAllPresetEat();
