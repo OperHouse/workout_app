@@ -10,7 +10,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.example.workoutapp.Data.AppDataBase;
+import com.example.workoutapp.NutritionModels.EatModel;
 import com.example.workoutapp.NutritionModels.MealPresetNameModel;
+import com.example.workoutapp.NutritionModels.PresetMealModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +70,35 @@ public class PresetMealNameDao {
 
         db.close();
         return nameList;
+    }
+
+    public List<PresetMealModel> getAllPresetMealModels(
+            ConnectingMealPresetDao connectionDao,
+            PresetEatDao eatDao
+    ) {
+        List<PresetMealModel> presetMeals = new ArrayList<>();
+        List<MealPresetNameModel> mealNames = getAllMealPresetNames(); // твой метод
+
+        for (MealPresetNameModel meal : mealNames) {
+            int mealId = meal.getId();
+            String name = meal.getName();
+
+            // Получаем связи
+            List<Integer> eatIds = connectionDao.getEatIdsByPresetId(mealId);
+
+            // Получаем EatModel по id
+            List<EatModel> eatList = new ArrayList<>();
+            for (int eatId : eatIds) {
+                EatModel eat = eatDao.getPresetEatById(eatId);
+                if (eat != null) {
+                    eatList.add(eat);
+                }
+            }
+
+            presetMeals.add(new PresetMealModel(mealId, name, eatList));
+        }
+
+        return presetMeals;
     }
 
 

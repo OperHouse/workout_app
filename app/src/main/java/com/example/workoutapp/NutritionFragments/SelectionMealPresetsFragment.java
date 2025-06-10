@@ -10,11 +10,26 @@ import android.widget.ImageButton;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.Adapters.PresetMealAdapter;
+import com.example.workoutapp.DAO.ConnectingMealPresetDao;
+import com.example.workoutapp.DAO.PresetEatDao;
+import com.example.workoutapp.DAO.PresetMealNameDao;
+import com.example.workoutapp.MainActivity;
+import com.example.workoutapp.NutritionModels.PresetMealModel;
 import com.example.workoutapp.R;
+
+import java.util.List;
 
 public class SelectionMealPresetsFragment extends Fragment {
 
+    private RecyclerView presetRecycler;
+    private PresetMealNameDao presetMealNameDao;
+    private PresetEatDao presetEatDao;
+    private ConnectingMealPresetDao connectingMealPresetDao;
+    private PresetMealAdapter presetMealAdapter;
 
     public SelectionMealPresetsFragment() {
         // Required empty public constructor
@@ -25,7 +40,9 @@ public class SelectionMealPresetsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        this.presetMealNameDao = new PresetMealNameDao(MainActivity.getAppDataBase());
+        this.presetEatDao = new PresetEatDao(MainActivity.getAppDataBase());
+        this.connectingMealPresetDao = new ConnectingMealPresetDao(MainActivity.getAppDataBase());
     }
 
     @Override
@@ -35,6 +52,21 @@ public class SelectionMealPresetsFragment extends Fragment {
 
         ImageButton backBtn = AddMealFragmentView.findViewById(R.id.imageButtonBack);
         Button createPresetBtn = AddMealFragmentView.findViewById(R.id.createPresetBtn);
+        presetRecycler = AddMealFragmentView.findViewById(R.id.presetsRecycler);
+
+
+
+
+        List<PresetMealModel> presets = presetMealNameDao.getAllPresetMealModels(
+                connectingMealPresetDao,
+                presetEatDao
+        );
+
+
+        presetMealAdapter = new PresetMealAdapter(requireContext(),presets);
+        presetRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
+        presetRecycler.setAdapter(presetMealAdapter);
+
 
         backBtn.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -11,6 +11,9 @@ import android.util.Log;
 
 import com.example.workoutapp.Data.AppDataBase;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ConnectingMealPresetDao {
     private final AppDataBase dbHelper;
 
@@ -25,6 +28,29 @@ public class ConnectingMealPresetDao {
         values.put(CONNECTING_MEAL_PRESET_EAT_ID, presetEatId);
         db.insert(CONNECTING_MEAL_PRESET_TABLE, null, values);
         db.close();
+    }
+
+    public List<Integer> getEatIdsByPresetId(int presetId) {
+        List<Integer> eatIds = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT " + CONNECTING_MEAL_PRESET_EAT_ID +
+                        " FROM " + CONNECTING_MEAL_PRESET_TABLE +
+                        " WHERE " + CONNECTING_MEAL_PRESET_NAME_ID + " = ?",
+                new String[]{String.valueOf(presetId)}
+        );
+
+        if (cursor.moveToFirst()) {
+            do {
+                int eatId = cursor.getInt(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_PRESET_EAT_ID));
+                eatIds.add(eatId);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        return eatIds;
     }
 
     public void logAllMealPresetConnections() {
