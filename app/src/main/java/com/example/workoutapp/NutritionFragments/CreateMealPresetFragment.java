@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -142,6 +143,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
             public boolean onQueryTextSubmit(String query) {
                 // Убираем фокус после отправки
                 searchEat.clearFocus();
+                clearSearchFocusAndHideKeyboard();
                 eatRecycler.requestFocus();
                 return true;
             }
@@ -162,6 +164,8 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                 showAddPresetNameDialog();
             }
         });
+
+
 
         return addEatToPresetFragment;
     }
@@ -615,11 +619,6 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                         connectingMealPresetDao.addMealPresetConnection((int) mealNameId, eatId);
                     }
 
-                    //for (EatModel eat : pressedEat) {
-                    //    Log.d("PressedEat", "Name: " + eat.getEat_name() + ", Amount: " + eat.getAmount());
-                    //    long eatId = presetEatDao.addPresetEat(eat);
-                    //    connectingMealPresetDao.addMealPresetConnection((int) mealNameId, (int) eatId);
-                    //}
 
 
 
@@ -643,6 +642,23 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
 
         dialogAddMealPresetName.setOnCancelListener(dialog -> isDialogClosedByOutsideClick.set(true));
         dialogAddMealPresetName.show();
+    }
+
+    private void clearSearchFocusAndHideKeyboard() {
+        if (searchEat != null) {
+            searchEat.clearFocus(); // убрать фокус
+
+            // Прячем клавиатуру
+            InputMethodManager imm = (InputMethodManager) requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(searchEat.getWindowToken(), 0);
+            }
+
+            // Удаляем каретку (трюк через queryHint)
+            String hint = searchEat.getQueryHint() != null ? searchEat.getQueryHint().toString() : "";
+            searchEat.setQueryHint(""); // временно убираем
+            searchEat.setQueryHint(hint); // возвращаем обратно
+        }
     }
 
     private float roundStrictlyToOneDecimal(double value) {

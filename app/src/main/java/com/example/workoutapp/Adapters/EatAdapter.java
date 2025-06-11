@@ -121,12 +121,12 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
     @SuppressLint("NotifyDataSetChanged")
     public void updateEatList(List<EatModel> eatModelList) {
         if (!eatList.isEmpty()){
-            this.eatList = eatModelList;
+            this.eatList = new ArrayList<>(eatModelList);
             isSelectedInMain();
             sortUpdateEatListFiltered();
             notifyDataSetChanged();
         } else {
-            this.eatList = eatModelList;
+            this.eatList = new ArrayList<>(eatModelList);
             notifyDataSetChanged();
         }
 
@@ -224,10 +224,18 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
         }else {
             eatList.clear();
             for (EatModel eat : eatListMain) {
-                if (currentFilter.isEmpty()) {
-                    eatList.add(eat);
-                } else if (matchesFilter(eat)) {
-                    eatList.add(eat);
+                if (currentFilter.isEmpty() || matchesFilter(eat)) {
+                    eatList.add(new EatModel(
+                            eat.getEat_id(),
+                            eat.getEat_name(),
+                            eat.getProtein(),
+                            eat.getFat(),
+                            eat.getCarb(),
+                            eat.getCalories(),
+                            eat.getAmount(),
+                            eat.getMeasurement_type(),
+                            eat.getIsSelected()
+                    ));
                 }
             }
         }
