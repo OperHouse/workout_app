@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.NutritionModels.EatModel;
 import com.example.workoutapp.NutritionModels.PresetMealModel;
+import com.example.workoutapp.OnPresetMealLongClickListener;
 import com.example.workoutapp.R;
 
 import java.util.List;
@@ -22,9 +23,12 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
     private final Context context;
     private final List<PresetMealModel> presetMeals;
 
-    public PresetMealAdapter(Context context, List<PresetMealModel> presetMeals) {
+    private final OnPresetMealLongClickListener longClickListener;
+
+    public PresetMealAdapter(Context context, List<PresetMealModel> presetMeals, OnPresetMealLongClickListener longClickListener) {
         this.context = context;
         this.presetMeals = presetMeals;
+        this.longClickListener = longClickListener;
     }
 
     @NonNull
@@ -60,6 +64,11 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
 
         holder.pfcText.setText("Б: " + protein + " / Ж: " + fat + " / У: " + carb);
         holder.eatCalories.setText(calories + " ккал");
+
+        holder.itemView.setOnLongClickListener(v -> {
+            longClickListener.onPresetMealLongClick(preset);
+            return true;
+        });
     }
 
     @Override
