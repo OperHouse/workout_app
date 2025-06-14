@@ -33,6 +33,30 @@ public class EatModel {
         this.isSelected = isSelected;
     }
 
+    public void copyFrom(EatModel other) {
+        this.eat_id = other.eat_id;
+        this.eat_name = other.eat_name;
+        this.protein = other.protein;
+        this.fat = other.fat;
+        this.carb = other.carb;
+        this.calories = other.calories;
+        this.amount = other.amount;
+        this.measurement_type = other.measurement_type;
+        this.isSelected = other.isSelected;
+    }
+
+    public EatModel(EatModel other) {
+        this.eat_id = other.eat_id;
+        this.eat_name = other.eat_name;
+        this.protein = other.protein;
+        this.fat = other.fat;
+        this.carb = other.carb;
+        this.calories = other.calories;
+        this.amount = other.amount;
+        this.measurement_type = other.measurement_type;
+        this.isSelected = other.isSelected;
+    }
+
     public int getEat_id() {
         return eat_id;
     }
