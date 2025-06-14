@@ -6,7 +6,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,6 +38,8 @@ import com.example.workoutapp.NutritionModels.EatModel;
 import com.example.workoutapp.OnEatItemClickListener;
 import com.example.workoutapp.R;
 
+import org.jetbrains.annotations.Contract;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
@@ -96,24 +98,16 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
 
         eatRecycler = addEatToPresetFragment.findViewById(R.id.eatRecyclerView);
         eatList = baseEatDao.getAllEat();
-        baseEatList = new ArrayList<>();
-        for (EatModel eat : eatList) {
-            baseEatList.add(new EatModel(
-                    eat.getEat_id(),
-                    eat.getEat_name(),
-                    eat.getProtein(),
-                    eat.getFat(),
-                    eat.getCarb(),
-                    eat.getCalories(),
-                    eat.getAmount(),
-                    eat.getMeasurement_type()
-            ));
-        }
+
+        //Обособленная копия eatList, которая никак не связанна с другими листами
+        baseEatList = eatList.stream().map(EatModel::new).collect(Collectors.toList());
+
         eatAdapter = new EatAdapter(requireContext(), this, CreateMealPresetFragment.this);
 
         eatRecycler.setHasFixedSize(true);
         eatRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         eatRecycler.setAdapter(eatAdapter);
+
 
         eatAdapter.updateEatList(eatList);
 
@@ -323,28 +317,20 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                 eatModel.setIsSelected(true); // устанавливаем флаг
 
                 // 3. Обновляем элемент в списке
-                for (int i = 0; i < eatList.size(); i++) {
-                    if (eatList.get(i).getEat_id() == eatModel.getEat_id()) {
-                        eatList.set(i, eatModel); // заменяем обновлённый элемент
-                        break;
-                    }
-                }
+                //for (int i = 0; i < eatList.size(); i++) {
+                //    if (eatList.get(i).getEat_id() == eatModel.getEat_id()) {
+                //        eatList.set(i, eatModel); // заменяем обновлённый элемент
+                //        break;
+                //    }
+                //}
 
                 // 4. Обновляем адаптер
                 eatAdapter.updateStatsMainEat(eatModel);
-                eatAdapter.updateEatList(eatList);
                 eatAdapter.noClickedList.clear();
-                eatAdapter.handleItemSelected(eatModel);
+                eatAdapter.selectNewItem(eatModel);
 
-                Log.d("EatModelDebug", "ID: " + eatModel.getEat_id()
-                        + ", Name: " + eatModel.getEat_name()
-                        + ", Protein: " + eatModel.getProtein()
-                        + ", Fat: " + eatModel.getFat()
-                        + ", Carb: " + eatModel.getCarb()
-                        + ", Calories: " + eatModel.getCalories()
-                        + ", Amount: " + eatModel.getAmount()
-                        + ", Measurement: " + eatModel.getMeasurement_type()
-                        + ", IsSelected: " + eatModel.getIsSelected());
+                //eatAdapter.handleItemSelected(eatModel);
+
                 dialog.dismiss();
             });
             searchEat.clearFocus();
@@ -378,6 +364,8 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
 
 
     }
+    @NonNull
+    @Contract("_, _ -> new")
     private ArrayAdapter<String> createStyledAdapter(Context context, List<String> items) {
         return new ArrayAdapter<String>(context, R.layout.item_dropdown_small_padding, items) {
             @NonNull
@@ -390,7 +378,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         };
     }
 
-    private int parseIntOrZero(String value) {
+    private int parseIntOrZero(@NonNull String value) {
         try {
             return Integer.parseInt(value.trim());
         } catch (NumberFormatException e) {
@@ -398,7 +386,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         }
     }
     private void setupAutoComplete(
-            AutoCompleteTextView autoCompleteView,
+            @NonNull AutoCompleteTextView autoCompleteView,
             ArrayAdapter<String> adapter,
             Runnable onItemSelected,
             BooleanSupplier isDropdownShownSupplier,
