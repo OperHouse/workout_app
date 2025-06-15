@@ -63,7 +63,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
     private List<EatModel> baseEatList;
     private EatAdapter eatAdapter;
     SearchView searchEat;
-    private String newText = "";
+    private String searchText = "";
 
     private boolean isAmountDropdownManuallyShown = false;
 
@@ -137,15 +137,21 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
             public boolean onQueryTextSubmit(String query) {
                 // Убираем фокус после отправки
                 searchEat.clearFocus();
-                clearSearchFocusAndHideKeyboard();
                 eatRecycler.requestFocus();
                 return true;
             }
 
             @Override
             public boolean onQueryTextChange(String newTextInp) {
-                newText = newTextInp;
-                eatAdapter.updateEatListFiltered(newTextInp);
+                searchText = newTextInp;
+                if(Objects.equals(searchText, "")){
+                    eatAdapter.filteredList.clear();
+                    eatAdapter.changeFilterText(searchText);
+                    eatAdapter.notifyDataSetChanged();
+                }else{
+                    eatAdapter.setFilteredList(newTextInp);
+                }
+
                 return true;
             }
         });
@@ -309,27 +315,23 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                 // 1. Вычисляем множитель
                 double multiplier = (double) amount / baseEatModel.getAmount();
 
-                eatModel.setProtein(baseEatModel.getProtein() * multiplier);
-                eatModel.setFat(baseEatModel.getFat() * multiplier);
-                eatModel.setCarb(baseEatModel.getCarb() * multiplier);
-                eatModel.setCalories((baseEatModel.getCalories() * multiplier));
-                eatModel.setAmount(amount);
-                eatModel.setIsSelected(true); // устанавливаем флаг
+                EatModel newEatElm = new EatModel(eatModel);
+                newEatElm.setProtein(baseEatModel.getProtein() * multiplier);
+                newEatElm.setFat(baseEatModel.getFat() * multiplier);
+                newEatElm.setCarb(baseEatModel.getCarb() * multiplier);
+                newEatElm.setCalories((baseEatModel.getCalories() * multiplier));
+                newEatElm.setAmount(amount);
+                newEatElm.setIsSelected(true); // устанавливаем флаг
 
-                // 3. Обновляем элемент в списке
-                //for (int i = 0; i < eatList.size(); i++) {
-                //    if (eatList.get(i).getEat_id() == eatModel.getEat_id()) {
-                //        eatList.set(i, eatModel); // заменяем обновлённый элемент
-                //        break;
-                //    }
-                //}
-
-                // 4. Обновляем адаптер
-                eatAdapter.updateStatsMainEat(eatModel);
-                eatAdapter.noClickedList.clear();
-                eatAdapter.selectNewItem(eatModel);
-
-                //eatAdapter.handleItemSelected(eatModel);
+                if (!searchText.isEmpty()) {
+                    eatAdapter.removeEatElm(eatModel);
+                    eatAdapter.eatPressedSort(newEatElm);
+                    eatAdapter.setFilteredList(searchText);
+                }else {
+                    eatAdapter.removeEatElm(eatModel);
+                    eatAdapter.eatPressedSort(newEatElm);
+                    eatAdapter.notifyDataSetChanged();
+                }
 
                 dialog.dismiss();
             });
@@ -347,18 +349,24 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                 }
             }
             if (baseEatModel == null) return; // не нашли базу — выходим
-            eatModel.setProtein(baseEatModel.getProtein());
-            eatModel.setFat(baseEatModel.getFat());
-            eatModel.setCarb(baseEatModel.getCarb());
-            eatModel.setCalories(baseEatModel.getCalories());
-            eatModel.setAmount(baseEatModel.getAmount());
-            eatModel.setIsSelected(false);
 
+            EatModel newEatElm = new EatModel(eatModel);
+            newEatElm.setProtein(baseEatModel.getProtein());
+            newEatElm.setFat(baseEatModel.getFat());
+            newEatElm.setCarb(baseEatModel.getCarb());
+            newEatElm.setCalories(baseEatModel.getCalories());
+            newEatElm.setAmount(baseEatModel.getAmount());
+            newEatElm.setIsSelected(false);
 
-
-
-            eatAdapter.updateStatsMainEat(eatModel);
-            eatAdapter.handleItemDeselected(eatModel);
+            if (!searchText.isEmpty()) {
+                eatAdapter.removeEatElm(eatModel);
+                eatAdapter.unPressedSort(newEatElm);
+                eatAdapter.setFilteredList(searchText);
+            }else {
+                eatAdapter.removeEatElm(eatModel);
+                eatAdapter.unPressedSort(newEatElm);
+                eatAdapter.notifyDataSetChanged();
+            }
             searchEat.clearFocus();
         }
 
@@ -532,15 +540,13 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
             public void onClick(View v) {
 
                 baseEatDao.deleteEat(eatToDelete.getEat_id());
-                eatList.clear();
-                eatList = baseEatDao.getAllEat();
-                eatAdapter.changeEatListMain(eatToDelete);
-                baseEatList.remove(eatToDelete);
-                if(newText.isEmpty()){
-                    eatAdapter.updateEatList(eatList);
-                }else{
-                    eatAdapter.updateEatListFiltered(newText);
+                if (!searchText.isEmpty()) {
+                    eatAdapter.removeEatElm(eatToDelete);
+                    eatAdapter.setFilteredList(searchText);
+                }else {
+                    eatAdapter.deleteEat(eatToDelete);
                 }
+
                 r.requestLayout();
                 dialogDeleteEat.dismiss();
             }

@@ -19,21 +19,19 @@ import com.example.workoutapp.OnEatItemClickListener;
 import com.example.workoutapp.R;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
 
     private final Context context;
     private final BaseEatDao baseEatDao;
-    public List<EatModel> noClickedList;
     private final OnEatItemClickListener listener;
     private final Fragment fragment;
     private String currentFilter = "";
-    private List<EatModel> eatList; //Лист, который используется для отображения в адаптере
-    private final List<EatModel> eatListMain; //Лист, который хранит в себе актуальные сведения о еде
+    private List<EatModel> eatList = new ArrayList<>(); //Лист, который используется для отображения в адаптере
+    public List<EatModel> filteredList = new ArrayList<>();
 
 
 
@@ -42,13 +40,8 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
         this.fragment = fragment;
         this.listener = listener;
         this.baseEatDao = new BaseEatDao(MainActivity.getAppDataBase());
-        this.eatList = new ArrayList<>();
-        this.noClickedList = new ArrayList<>();
-        this.eatListMain = baseEatDao.getAllEat();
-
-
-
     }
+
     @NonNull
     @Override
     public EatAdapter.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -59,48 +52,31 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(@NonNull EatAdapter.MyViewHolder holder, int position) {
-        if (eatList != null && !eatList.isEmpty()) {
-            EatModel eat = eatList.get(position);
-            holder.nameEat.setText(eat.getEat_name());
-            holder.amountEat.setText("(" + eat.getAmount() + " " + eat.getMeasurement_type() + ")");
-
-            @SuppressLint("DefaultLocale") String protein = String.format("%.1f", eat.getProtein());
-            @SuppressLint("DefaultLocale") String fat = String.format("%.1f", eat.getFat());
-            @SuppressLint("DefaultLocale") String carb = String.format("%.1f", eat.getCarb());
-            @SuppressLint("DefaultLocale") String calories = String.format("%.0f", eat.getCalories());
-
-            holder.pfcText.setText("Б: " + protein + " / Ж: " + fat + " / У: " + carb);
-            holder.eatCalories.setText(calories + " ккал");
-
-            holder.linerLayoutMain.setBackgroundResource(eat.getIsSelected() ? R.drawable.card_border4_blue : R.drawable.card_border);
-            holder.linerLayoutSecond.setBackgroundResource(eat.getIsSelected() ? R.drawable.card_border : R.drawable.card_border2);
-
-            holder.itemView.setOnClickListener(v -> {
-                listener.onEatItemClick(context, eat);
-
-                // Только если еда уже была выбрана через диалог
-                if (eat.getIsSelected()) {
-                    if (!noClickedList.contains(eat)) {
-                        handleItemSelected(eat);
-                    } else {
-                        handleItemDeselected(eat);
-                    }
-
-                    if (fragment != null) {
-                        try {
-                            fragment.getClass().getMethod("clearSearchFocus").invoke(fragment);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    noClickedList.clear();
-                    notifyDataSetChanged();
+        if (!eatList.isEmpty() || !filteredList.isEmpty()) {
+            EatModel eat;
+                if(!Objects.equals(currentFilter, "")){
+                    eat = filteredList.get(position);
+                }else{
+                    eat = eatList.get(position);
                 }
-            });
 
+                holder.nameEat.setText(eat.getEat_name());
+                holder.amountEat.setText("(" + eat.getAmount() + " " + eat.getMeasurement_type() + ")");
 
+                @SuppressLint("DefaultLocale") String protein = String.format("%.1f", eat.getProtein());
+                @SuppressLint("DefaultLocale") String fat = String.format("%.1f", eat.getFat());
+                @SuppressLint("DefaultLocale") String carb = String.format("%.1f", eat.getCarb());
+                @SuppressLint("DefaultLocale") String calories = String.format("%.0f", eat.getCalories());
 
+                holder.pfcText.setText("Б: " + protein + " / Ж: " + fat + " / У: " + carb);
+                holder.eatCalories.setText(calories + " ккал");
 
+                holder.linerLayoutMain.setBackgroundResource(eat.getIsSelected() ? R.drawable.card_border4_blue : R.drawable.card_border);
+                holder.linerLayoutSecond.setBackgroundResource(eat.getIsSelected() ? R.drawable.card_border : R.drawable.card_border2);
+
+                holder.itemView.setOnClickListener(v -> {
+                    listener.onEatItemClick(context, eat);
+                });
 
 
 
@@ -110,211 +86,80 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
 
     @Override
     public int getItemCount() {
-        if (eatList != null) {
+        if (currentFilter.isEmpty() && !eatList.isEmpty()) {
             return eatList.size();
-        }
-        return 0;
+        }else if(!currentFilter.isEmpty() && !filteredList.isEmpty()){
+            return filteredList.size();
+        }else {return 0;}
+
     }
 
     @SuppressLint("NotifyDataSetChanged")
     public void updateEatList(List<EatModel> eatModelList) {
-        if (!eatList.isEmpty()){
             this.eatList = eatModelList.stream().map(EatModel::new).collect(Collectors.toList());
-            isSelectedInMain();
-            sortEatList();
-            notifyDataSetChanged();
-        } else {
-            this.eatList = eatModelList.stream().map(EatModel::new).collect(Collectors.toList());
-            notifyDataSetChanged();
-        }
-
     }
-    @SuppressLint("NotifyDataSetChanged")
-    public void selectNewItem(EatModel updatedEat) {
-        for (int i = 0; i < eatList.size(); i++) {
-            EatModel eat = eatList.get(i);
-            if (eat.getEat_id() == updatedEat.getEat_id()) {
-                eat.copyFrom(updatedEat);
-                break;
-            }
-        }
-        handleItemSelected(updatedEat);
-        isSelectedInMain();
-        updateStatsMainEat(updatedEat);
-        sortEatList();
-        notifyDataSetChanged();
-    }
-
-    public void handleItemSelected(EatModel eatElm) {
-        // Перемещаем выбранный элемент в начало списка
-        eatList.remove(eatElm);
-        eatList.add(0, eatElm);
-        eatList.get(0).setIsSelected(true);
-
-        // Обновляем состояние элемента в exListMain
-        updateExListMainState(eatElm.getEat_id(), true);
-
-        // Переносим невзаимодействующие элементы в noClickedList и удаляем их из exList
-        Iterator<EatModel> iterator = eatList.iterator();
-        while (iterator.hasNext()) {
-            EatModel elm = iterator.next();
-            if (!elm.getIsSelected()) {
-                iterator.remove();
-                noClickedList.add(elm);
-            }
-        }
-
-        // Добавляем оставшиеся элементы обратно в exList
-        eatList.addAll(noClickedList);
-    }
-
-    public void handleItemDeselected(EatModel eatElm) {
-        // Убираем из видимого списка
-        eatList.remove(eatElm);
-
-        // Обновляем состояние
-        updateExListMainState(eatElm.getEat_id(), false);
-
-        // Удаляем все невыбранные элементы
-        List<EatModel> toRemove = new ArrayList<>();
-        for (EatModel elm : eatList) {
-            if (!elm.getIsSelected()) {
-                toRemove.add(elm);
-            }
-        }
-        eatList.removeAll(toRemove);
-
-
-        // Добавляем обратно подходящие элементы из основного списка
-        for (EatModel elm : eatListMain) {
-            if (!elm.getIsSelected()) {
-                if (currentFilter.isEmpty()) {
-                    eatList.add(elm);
-                } else if (matchesFilter(elm)) {
-                    eatList.add(elm);
-                }
-            }
-        }
-
-
-        notifyDataSetChanged();
-    }
-
-    private void updateExListMainState(int eat_id, boolean isPressed) {
-        for (int i = 0; i < eatListMain.size(); i++) {
-            EatModel mainElm = eatListMain.get(i);
-            if (mainElm.getEat_id() == eat_id) {
-                mainElm.setIsSelected(isPressed);
-                break;
-            }
-        }
-    }
-
-    private boolean matchesFilter(EatModel elm) {
-        // Проверяем, соответствует ли элемент текущему фильтру
-        return elm.getEat_name().toLowerCase().contains(currentFilter);
-    }
-
-    @SuppressLint("NotifyDataSetChanged")
-    public void updateEatListFiltered(String filter) {
-        this.currentFilter = filter.toLowerCase();
-        eatList.clear();
-
-        for (EatModel eat : eatListMain) {
-            if (filter.isEmpty() || eat.getEat_name().toLowerCase().contains(currentFilter)) {
-                eatList.add(new EatModel(eat));
-            }
-        }
-
-        sortEatList();
-        notifyDataSetChanged();
-    }
-
-    private void sortEatList() {
-        for (int i = 0; i < eatList.size(); i++) {
-            EatModel eatListItem = eatList.get(i);
-            for (EatModel mainItem : eatListMain) {
-                if (eatListItem.getEat_id() == mainItem.getEat_id()) {
-                    if (eatListItem.getIsSelected()) {
-                        mainItem.setIsSelected(true);
-                    }
-                    break;
-                }
-            }
-        }
-        eatList.sort(new Comparator<EatModel>() {
-            @Override
-            public int compare(EatModel eat1, EatModel eat2) {
-                if (eat1.getIsSelected() && !eat2.getIsSelected()) return -1;
-                if (!eat1.getIsSelected() && eat2.getIsSelected()) return 1;
-                return 0;
-            }
-        });
-    }
-
 
     public List<EatModel> getList() {
         return eatList;
     }
 
-    @SuppressLint("NotifyDataSetChanged")
-    public void changeEatListMain(EatModel eatToDell){
-        this.eatListMain.remove(eatToDell);
 
-    }
-
-    void isSelectedInMain(){
-        for (int i = 0; i < eatList.size(); i++) {
-            EatModel eatListItem = eatList.get(i);
-            for (EatModel mainItem : eatListMain) {
-                if (eatListItem.getEat_id() == mainItem.getEat_id()) {
-                    if(!eatListItem.getIsSelected() && mainItem.getIsSelected()){
-                        eatListItem.setIsSelected(true);
-                    }
-                }
-            }
-        }
-    }
-
-    void handleSort(){
-        // Переносим невзаимодействующие элементы в noClickedList и удаляем их из exList
-        Iterator<EatModel> iterator = eatList.iterator();
-        while (iterator.hasNext()) {
-            EatModel elm = iterator.next();
-            if (!elm.getIsSelected()) {
-                iterator.remove();
-                noClickedList.add(elm);
-            }
-        }
-
-        // Добавляем оставшиеся элементы обратно в exList
-        eatList.addAll(noClickedList);
-    }
 
     public List<EatModel> getPressedEat(){
         List<EatModel> eatPressedList = new ArrayList<>();
-
-        for (EatModel elm: eatListMain) {
+        for (EatModel elm: eatList) {
             if(elm.getIsSelected()){
                 eatPressedList.add(elm);
             }
         }
-
         return eatPressedList;
     }
 
-    public void updateStatsMainEat(EatModel eatElm){
-        for (EatModel mainElm: eatListMain) {
-            if(mainElm.getEat_id() == eatElm.getEat_id()){
-                mainElm.setAmount(eatElm.getAmount());
-                mainElm.setCalories(eatElm.getCalories());
-                mainElm.setProtein(eatElm.getProtein());
-                mainElm.setFat(eatElm.getFat());
-                mainElm.setCarb(eatElm.getCarb());
+    public void removeEatElm(EatModel eatElmToRemove){
+        eatList.remove(eatElmToRemove);
+    }
+    public void eatPressedSort(EatModel eatElmPressed){
+        eatList.add(0,new EatModel(eatElmPressed));
+    }
+
+    public void unPressedSort(EatModel eatElmBase) {
+        int eat_id = eatElmBase.getEat_id();
+        boolean isBroken = false;
+
+        for (int i = 0; i < eatList.size(); i++) {
+            EatModel e = eatList.get(i);
+            if (!e.getIsSelected()) {
+                if (e.getEat_id() > eat_id) {
+                    eatList.add(i, new EatModel(eatElmBase));
+                    isBroken = true;
+                    break;
+                }
             }
+        }
+        if (!isBroken) {
+            eatList.add(new EatModel(eatElmBase)); // вызывается, если break НЕ сработал
         }
     }
 
+    public void deleteEat(EatModel eatToDelete){
+        eatList.remove(eatToDelete);
+        notifyDataSetChanged();
+    }
+public void changeFilterText(String text){
+        currentFilter = text;
+}
+
+
+    public void setFilteredList(String text){
+        currentFilter = text;
+        filteredList.clear();
+        for (EatModel elm:eatList) {
+            if(elm.getEat_name().toLowerCase().contains(currentFilter)){
+                filteredList.add(elm);
+            }
+        }
+        notifyDataSetChanged();
+    };
 
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
