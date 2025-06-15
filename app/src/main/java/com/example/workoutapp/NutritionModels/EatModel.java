@@ -9,7 +9,10 @@ public class EatModel {
     double calories;
     int amount;
     String measurement_type;
+
+
     boolean isSelected = false;
+
 
     public EatModel(int eat_id, String eat_name, double protein, double fat, double carb, double calories, int amount, String measurement_type) {
         this.eat_id = eat_id;
