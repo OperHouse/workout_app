@@ -1,14 +1,13 @@
 package com.example.workoutapp.NutritionFragments;
 
-import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
@@ -17,16 +16,17 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.Adapters.EatAdapter;
 import com.example.workoutapp.Adapters.PresetMealAdapter;
 import com.example.workoutapp.DAO.ConnectingMealPresetDao;
 import com.example.workoutapp.DAO.PresetEatDao;
 import com.example.workoutapp.DAO.PresetMealNameDao;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.NutritionModels.EatModel;
 import com.example.workoutapp.NutritionModels.PresetMealModel;
 import com.example.workoutapp.R;
 
 import java.util.List;
+import java.util.Objects;
 
 public class SelectionMealPresetsFragment extends Fragment {
 
@@ -97,36 +97,42 @@ public class SelectionMealPresetsFragment extends Fragment {
     private void showPresetDetailDialog(PresetMealModel preset) {
         Dialog dialog = new Dialog(requireContext());
         dialog.setContentView(R.layout.dialog_preset_detail);
-        dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        Objects.requireNonNull(dialog.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
 
         TextView title = dialog.findViewById(R.id.textView1);
-        LinearLayout container = dialog.findViewById(R.id.eatListContainer);
         ImageButton closeBtn = dialog.findViewById(R.id.imageButtonBack1);
+        Button changePresetBtn = dialog.findViewById(R.id.changePresetBtn);
+        RecyclerView eatRecycler = dialog.findViewById(R.id.recyclerView);
 
+        if (preset.getPresetMealEat().size() > 5) {
+            ViewGroup.LayoutParams params = eatRecycler.getLayoutParams();
+            params.height = (int) TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    350,
+                    requireContext().getResources().getDisplayMetrics()
+            );
+            eatRecycler.setLayoutParams(params);
+        }
+
+        EatAdapter eatAdapter = new EatAdapter(requireContext(), SelectionMealPresetsFragment.this);
+
+        eatRecycler.setHasFixedSize(true);
+        eatRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
+        eatRecycler.setAdapter(eatAdapter);
+
+
+        eatAdapter.updateEatList(preset.getPresetMealEat());
         title.setText(preset.getPresetMealName());
 
-        for (EatModel eat : preset.getPresetMealEat()) {
-            View eatItemView = LayoutInflater.from(requireContext())
-                    .inflate(R.layout.eat_elm_card, container, false);
+        changePresetBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+                replaceFragment(new CreateMealPresetFragment(preset.getPresetMealName_id()));
+            }
+        });
 
-            ((TextView) eatItemView.findViewById(R.id.nameEat)).setText(eat.getEat_name());
-            ((TextView) eatItemView.findViewById(R.id.amountEat)).setText(
-                    "(" + eat.getAmount() + " " + eat.getMeasurement_type() + ")");
-
-            @SuppressLint("DefaultLocale") String protein = String.format("%.1f", eat.getProtein());
-            @SuppressLint("DefaultLocale") String fat = String.format("%.1f", eat.getFat());
-            @SuppressLint("DefaultLocale") String carb = String.format("%.1f", eat.getCarb());
-            @SuppressLint("DefaultLocale") String calories = String.format("%.0f", eat.getCalories());
-
-            ((TextView) eatItemView.findViewById(R.id.pfcText)).setText("Б: " + protein + " / Ж: " + fat + " / У: " + carb);
-            ((TextView) eatItemView.findViewById(R.id.eatCalories)).setText(calories + " ккал");
-
-
-
-
-            container.addView(eatItemView);
-        }
 
         title.setText(preset.getPresetMealName());
         closeBtn.setOnClickListener(v -> dialog.dismiss());

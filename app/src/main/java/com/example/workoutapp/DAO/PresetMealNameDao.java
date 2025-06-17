@@ -100,7 +100,39 @@ public class PresetMealNameDao {
 
         return presetMeals;
     }
+    public void updatePresetName(int presetId, String newName) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
 
+        ContentValues values = new ContentValues();
+        values.put(MEAL_PRESET_NAME, newName);
+
+        db.update(MEAL_PRESET_NAME_TABLE, values, MEAL_PRESET_NAME_ID + " = ?", new String[]{String.valueOf(presetId)});
+        db.close();
+    }
+    public String getMealPresetNameById(int id) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String presetName = null;
+
+        Cursor cursor = db.query(
+                MEAL_PRESET_NAME_TABLE,
+                new String[]{MEAL_PRESET_NAME},
+                MEAL_PRESET_NAME_ID + " = ?",
+                new String[]{String.valueOf(id)},
+                null,
+                null,
+                null
+        );
+
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                presetName = cursor.getString(cursor.getColumnIndexOrThrow(MEAL_PRESET_NAME));
+            }
+            cursor.close();
+        }
+
+        db.close();
+        return presetName;
+    }
 
     // Вывести в лог всё содержимое таблицы
     public void logAllMealPresetNames() {

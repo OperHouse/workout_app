@@ -15,11 +15,13 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.Contract;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -64,15 +67,17 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
     private EatAdapter eatAdapter;
     SearchView searchEat;
     private String searchText = "";
+    private int presetId = -1;
 
     private boolean isAmountDropdownManuallyShown = false;
 
 
-    public CreateMealPresetFragment() {
-        // Required empty public constructor
+    public CreateMealPresetFragment(int  presetId) {
+        this.presetId = presetId;
     }
 
-
+    public CreateMealPresetFragment() {
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -93,6 +98,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         Button createEatBtn = addEatToPresetFragment.findViewById(R.id.createEatBtn);
         Button createPresetBtn = addEatToPresetFragment.findViewById(R.id.nextBtn);
         TextView text = addEatToPresetFragment.findViewById(R.id.textView7);
+        TextView text_2 = addEatToPresetFragment.findViewById(R.id.textView);
         searchEat = addEatToPresetFragment.findViewById(R.id.searchEat);
 
 
@@ -101,8 +107,34 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
 
         //Обособленная копия eatList, которая никак не связанна с другими листами
         baseEatList = eatList.stream().map(EatModel::new).collect(Collectors.toList());
-
         eatAdapter = new EatAdapter(requireContext(), this, CreateMealPresetFragment.this);
+        if (presetId > 0 ){
+            List<Integer> connectedEatIds = connectingMealPresetDao.getEatIdsForPreset(presetId);
+
+            for (int i = connectedEatIds.size() - 1; i >= 0; i--) {
+                int eatId = connectedEatIds.get(i);
+                EatModel eat = presetEatDao.getPresetEatById(eatId);
+
+                if (eat != null) {
+                    // Удаляем из eatList все элементы с таким же именем
+                    Iterator<EatModel> iterator = eatList.iterator();
+                    while (iterator.hasNext()) {
+                        EatModel existing = iterator.next();
+                        if (existing.getEat_name().equals(eat.getEat_name())) {
+                            iterator.remove();
+                            eat.setEat_id(existing.getEat_id());
+                        }
+                    }
+
+                    // Добавляем в начало и отмечаем выбранным
+                    eat.setIsSelected(true);
+                    eatList.add(0, eat);
+                }
+            }
+
+            text_2.setText("Изменение пресета");
+        }
+
 
         eatRecycler.setHasFixedSize(true);
         eatRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -225,7 +257,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
             textViewCarb.setText("Углеводы (" + eatModel.getCarb() + " гр)");
             textViewCalories.setText("Калории: " + eatModel.getCalories() + " ккал");
 
-            // Остальной твой код...
+
             String measurementType = eatModel.getMeasurement_type().toLowerCase();
             amountLabel.setText("Количество пищи в (" + measurementType + ")");
 
@@ -344,7 +376,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
             EatModel baseEatModel = null;
             for (EatModel base : baseEatList) {
                 if (base.getEat_id() == eatModel.getEat_id()) {
-                    baseEatModel = base;
+                    baseEatModel = new EatModel(base);
                     break;
                 }
             }
@@ -509,6 +541,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
 
 
 
+    @SuppressLint("SetTextI18n")
     private void showDeleteConfirmationDialog(EatModel eatToDelete, int position, RecyclerView r) {
         Dialog dialogDeleteEat = new Dialog(requireContext());
         dialogDeleteEat.setContentView(R.layout.confirm_dialog_layout);
@@ -518,9 +551,14 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         dialogDeleteEat.setCancelable(true); // Делаем диалог закрываемым
         dialogDeleteEat.setCanceledOnTouchOutside(true); // Закрыть при клике вне диалога
 
+
+        TextView text1 = dialogDeleteEat.findViewById(R.id.text1);
+        TextView text2 = dialogDeleteEat.findViewById(R.id.text2);
         Button deleteBtn = dialogDeleteEat.findViewById(R.id.btnDelete);
         Button chanelBtn = dialogDeleteEat.findViewById(R.id.btnChanel);
 
+        text1.setText("Удаление еды");
+        text2.setText("Вы действивтельно хотите удалить \"" + eatToDelete.getEat_name() + "\"");
 
         if(dialogDeleteEat.getWindow() != null){
             dialogDeleteEat.getWindow().setBackgroundDrawable(new ColorDrawable(0));
@@ -565,6 +603,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
     }
 
 
+    @SuppressLint({"SetTextI18n", "DefaultLocale"})
     private void showAddPresetNameDialog(){
         Dialog dialogAddMealPresetName = new Dialog(requireContext());
         dialogAddMealPresetName.setContentView(R.layout.add_meal_name_dialog);
@@ -572,15 +611,65 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         dialogAddMealPresetName.getWindow().setBackgroundDrawable(new ColorDrawable(0));
         dialogAddMealPresetName.show();
 
+        List<EatModel> pressedEat = eatAdapter.getPressedEat();
+
         ImageButton backBtn = dialogAddMealPresetName.findViewById(R.id.imageButtonBack1);
         EditText nameMealPreset = dialogAddMealPresetName.findViewById(R.id.editText);
         TextView text1 = dialogAddMealPresetName.findViewById(R.id.textView1);
         TextView text2 = dialogAddMealPresetName.findViewById(R.id.textView2);
+        TextView textViewProtein = dialogAddMealPresetName.findViewById(R.id.textViewProtein);
+        TextView textViewFat = dialogAddMealPresetName.findViewById(R.id.textViewFat);
+        TextView textViewCarb = dialogAddMealPresetName.findViewById(R.id.textViewCarb);
+        TextView textViewCalories = dialogAddMealPresetName.findViewById(R.id.textViewCalories);
         Button createMealPresetBtn = dialogAddMealPresetName.findViewById(R.id.createWorkBtn);
+        com.example.workoutapp.NutritionCircleView circle = dialogAddMealPresetName.findViewById(R.id.NutritionCircleView);
+        ConstraintLayout detailsLayout = dialogAddMealPresetName.findViewById(R.id.detailsLayout);
 
-        text1.setText("Создание пресета");
-        text2.setText("Название пресета");
-        createMealPresetBtn.setText("Создать пресет");
+        ImageView image = dialogAddMealPresetName.findViewById(R.id.imageView);
+
+
+        if (pressedEat == null || pressedEat.isEmpty()) {
+            detailsLayout.setVisibility(View.GONE);
+        } else {
+            detailsLayout.setVisibility(View.VISIBLE);
+            image.setVisibility(View.GONE);
+            double protein = 0;
+            double fat = 0;
+            double carbs = 0;
+            for (EatModel elm: pressedEat) {
+                protein += elm.getProtein();
+                fat += elm.getFat();
+                carbs += elm.getCarb();
+            }
+            double calories = protein * 4 + carbs * 4 + fat * 9;
+            circle.setMacros(
+                    (float) protein,
+                    (float) fat,
+                    (float) carbs
+            );
+
+
+            // Обновляем текст с граммами
+            textViewProtein.setText(String.format("Белки (%.1f гр)", (float) protein));
+            textViewFat.setText(String.format("Жиры (%.1f гр)", (float) fat));
+            textViewCarb.setText(String.format("Углеводы (%.1f гр)", (float) carbs));
+            textViewCalories.setText(String.format("Калории: %.0f ккал", (float) calories));
+
+        }
+        if(presetId > 0){
+            text1.setText("Изменение пресета");
+            text2.setText("Название пресета");
+            nameMealPreset.setText(presetMealNameDao.getMealPresetNameById(presetId));
+            createMealPresetBtn.setText("Изменить пресет");
+
+        }else {
+            text1.setText("Создание пресета");
+            text2.setText("Название пресета");
+            createMealPresetBtn.setText("Создать пресет");
+        }
+
+
+
         AtomicBoolean isDialogClosedByOutsideClick = new AtomicBoolean(false);
 
         backBtn.setOnClickListener(new View.OnClickListener() {
@@ -594,44 +683,71 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
             @Override
             public void onClick(View v) {
                 String presetMealName = nameMealPreset.getText().toString().trim();
-                List<EatModel> pressedEat = eatAdapter.getPressedEat();
 
-                if(presetMealName.isEmpty()){
-                    nameMealPreset.setError("Пожалуйста, введите название пресета");
-                    //return;
-                }else if(pressedEat.isEmpty()){
-                    Toast.makeText(requireContext(), "Выберите хотя бы один элемент еды!", Toast.LENGTH_SHORT).show();
-                } else {
-                    // 1. Добавить имя и получить его ID
-                    long mealNameId = presetMealNameDao.addMealPresetName(presetMealName);
 
-                    // 2. Добавить каждый EatModel, получить его ID и связать
+                if (pressedEat.isEmpty()) {
+                    Toast.makeText(requireContext(), "Выберите элементы!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (presetMealName.isEmpty()) {
+                    nameMealPreset.setError("Укажите название пресета!");
+                    return;
+                }
 
-                    for (int i = 0; i < pressedEat.size(); i++) {
-                        presetEatDao.addPresetEat(pressedEat.get(i));
-                        int eatId = presetEatDao.getLastInsertedPresetEatId();
-                        connectingMealPresetDao.addMealPresetConnection((int) mealNameId, eatId);
+
+                if (presetId > 0) {
+                    // 1. Обновляем имя пресета
+                    presetMealNameDao.updatePresetName(presetId, presetMealName);
+
+                    // 2. Чистим старые связи
+                    connectingMealPresetDao.deleteAllForPreset(presetId);
+
+                    // 3. Повторно связываем продукты
+                    for (EatModel eat : pressedEat) {
+                        EatModel existing = presetEatDao.findDuplicateEat(eat);
+                        int eatId;
+
+                        if (existing != null) {
+                            eatId = existing.getEat_id();
+                        } else {
+                            presetEatDao.addPresetEat(eat);
+                            eatId = presetEatDao.getLastInsertedPresetEatId();
+                        }
+
+                        connectingMealPresetDao.addMealPresetConnection(presetId, eatId);
                     }
 
+                } else {
+                    // 1. Добавляем имя нового пресета
+                    long mealNameId = presetMealNameDao.addMealPresetName(presetMealName);
+
+                    // 2. Связываем продукты
+                    for (EatModel eat : pressedEat) {
+                        EatModel existing = presetEatDao.findDuplicateEat(eat);
+                        int eatId;
+
+                        if (existing != null) {
+                            eatId = existing.getEat_id();
+                        } else {
+                            presetEatDao.addPresetEat(eat);
+                            eatId = presetEatDao.getLastInsertedPresetEatId();
+                        }
+
+                        connectingMealPresetDao.addMealPresetConnection((int) mealNameId, eatId);
+                    }
+                }
 
 
-
+                    // Логи
                     presetEatDao.logAllPresetEat();
                     presetMealNameDao.logAllMealPresetNames();
                     connectingMealPresetDao.logAllMealPresetConnections();
 
                     dialogAddMealPresetName.dismiss();
                     requireActivity().getOnBackPressedDispatcher().onBackPressed();
-                }
-
-
-
-
-
-
-
             }
         });
+
 
 
         dialogAddMealPresetName.setOnCancelListener(dialog -> isDialogClosedByOutsideClick.set(true));

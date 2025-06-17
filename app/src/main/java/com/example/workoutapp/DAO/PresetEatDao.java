@@ -135,6 +135,52 @@ public class PresetEatDao {
         return eat;
     }
 
+    public EatModel findDuplicateEat(EatModel eat) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        Cursor cursor = db.query(
+                PRESET_EAT_TABLE,
+                null,
+                PRESET_EAT_NAME + " = ? AND " +
+                        PRESET_EAT_PROTEIN + " = ? AND " +
+                        PRESET_EAT_FAT + " = ? AND " +
+                        PRESET_EAT_CARB + " = ? AND " +
+                        PRESET_EAT_CALORIES + " = ? AND " +
+                        PRESET_EAT_AMOUNT + " = ? AND " +
+                        PRESET_EAT_MEASUREMENT_TYPE + " = ?",
+                new String[]{
+                        eat.getEat_name(),
+                        String.valueOf(eat.getProtein()),
+                        String.valueOf(eat.getFat()),
+                        String.valueOf(eat.getCarb()),
+                        String.valueOf(eat.getCalories()),
+                        String.valueOf(eat.getAmount()),
+                        eat.getMeasurement_type()
+                },
+                null,
+                null,
+                null
+        );
+
+        EatModel duplicate = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            duplicate = new EatModel(
+                    cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_EAT_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(PRESET_EAT_NAME)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_PROTEIN)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_FAT)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_CARB)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_CALORIES)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_EAT_AMOUNT)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(PRESET_EAT_MEASUREMENT_TYPE))
+            );
+            cursor.close();
+        }
+
+        db.close();
+        return duplicate;
+    }
+
 
     // Логирование всех preset eat записей
     public void logAllPresetEat() {

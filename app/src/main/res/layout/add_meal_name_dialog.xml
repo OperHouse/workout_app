@@ -54,9 +54,104 @@
                 android:background="@drawable/immage_eat_foreground"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView1">
+                app:layout_constraintTop_toBottomOf="@+id/detailsLayout">
 
             </ImageView>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/detailsLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView1">
+
+
+                <com.example.workoutapp.NutritionCircleView
+                    android:id="@+id/NutritionCircleView"
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/textView1" />
+
+
+                <!-- Белки -->
+                <View
+                    android:id="@+id/proteinColor"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="20dp"
+                    android:background="@color/protein_red"
+                    app:layout_constraintStart_toEndOf="@+id/NutritionCircleView"
+                    app:layout_constraintTop_toBottomOf="@+id/textView1" />
+
+                <TextView
+                    android:id="@+id/textViewProtein"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Белки"
+                    android:textColor="@color/white"
+                    app:layout_constraintStart_toEndOf="@id/proteinColor"
+                    app:layout_constraintTop_toTopOf="@id/proteinColor" />
+
+                <!-- Жиры -->
+                <View
+                    android:id="@+id/fatColor"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@color/fat_yellow"
+                    app:layout_constraintStart_toStartOf="@+id/proteinColor"
+                    app:layout_constraintTop_toBottomOf="@id/proteinColor" />
+
+                <TextView
+                    android:id="@+id/textViewFat"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Жиры"
+                    android:textColor="@color/white"
+                    app:layout_constraintStart_toEndOf="@id/fatColor"
+                    app:layout_constraintTop_toTopOf="@id/fatColor" />
+
+                <!-- Углеводы -->
+                <View
+                    android:id="@+id/carbColor"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@color/carb_green"
+                    app:layout_constraintStart_toStartOf="@+id/fatColor"
+                    app:layout_constraintTop_toBottomOf="@id/fatColor" />
+
+                <TextView
+                    android:id="@+id/textViewCarb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Углеводы"
+                    android:textColor="@color/white"
+                    app:layout_constraintStart_toEndOf="@id/carbColor"
+                    app:layout_constraintTop_toTopOf="@id/carbColor" />
+
+                <TextView
+                    android:id="@+id/textViewCalories"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Калории:"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    app:layout_constraintStart_toStartOf="@+id/carbColor"
+                    app:layout_constraintTop_toBottomOf="@id/textViewCarb" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
 
             <TextView
                 android:id="@+id/textView2"

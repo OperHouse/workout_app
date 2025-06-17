@@ -41,6 +41,13 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
         this.listener = listener;
         this.baseEatDao = new BaseEatDao(MainActivity.getAppDataBase());
     }
+    public EatAdapter(@NonNull Context context, Fragment fragment) {
+        this.context = context;
+        this.fragment = fragment;
+        this.baseEatDao = new BaseEatDao(MainActivity.getAppDataBase());
+        listener = null;
+    }
+
 
     @NonNull
     @Override
@@ -75,7 +82,9 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
                 holder.linerLayoutSecond.setBackgroundResource(eat.getIsSelected() ? R.drawable.card_border : R.drawable.card_border2);
 
                 holder.itemView.setOnClickListener(v -> {
-                    listener.onEatItemClick(context, eat);
+                    if(listener != null){
+                        listener.onEatItemClick(context, eat);
+                    }
                 });
 
 
