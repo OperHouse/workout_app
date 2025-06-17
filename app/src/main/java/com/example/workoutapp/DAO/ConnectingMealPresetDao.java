@@ -53,6 +53,34 @@ public class ConnectingMealPresetDao {
         return eatIds;
     }
 
+    public List<Integer> getEatIdsForPreset(int presetId) {
+        List<Integer> eatIds = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT " + CONNECTING_MEAL_PRESET_EAT_ID + " FROM " + CONNECTING_MEAL_PRESET_TABLE + " WHERE " + CONNECTING_MEAL_PRESET_NAME_ID + " = ?",
+                new String[]{String.valueOf(presetId)}
+        );
+
+        if (cursor.moveToFirst()) {
+            do {
+                int eatId = cursor.getInt(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_PRESET_EAT_ID));
+                eatIds.add(eatId);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+
+        return eatIds;
+    }
+
+    public void deleteAllForPreset(int presetId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        db.delete(CONNECTING_MEAL_PRESET_TABLE, CONNECTING_MEAL_PRESET_NAME_ID + " = ?", new String[]{String.valueOf(presetId)});
+        db.close();
+    }
+
     public void logAllMealPresetConnections() {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
