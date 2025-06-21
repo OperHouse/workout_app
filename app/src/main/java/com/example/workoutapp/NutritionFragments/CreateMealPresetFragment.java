@@ -226,6 +226,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         if(!eatModel.getIsSelected()) {
             android.app.Dialog dialog = new android.app.Dialog(context);
             dialog.setContentView(R.layout.amount_dialog);
+            Objects.requireNonNull(dialog.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
 
             // View references
