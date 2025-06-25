@@ -216,7 +216,7 @@ public class CreateEatFragment extends Fragment {
 
     private double parseDoubleOrZero(String value) {
         try {
-            return Double.parseDouble(value.trim());
+            return Double.parseDouble(value.trim().replace(',', '.'));
         } catch (NumberFormatException e) {
             return 0.0;
         }

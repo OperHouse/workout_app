@@ -1,6 +1,9 @@
 package com.example.workoutapp.NutritionFragments;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.graphics.Canvas;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -8,11 +11,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.SearchView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -22,11 +28,15 @@ import com.example.workoutapp.DAO.ConnectingMealPresetDao;
 import com.example.workoutapp.DAO.PresetEatDao;
 import com.example.workoutapp.DAO.PresetMealNameDao;
 import com.example.workoutapp.MainActivity;
+import com.example.workoutapp.NutritionModels.EatModel;
 import com.example.workoutapp.NutritionModels.PresetMealModel;
 import com.example.workoutapp.R;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
 public class SelectionMealPresetsFragment extends Fragment {
 
@@ -35,6 +45,10 @@ public class SelectionMealPresetsFragment extends Fragment {
     private PresetEatDao presetEatDao;
     private ConnectingMealPresetDao connectingMealPresetDao;
     private PresetMealAdapter presetMealAdapter;
+    private SearchView searchPreset;
+    private String searchText = "";
+
+    TextView textPressedBtn;
 
     public SelectionMealPresetsFragment() {
         // Required empty public constructor
@@ -57,20 +71,23 @@ public class SelectionMealPresetsFragment extends Fragment {
 
         ImageButton backBtn = AddMealFragmentView.findViewById(R.id.imageButtonBack);
         Button createPresetBtn = AddMealFragmentView.findViewById(R.id.createPresetBtn);
+        searchPreset = AddMealFragmentView.findViewById(R.id.searchPresets);
         presetRecycler = AddMealFragmentView.findViewById(R.id.presetsRecycler);
-
-
-
+        textPressedBtn = AddMealFragmentView.findViewById(R.id.textView7);
 
         List<PresetMealModel> presets = presetMealNameDao.getAllPresetMealModels(
                 connectingMealPresetDao,
                 presetEatDao
         );
 
+        if(!presets.isEmpty()){
+            textPressedBtn.setVisibility(View.GONE);
+        }
 
-        presetMealAdapter = new PresetMealAdapter(requireContext(), presets, this::showPresetDetailDialog);
+        presetMealAdapter = new PresetMealAdapter(requireContext(), this::showPresetDetailDialog);
         presetRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         presetRecycler.setAdapter(presetMealAdapter);
+        presetMealAdapter.updatePresetMealsList(presets);
 
 
         backBtn.setOnClickListener(new View.OnClickListener() {
@@ -87,8 +104,31 @@ public class SelectionMealPresetsFragment extends Fragment {
             }
         });
 
+        setupSwipeLeftForRecycler(presetRecycler, presets);
 
+        searchPreset.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                // Убираем фокус после отправки
+                searchPreset.clearFocus();
+                presetRecycler.requestFocus();
+                return true;
+            }
 
+            @Override
+            public boolean onQueryTextChange(String newTextInp) {
+                searchText = newTextInp;
+                if(Objects.equals(searchText, "")){
+                    presetMealAdapter.filteredList.clear();
+                    presetMealAdapter.changeFilterText(searchText);
+                    presetMealAdapter.notifyDataSetChanged();
+                }else{
+                    presetMealAdapter.setFilteredList(newTextInp);
+                }
+
+                return true;
+            }
+        });
 
 
         return AddMealFragmentView;
@@ -137,6 +177,120 @@ public class SelectionMealPresetsFragment extends Fragment {
         title.setText(preset.getPresetMealName());
         closeBtn.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+    }
+
+    private void setupSwipeLeftForRecycler(RecyclerView recyclerView, List<?> dataList) {
+        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                searchPreset.clearFocus();
+                int position = viewHolder.getAdapterPosition();
+                PresetMealModel item = (PresetMealModel) presetMealAdapter.getList().get(position);
+                showDeleteConfirmationDialog(item, position, recyclerView);
+
+            }
+
+            @Override
+            public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder,
+                                    float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                new RecyclerViewSwipeDecorator.Builder(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+                        .addActionIcon(R.drawable.ic_trash_can_foreground)
+                        .create()
+                        .decorate();
+
+                if (Math.abs(dX) > viewHolder.itemView.getWidth() * 0.3) {
+                    dX = viewHolder.itemView.getWidth() * 0.3f * (dX > 0 ? 1 : -1);
+                }
+
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+            }
+        };
+
+        new ItemTouchHelper(simpleCallback).attachToRecyclerView(recyclerView);
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void showDeleteConfirmationDialog(PresetMealModel presetToDelete, int position, RecyclerView r) {
+        Dialog dialogDeleteEat = new Dialog(requireContext());
+        dialogDeleteEat.setContentView(R.layout.confirm_dialog_layout);
+        Objects.requireNonNull(dialogDeleteEat.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        AtomicBoolean isDialogClosedByOutsideClick = new AtomicBoolean(false);
+        // Разрешаем закрытие диалога при нажатии вне его
+        dialogDeleteEat.setCancelable(true); // Делаем диалог закрываемым
+        dialogDeleteEat.setCanceledOnTouchOutside(true); // Закрыть при клике вне диалога
+
+
+        TextView text1 = dialogDeleteEat.findViewById(R.id.text1);
+        TextView text2 = dialogDeleteEat.findViewById(R.id.text2);
+        Button deleteBtn = dialogDeleteEat.findViewById(R.id.btnDelete);
+        Button chanelBtn = dialogDeleteEat.findViewById(R.id.btnChanel);
+
+        text1.setText("Удаление пресета");
+        text2.setText("Вы действивтельно хотите удалить пресет \"" + presetToDelete.getPresetMealName() + "\"");
+
+        if(dialogDeleteEat.getWindow() != null){
+            dialogDeleteEat.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+        }
+
+        chanelBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                presetMealAdapter.notifyItemChanged(position);
+                dialogDeleteEat.dismiss();
+
+            }
+        });
+
+        deleteBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int presetId = presetToDelete.getPresetMealName_id();
+                List<Integer> eatIds = connectingMealPresetDao.getEatIdsForPreset(presetId);
+                connectingMealPresetDao.deleteAllForPreset(presetId);
+                presetMealNameDao.deleteMealPresetName(presetId);
+
+
+                for(Integer id: eatIds){
+                    if(!connectingMealPresetDao.doesEatIdExist(id)){
+                        presetEatDao.deletePresetEat(id);
+                    }
+                }
+
+                connectingMealPresetDao.logAllMealPresetConnections();
+                presetMealNameDao.logAllMealPresetNames();
+                presetEatDao.logAllPresetEat();
+
+                if (!searchText.isEmpty()) {
+                    presetMealAdapter.removePresetElm(presetToDelete);
+                    presetMealAdapter.setFilteredList(searchText);
+                }else {
+                    presetMealAdapter.removePresetElm(presetToDelete);
+                    presetMealAdapter.notifyDataSetChanged();
+                }
+
+                if(presetMealAdapter.getItemCount() == 0){
+                    textPressedBtn.setVisibility(View.VISIBLE);
+                }
+                r.requestLayout();
+                dialogDeleteEat.dismiss();
+            }
+        });
+
+        dialogDeleteEat.setOnDismissListener(dialog -> {
+            if (isDialogClosedByOutsideClick.get()) {
+                // Диалог был закрыт нажатием вне
+                presetMealAdapter.notifyItemChanged(position);
+            }
+        });
+
+        // Слушаем закрытие по клику вне
+        dialogDeleteEat.setOnCancelListener(dialog -> isDialogClosedByOutsideClick.set(true));
+        dialogDeleteEat.show();
     }
 
     private void replaceFragment(Fragment newFragment) {

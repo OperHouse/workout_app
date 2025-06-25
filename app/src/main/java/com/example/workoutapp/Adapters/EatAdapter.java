@@ -30,7 +30,7 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
     private final OnEatItemClickListener listener;
     private final Fragment fragment;
     private String currentFilter = "";
-    private List<EatModel> eatList = new ArrayList<>(); //Лист, который используется для отображения в адаптере
+    private List<EatModel> eatList = new ArrayList<>(); //Основной лист
     public List<EatModel> filteredList = new ArrayList<>();
 
 

@@ -1,5 +1,7 @@
 package com.example.workoutapp.NutritionModels;
 
+import android.os.Build;
+
 import java.util.List;
 
 public class PresetMealModel {
@@ -13,6 +15,18 @@ public class PresetMealModel {
         this.presetMealName = presetMealName;
         this.presetMealEat = presetMealEat;
     };
+    public PresetMealModel(PresetMealModel other) {
+        this.presetMealName_id = other.presetMealName_id;
+        this.presetMealName = other.presetMealName;
+
+        // Копируем список EatModel через копирующий конструктор каждого элемента
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            this.presetMealEat = other.presetMealEat.stream()
+                    .map(EatModel::new) // требуется копирующий конструктор в EatModel
+                    .toList(); // можно заменить на collect(Collectors.toList()) для совместимости с Java <16
+        }
+    }
+
 
 
 
