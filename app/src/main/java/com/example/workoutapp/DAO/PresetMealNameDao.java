@@ -84,7 +84,7 @@ public class PresetMealNameDao {
             String name = meal.getName();
 
             // Получаем связи
-            List<Integer> eatIds = connectionDao.getEatIdsByPresetId(mealId);
+            List<Integer> eatIds = connectionDao.getEatIdsForPreset(mealId);
 
             // Получаем EatModel по id
             List<EatModel> eatList = new ArrayList<>();

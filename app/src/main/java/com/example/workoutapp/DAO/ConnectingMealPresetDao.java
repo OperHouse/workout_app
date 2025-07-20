@@ -30,29 +30,6 @@ public class ConnectingMealPresetDao {
         db.close();
     }
 
-    public List<Integer> getEatIdsByPresetId(int presetId) {
-        List<Integer> eatIds = new ArrayList<>();
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-
-        Cursor cursor = db.rawQuery(
-                "SELECT " + CONNECTING_MEAL_PRESET_EAT_ID +
-                        " FROM " + CONNECTING_MEAL_PRESET_TABLE +
-                        " WHERE " + CONNECTING_MEAL_PRESET_NAME_ID + " = ?",
-                new String[]{String.valueOf(presetId)}
-        );
-
-        if (cursor.moveToFirst()) {
-            do {
-                int eatId = cursor.getInt(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_PRESET_EAT_ID));
-                eatIds.add(eatId);
-            } while (cursor.moveToNext());
-        }
-
-        cursor.close();
-        db.close();
-        return eatIds;
-    }
-
     public List<Integer> getEatIdsForPreset(int presetId) {
         List<Integer> eatIds = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
@@ -80,7 +57,22 @@ public class ConnectingMealPresetDao {
         db.delete(CONNECTING_MEAL_PRESET_TABLE, CONNECTING_MEAL_PRESET_NAME_ID + " = ?", new String[]{String.valueOf(presetId)});
         db.close();
     }
+    public boolean doesEatIdExist(int eatId) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
 
+        Cursor cursor = db.rawQuery(
+                "SELECT 1 FROM " + CONNECTING_MEAL_PRESET_TABLE +
+                        " WHERE " + CONNECTING_MEAL_PRESET_EAT_ID + " = ? LIMIT 1",
+                new String[]{String.valueOf(eatId)}
+        );
+
+        boolean exists = cursor.moveToFirst(); // если есть хотя бы одна строка — true
+
+        cursor.close();
+        db.close();
+
+        return exists;
+    }
     public void logAllMealPresetConnections() {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
