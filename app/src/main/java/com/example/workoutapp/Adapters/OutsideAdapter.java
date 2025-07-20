@@ -29,21 +29,21 @@ import java.util.Objects;
 
 public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHolder> {
 
-    private final Context context;
     private TempWorkoutDao TempWorkDao;
     private List<TempExModel> tempExModelList;
     private Fragment fragment;
+    private final Context context;
 
     // Список для хранения всех адаптеров InnerAdapter
     private RecyclerView outerRecyclerView;
-    private final SparseArray<InnerAdapter> allInnerAdapters = new SparseArray<>();
-
     public OutsideAdapter(@NonNull Fragment fragment, RecyclerView recyclerView) {
         this.context = fragment.requireContext();
         this.fragment = fragment;
         this.TempWorkDao = new TempWorkoutDao(MainActivity.getAppDataBase());
         this.outerRecyclerView = recyclerView; // сохраняем ссылку
     }
+
+    private final SparseArray<InnerAdapter> allInnerAdapters = new SparseArray<>();
 
     @NonNull
     @Override

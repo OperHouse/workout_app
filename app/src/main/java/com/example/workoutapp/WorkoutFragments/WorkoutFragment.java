@@ -79,7 +79,7 @@ public class WorkoutFragment extends Fragment {
         // Устанавливаем обработчик нажатия на кнопку
         addExBtn.setOnClickListener(v -> {
             // Заменяем текущий фрагмент на FullscreenFragment
-            replaceFragment(new AddExFragment());
+            replaceFragment(new Selection_Ex_Preset_Fragment());
         });
 
 
