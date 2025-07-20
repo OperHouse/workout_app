@@ -79,7 +79,7 @@ public class CreatePresetFragment extends Fragment {
                 assert fragmentManager != null;
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                 try {
-                    fragmentTransaction.replace(R.id.frameLayout, AddExFragment.class.newInstance());
+                    fragmentTransaction.replace(R.id.frameLayout, Selection_Ex_Preset_Fragment.class.newInstance());
                 } catch (IllegalAccessException | java.lang.InstantiationException e) {
                     throw new RuntimeException(e);
                 }
@@ -182,7 +182,7 @@ public class CreatePresetFragment extends Fragment {
                 assert fragmentManager != null;
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                 try {
-                    fragmentTransaction.replace(R.id.frameLayout, AddExFragment.class.newInstance());
+                    fragmentTransaction.replace(R.id.frameLayout, Selection_Ex_Preset_Fragment.class.newInstance());
                 } catch (IllegalAccessException | java.lang.InstantiationException e) {
                     throw new RuntimeException(e);
                 }
