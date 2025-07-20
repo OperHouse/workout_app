@@ -33,11 +33,11 @@ public class PresetEatDao {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(PRESET_EAT_NAME, eat.getEat_name());
-        values.put(PRESET_EAT_PROTEIN, eat.getProtein());
-        values.put(PRESET_EAT_FAT, eat.getFat());
-        values.put(PRESET_EAT_CARB, eat.getCarb());
-        values.put(PRESET_EAT_CALORIES, eat.getCalories());
-        values.put(PRESET_EAT_AMOUNT, eat.getAmount());
+        values.put(PRESET_EAT_PROTEIN, roundToOneDecimal(eat.getProtein()));
+        values.put(PRESET_EAT_FAT, roundToOneDecimal(eat.getFat()));
+        values.put(PRESET_EAT_CARB, roundToOneDecimal(eat.getCarb()));
+        values.put(PRESET_EAT_CALORIES, roundToOneDecimal(eat.getCalories()));
+        values.put(PRESET_EAT_AMOUNT, roundToOneDecimal(eat.getAmount()));
         values.put(PRESET_EAT_MEASUREMENT_TYPE, eat.getMeasurement_type());
 
 
@@ -179,6 +179,10 @@ public class PresetEatDao {
 
         db.close();
         return duplicate;
+    }
+
+    private double roundToOneDecimal(double value) {
+        return Math.round(value * 10.0) / 10.0;
     }
 
 
