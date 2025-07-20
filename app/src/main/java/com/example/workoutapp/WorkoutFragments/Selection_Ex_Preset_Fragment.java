@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
 
-public class AddExFragment extends Fragment {
+public class Selection_Ex_Preset_Fragment extends Fragment {
     private ExerciseDao ExDao;
     private PresetDao PresetDao;
     private List<ExModel> exList;
@@ -56,7 +56,7 @@ public class AddExFragment extends Fragment {
     private TextView textEx;
     SearchView searchView;
 
-    public AddExFragment() {
+    public Selection_Ex_Preset_Fragment() {
         // Required empty public constructor
     }
 
@@ -78,7 +78,7 @@ public class AddExFragment extends Fragment {
 
         presetRecycler = RootViewAddExFragment.findViewById(R.id.presetRecycler);
         presetsList = PresetDao.getAllPresets();
-        presetAdapter = new PresetsAdapter(AddExFragment.this);
+        presetAdapter = new PresetsAdapter(Selection_Ex_Preset_Fragment.this);
 
         presetRecycler.setHasFixedSize(true);
         presetRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -88,7 +88,7 @@ public class AddExFragment extends Fragment {
 
         exRecycler = RootViewAddExFragment.findViewById(R.id.ExerciseRecyclerViewPresets);
         exList = ExDao.getAllExercises();
-        exAdapter = new ExAdapter(AddExFragment.this, false);
+        exAdapter = new ExAdapter(Selection_Ex_Preset_Fragment.this, false);
 
         exRecycler.setHasFixedSize(true);
         exRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));

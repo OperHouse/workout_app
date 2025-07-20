@@ -1,4 +1,4 @@
-package com.example.workoutapp.Adapters;
+package com.example.workoutapp.NutritionAdapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
