@@ -22,13 +22,12 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.workoutapp.Adapters.EatAdapter;
-import com.example.workoutapp.Adapters.PresetMealAdapter;
+import com.example.workoutapp.NutritionAdapters.EatAdapter;
+import com.example.workoutapp.NutritionAdapters.PresetMealAdapter;
 import com.example.workoutapp.DAO.ConnectingMealPresetDao;
 import com.example.workoutapp.DAO.PresetEatDao;
 import com.example.workoutapp.DAO.PresetMealNameDao;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.NutritionModels.EatModel;
 import com.example.workoutapp.NutritionModels.PresetMealModel;
 import com.example.workoutapp.R;
 
@@ -84,7 +83,7 @@ public class SelectionMealPresetsFragment extends Fragment {
             textPressedBtn.setVisibility(View.GONE);
         }
 
-        presetMealAdapter = new PresetMealAdapter(requireContext(), this::showPresetDetailDialog);
+        presetMealAdapter = new PresetMealAdapter(this, requireContext(), this::showPresetDetailDialog);
         presetRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         presetRecycler.setAdapter(presetMealAdapter);
         presetMealAdapter.updatePresetMealsList(presets);

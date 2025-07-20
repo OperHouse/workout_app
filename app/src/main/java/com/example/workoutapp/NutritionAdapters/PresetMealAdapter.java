@@ -1,23 +1,35 @@
-package com.example.workoutapp.Adapters;
+package com.example.workoutapp.NutritionAdapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.DAO.ConnectingMealDao;
 import com.example.workoutapp.DAO.ConnectingMealPresetDao;
+import com.example.workoutapp.DAO.MealEatDao;
+import com.example.workoutapp.DAO.MealNameDao;
 import com.example.workoutapp.MainActivity;
+import com.example.workoutapp.NutritionFragments.NutritionFragment;
+import com.example.workoutapp.NutritionFragments.SelectionMealPresetsFragment;
 import com.example.workoutapp.NutritionModels.EatModel;
 import com.example.workoutapp.NutritionModels.PresetMealModel;
 import com.example.workoutapp.OnPresetMealLongClickListener;
 import com.example.workoutapp.R;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,17 +38,22 @@ import java.util.stream.Collectors;
 public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.PresetViewHolder> {
 
     private final Context context;
-    private final ConnectingMealPresetDao connectingMealPresetDao;
+
     private final OnPresetMealLongClickListener longClickListener;
+    private final Fragment fragment;
+    private MealNameDao mealNameDao;
+    private ConnectingMealDao connectingMealDao;
+    private MealEatDao mealFoodDao;
+
     private List<PresetMealModel> presetMeals = new ArrayList<>();
     public List<PresetMealModel> filteredList = new ArrayList<>();
     private String currentFilter = "";
 
 
-    public PresetMealAdapter(Context context, OnPresetMealLongClickListener longClickListener) {
+    public PresetMealAdapter(Fragment fragment, Context context, OnPresetMealLongClickListener longClickListener) {
+        this.fragment = fragment;
         this.context = context;
         this.longClickListener = longClickListener;
-        this.connectingMealPresetDao = new ConnectingMealPresetDao(MainActivity.getAppDataBase());
     }
 
     @NonNull
@@ -84,6 +101,41 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
             holder.itemView.setOnLongClickListener(v -> {
                 longClickListener.onPresetMealLongClick(preset);
                 return true;
+            });
+
+            holder.itemView.setOnClickListener(v -> {
+                if (fragment instanceof SelectionMealPresetsFragment) {
+                    this.mealNameDao = new MealNameDao(MainActivity.getAppDataBase());
+                    String formattedDate = "";
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        LocalDate currentDate = LocalDate.now();
+                        formattedDate = currentDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+                    }
+
+                    preset.setMealData(formattedDate); // Устанавливаем дату в модель
+                    String presetName = preset.getPresetMealName();
+
+                    boolean exists = mealNameDao.checkIfMealExist(presetName,formattedDate);
+
+                    if (!exists) {
+                        // Сохраняем объект
+                        this.mealFoodDao = new MealEatDao(MainActivity.getAppDataBase());
+                        this.connectingMealDao = new ConnectingMealDao(MainActivity.getAppDataBase());
+
+                        mealNameDao.insertMealName(preset.getPresetMealName(), formattedDate);
+                        int meal_Id = (int) mealNameDao.getLastInsertedMealNameId();
+                        mealFoodDao.addFoodList(preset.getPresetMealEat());
+                        connectingMealDao.connecting(meal_Id, mealFoodDao.getAllFoodForMeal(meal_Id));
+
+                        mealNameDao.logAllMealNames();
+                        mealFoodDao.logAllMealEats();
+                        connectingMealDao.logAllConnections();
+
+                        fragment.getParentFragmentManager().popBackStack();
+                    } else {
+                        Toast.makeText(context, "Такой приём пищи уже добавлен!", Toast.LENGTH_SHORT).show();
+                    }
+                }
             });
         }
     }

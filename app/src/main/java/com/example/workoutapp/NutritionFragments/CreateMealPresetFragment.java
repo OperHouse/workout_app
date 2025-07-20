@@ -30,7 +30,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.workoutapp.Adapters.EatAdapter;
+import com.example.workoutapp.NutritionAdapters.EatAdapter;
 import com.example.workoutapp.DAO.BaseEatDao;
 import com.example.workoutapp.DAO.ConnectingMealPresetDao;
 import com.example.workoutapp.DAO.PresetEatDao;
