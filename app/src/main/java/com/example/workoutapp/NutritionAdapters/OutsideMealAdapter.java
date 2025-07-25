@@ -11,9 +11,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.workoutapp.Adapters.InnerAdapter;
 import com.example.workoutapp.NutritionModels.FoodModel;
 import com.example.workoutapp.NutritionModels.MealModel;
 import com.example.workoutapp.R;
@@ -24,10 +24,12 @@ import java.util.stream.Collectors;
 public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.MyViewHolder>{
 
     private RecyclerView outsideRecyclerView;
-    private final SparseArray<InnerAdapter> allInnerFoodAdapters = new SparseArray<>();
     private List<MealModel> allMealList;
     private Fragment fragment;
     private final Context context;
+
+    private final SparseArray<InnerFoodAdapter> allInnerFoodAdapters = new SparseArray<>();
+
     public OutsideMealAdapter(@NonNull Fragment fragment, RecyclerView recyclerView) {
         this.context = fragment.requireContext();
         this.fragment = fragment;
@@ -69,6 +71,20 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
 
         holder.KKAL_TV.setText("Калории: " +calories);
         holder.PFC_TV.setText("Б: " + protein + " / Ж: " + fat + " / У: " + carb);
+
+        int meal_id = mealElm.getMeal_name_id();
+
+
+        InnerFoodAdapter innerFoodAdapter = allInnerFoodAdapters.get(meal_id);
+        if (innerFoodAdapter == null) {
+            innerFoodAdapter = new InnerFoodAdapter(mealElm.getMeal_food_list(), meal_id);
+            allInnerFoodAdapters.put(meal_id, innerFoodAdapter);
+        } else {
+            innerFoodAdapter.updateData(mealElm.getMeal_food_list(), meal_id);
+        }
+        holder.innerFoodRecycler.setLayoutManager(new LinearLayoutManager(context));
+        holder.innerFoodRecycler.setAdapter(innerFoodAdapter);
+
     }
 
     @Override

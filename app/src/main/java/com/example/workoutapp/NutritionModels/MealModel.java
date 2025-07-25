@@ -50,9 +50,6 @@ public class MealModel {
 
 
 
-
-
-
     public int getMeal_name_id() {
         return meal_name_id;
     }

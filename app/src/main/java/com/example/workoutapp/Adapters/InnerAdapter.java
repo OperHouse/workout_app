@@ -28,16 +28,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHolder> {
+    private boolean getSetId(int setId) {
+        for (SetsModel s: modifiedSets) {
+            if(s.getSet_id() == setId){return true;}
+        }
+        return false;
+    }
     private List<SetsModel> setsList;
     private int exerciseId;
+
     private TempWorkoutDao TempWorkDao;
-
     // Список для хранения измененных данных, которые будут записаны в БД
-    private List<SetsModel> modifiedSets = new ArrayList<>();
 
+    private List<SetsModel> modifiedSets = new ArrayList<>();
 
     public interface OnSetListChangedListener {
         void onSetListChanged(int exerciseId, boolean isEmpty);
+
     }
 
     private OnSetListChangedListener setListChangedListener;
@@ -241,13 +248,6 @@ public class InnerAdapter extends RecyclerView.Adapter<InnerAdapter.InnerViewHol
 
 
 
-    }
-
-    private boolean getSetId(int setId) {
-        for (SetsModel s: modifiedSets) {
-            if(s.getSet_id() == setId){return true;}
-        }
-        return false;
     }
 
     @Override
