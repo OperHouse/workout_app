@@ -12,19 +12,15 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.DAO.ConnectingMealDao;
-import com.example.workoutapp.DAO.ConnectingMealPresetDao;
-import com.example.workoutapp.DAO.MealEatDao;
+import com.example.workoutapp.DAO.MealFoodDao;
 import com.example.workoutapp.DAO.MealNameDao;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.NutritionFragments.NutritionFragment;
 import com.example.workoutapp.NutritionFragments.SelectionMealPresetsFragment;
-import com.example.workoutapp.NutritionModels.EatModel;
-import com.example.workoutapp.NutritionModels.PresetMealModel;
+import com.example.workoutapp.NutritionModels.FoodModel;
+import com.example.workoutapp.NutritionModels.MealModel;
 import com.example.workoutapp.OnPresetMealLongClickListener;
 import com.example.workoutapp.R;
 
@@ -43,10 +39,10 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
     private final Fragment fragment;
     private MealNameDao mealNameDao;
     private ConnectingMealDao connectingMealDao;
-    private MealEatDao mealFoodDao;
+    private MealFoodDao mealFoodDao;
 
-    private List<PresetMealModel> presetMeals = new ArrayList<>();
-    public List<PresetMealModel> filteredList = new ArrayList<>();
+    private List<MealModel> presetMeals = new ArrayList<>();
+    public List<MealModel> filteredList = new ArrayList<>();
     private String currentFilter = "";
 
 
@@ -67,7 +63,7 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
     @Override
     public void onBindViewHolder(@NonNull PresetViewHolder holder, int position) {
         if (!presetMeals.isEmpty() || !filteredList.isEmpty()) {
-            PresetMealModel preset;
+            MealModel preset;
 
             if(!Objects.equals(currentFilter, "")){
                 preset = filteredList.get(position);
@@ -76,14 +72,14 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
             }
 
 
-            holder.namePresetMeal.setText(preset.getPresetMealName());
+            holder.namePresetMeal.setText(preset.getMeal_name());
 
             double totalProtein = 0;
             double totalFat = 0;
             double totalCarb = 0;
             double totalCalories = 0;
 
-            for (EatModel eat : preset.getPresetMealEat()) {
+            for (FoodModel eat : preset.getMeal_food_list()) {
                 totalProtein += eat.getProtein();
                 totalFat += eat.getFat();
                 totalCarb += eat.getCarb();
@@ -113,22 +109,29 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
                     }
 
                     preset.setMealData(formattedDate); // Устанавливаем дату в модель
-                    String presetName = preset.getPresetMealName();
+                    String presetName = preset.getMeal_name();
 
                     boolean exists = mealNameDao.checkIfMealExist(presetName,formattedDate);
 
                     if (!exists) {
                         // Сохраняем объект
-                        this.mealFoodDao = new MealEatDao(MainActivity.getAppDataBase());
+                        this.mealFoodDao = new MealFoodDao(MainActivity.getAppDataBase());
                         this.connectingMealDao = new ConnectingMealDao(MainActivity.getAppDataBase());
 
-                        mealNameDao.insertMealName(preset.getPresetMealName(), formattedDate);
+                        mealNameDao.insertMealName(preset.getMeal_name(), formattedDate);
                         int meal_Id = (int) mealNameDao.getLastInsertedMealNameId();
-                        mealFoodDao.addFoodList(preset.getPresetMealEat());
-                        connectingMealDao.connecting(meal_Id, mealFoodDao.getAllFoodForMeal(meal_Id));
+                        // Добавляем еду и сохраняем полученные IDs
+                        List<Long> insertedEatIds = new ArrayList<>();
+                        for (FoodModel eat : preset.getMeal_food_list()) {
+                            long id = mealFoodDao.addSingleFood(eat); // новый метод
+                            insertedEatIds.add(id);
+                        }
+
+// Связываем mealId с этими eatId
+                        connectingMealDao.connecting(meal_Id, insertedEatIds);
 
                         mealNameDao.logAllMealNames();
-                        mealFoodDao.logAllMealEats();
+                        mealFoodDao.logAllMealFoods();
                         connectingMealDao.logAllConnections();
 
                         fragment.getParentFragmentManager().popBackStack();
@@ -151,28 +154,28 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    public void updatePresetMealsList(List<PresetMealModel> presetModelList) {
-        this.presetMeals = presetModelList.stream().map(PresetMealModel::new).collect(Collectors.toList());
+    public void updatePresetMealsList(List<MealModel> presetModelList) {
+        this.presetMeals = presetModelList.stream().map(MealModel::new).collect(Collectors.toList());
     }
 
     public void setFilteredList(String text){
         currentFilter = text;
         filteredList.clear();
-        for (PresetMealModel elm:presetMeals) {
-            if(elm.getPresetMealName().toLowerCase().contains(currentFilter)){
+        for (MealModel elm:presetMeals) {
+            if(elm.getMeal_name().toLowerCase().contains(currentFilter)){
                 filteredList.add(elm);
             }
         }
         notifyDataSetChanged();
     };
 
-    public List<PresetMealModel> getList(){
+    public List<MealModel> getList(){
         return presetMeals;
     }
     public void changeFilterText(String text){
         currentFilter = text;
     }
-    public void removePresetElm(PresetMealModel presetElmToRemove){
+    public void removePresetElm(MealModel presetElmToRemove){
         presetMeals.remove(presetElmToRemove);
     }
     public static class PresetViewHolder extends RecyclerView.ViewHolder {

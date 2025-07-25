@@ -2,33 +2,30 @@ package com.example.workoutapp.NutritionModels;
 
 
 public class MealNameModel {
-    private int id;
-    private String name;
-
-
-
+    private int meal_name_id;
+    private String meal_name;
     String mealData = "";
 
-    public MealNameModel(int id, String name) {
-        this.id = id;
-        this.name = name;
+    public MealNameModel(int meal_name_id, String meal_name) {
+        this.meal_name_id = meal_name_id;
+        this.meal_name = meal_name;
     }
-    public MealNameModel(int id, String name, String mealData) {
-        this.id = id;
-        this.name = name;
+    public MealNameModel(int meal_name_id, String meal_name, String mealData) {
+        this.meal_name_id = meal_name_id;
+        this.meal_name = meal_name;
         this.mealData = mealData;
     }
 
 
-    public int getId() { return id; }
+    public int getMeal_name_id() { return meal_name_id; }
 
-    public String getName() { return name; }
+    public String getMeal_name() { return meal_name; }
 
     public String getMealData() { return mealData; }
 
-    public void setId(int id) { this.id = id; }
+    public void setMeal_name_id(int meal_name_id) { this.meal_name_id = meal_name_id; }
 
-    public void setName(String name) { this.name = name; }
+    public void setMeal_name(String meal_name) { this.meal_name = meal_name; }
 
     public void setMealData(String mealData) { this.mealData = mealData; }
 }

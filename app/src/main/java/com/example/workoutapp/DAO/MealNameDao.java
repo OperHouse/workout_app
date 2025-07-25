@@ -1,20 +1,17 @@
 package com.example.workoutapp.DAO;
 
-import com.example.workoutapp.Data.AppDataBase;
-import com.example.workoutapp.NutritionModels.MealNameModel;
-
-
 import static com.example.workoutapp.Data.AppDataBase.MEAL_DATA;
 import static com.example.workoutapp.Data.AppDataBase.MEAL_NAME;
 import static com.example.workoutapp.Data.AppDataBase.MEAL_NAME_ID;
 import static com.example.workoutapp.Data.AppDataBase.MEAL_NAME_TABLE;
 
-
-
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
+
+import com.example.workoutapp.Data.AppDataBase;
+import com.example.workoutapp.NutritionModels.MealNameModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,6 +74,28 @@ public class MealNameDao {
         }
         db.close();
         return mealName;
+    }
+    // Метод для получения массива ID имен по дате
+    public List<Integer> getMealNamesIdsByDate(String date) {
+        List<Integer> idList = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        // Запрос для поиска всех записей по дате
+        String query = "SELECT " + MEAL_NAME_ID + " FROM " + MEAL_NAME_TABLE + " WHERE " + MEAL_DATA + " = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{date});
+
+        // Если курсор не пустой, извлекаем все ID
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                int id = cursor.getInt(cursor.getColumnIndexOrThrow(MEAL_NAME_ID));
+                idList.add(id);
+            } while (cursor.moveToNext());
+
+            cursor.close();
+        }
+
+        db.close();
+        return idList;
     }
 
     // Получить все названия пресетов еды
@@ -149,12 +168,39 @@ public class MealNameDao {
         return id;
     }
 
+    public MealNameModel getMealNameModelById(int id) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        MealNameModel mealModel = null;
+
+        Cursor cursor = db.query(
+                MEAL_NAME_TABLE,
+                null,
+                MEAL_NAME_ID + " = ?",
+                new String[]{String.valueOf(id)},
+                null,
+                null,
+                null
+        );
+
+        if (cursor != null && cursor.moveToFirst()) {
+            int mealId = cursor.getInt(cursor.getColumnIndexOrThrow(MEAL_NAME_ID));
+            String name = cursor.getString(cursor.getColumnIndexOrThrow(MEAL_NAME));
+            String data = cursor.getString(cursor.getColumnIndexOrThrow(MEAL_DATA)); // mealData
+
+            mealModel = new MealNameModel(mealId, name, data);
+            cursor.close();
+        }
+
+        db.close();
+        return mealModel;
+    }
+
     //==============================Логирование======================================//
 
     public void logAllMealNames() {
         List<MealNameModel> all = getAllMealNames();
         for (MealNameModel model : all) {
-            Log.d("MealNameDao", "Data: " + model.getMealData() + ", ID: " + model.getId() + ", Name: " + model.getName());
+            Log.d("MealNameDao", "Data: " + model.getMealData() + ", ID: " + model.getMeal_name_id() + ", Name: " + model.getMeal_name());
         }
     }
 }

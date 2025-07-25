@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.DAO.BaseEatDao;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.NutritionModels.EatModel;
+import com.example.workoutapp.NutritionModels.FoodModel;
 import com.example.workoutapp.OnEatItemClickListener;
 import com.example.workoutapp.R;
 
@@ -23,25 +23,25 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
+public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.MyViewHolder>{
 
     private final Context context;
     private final BaseEatDao baseEatDao;
     private final OnEatItemClickListener listener;
     private final Fragment fragment;
     private String currentFilter = "";
-    private List<EatModel> eatList = new ArrayList<>(); //Основной лист
-    public List<EatModel> filteredList = new ArrayList<>();
+    private List<FoodModel> eatList = new ArrayList<>(); //Основной лист
+    public List<FoodModel> filteredList = new ArrayList<>();
 
 
 
-    public EatAdapter(@NonNull Context context, @NonNull OnEatItemClickListener listener, Fragment fragment) {
+    public FoodAdapter(@NonNull Context context, @NonNull OnEatItemClickListener listener, Fragment fragment) {
         this.context = context;
         this.fragment = fragment;
         this.listener = listener;
         this.baseEatDao = new BaseEatDao(MainActivity.getAppDataBase());
     }
-    public EatAdapter(@NonNull Context context, Fragment fragment) {
+    public FoodAdapter(@NonNull Context context, Fragment fragment) {
         this.context = context;
         this.fragment = fragment;
         this.baseEatDao = new BaseEatDao(MainActivity.getAppDataBase());
@@ -51,23 +51,23 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
 
     @NonNull
     @Override
-    public EatAdapter.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public FoodAdapter.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.eat_elm_card, parent, false);
-        return new EatAdapter.MyViewHolder(v);
+        return new FoodAdapter.MyViewHolder(v);
     }
 
     @SuppressLint("SetTextI18n")
     @Override
-    public void onBindViewHolder(@NonNull EatAdapter.MyViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull FoodAdapter.MyViewHolder holder, int position) {
         if (!eatList.isEmpty() || !filteredList.isEmpty()) {
-            EatModel eat;
+            FoodModel eat;
                 if(!Objects.equals(currentFilter, "")){
                     eat = filteredList.get(position);
                 }else{
                     eat = eatList.get(position);
                 }
 
-                holder.nameEat.setText(eat.getEat_name());
+                holder.nameEat.setText(eat.getFood_name());
                 holder.amountEat.setText("(" + eat.getAmount() + " " + eat.getMeasurement_type() + ")");
 
                 @SuppressLint("DefaultLocale") String protein = String.format("%.1f", eat.getProtein());
@@ -104,19 +104,19 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    public void updateEatList(List<EatModel> eatModelList) {
-            this.eatList = eatModelList.stream().map(EatModel::new).collect(Collectors.toList());
+    public void updateEatList(List<FoodModel> foodModelList) {
+            this.eatList = foodModelList.stream().map(FoodModel::new).collect(Collectors.toList());
     }
 
-    public List<EatModel> getList() {
+    public List<FoodModel> getList() {
         return eatList;
     }
 
 
 
-    public List<EatModel> getPressedEat(){
-        List<EatModel> eatPressedList = new ArrayList<>();
-        for (EatModel elm: eatList) {
+    public List<FoodModel> getPressedEat(){
+        List<FoodModel> eatPressedList = new ArrayList<>();
+        for (FoodModel elm: eatList) {
             if(elm.getIsSelected()){
                 eatPressedList.add(elm);
             }
@@ -124,33 +124,33 @@ public class EatAdapter extends RecyclerView.Adapter<EatAdapter.MyViewHolder>{
         return eatPressedList;
     }
 
-    public void removeEatElm(EatModel eatElmToRemove){
+    public void removeEatElm(FoodModel eatElmToRemove){
         eatList.remove(eatElmToRemove);
     }
-    public void eatPressedSort(EatModel eatElmPressed){
-        eatList.add(0,new EatModel(eatElmPressed));
+    public void eatPressedSort(FoodModel eatElmPressed){
+        eatList.add(0,new FoodModel(eatElmPressed));
     }
 
-    public void unPressedSort(EatModel eatElmBase) {
-        int eat_id = eatElmBase.getEat_id();
+    public void unPressedSort(FoodModel eatElmBase) {
+        int eat_id = eatElmBase.getFood_id();
         boolean isBroken = false;
 
         for (int i = 0; i < eatList.size(); i++) {
-            EatModel e = eatList.get(i);
+            FoodModel e = eatList.get(i);
             if (!e.getIsSelected()) {
-                if (e.getEat_id() > eat_id) {
-                    eatList.add(i, new EatModel(eatElmBase));
+                if (e.getFood_id() > eat_id) {
+                    eatList.add(i, new FoodModel(eatElmBase));
                     isBroken = true;
                     break;
                 }
             }
         }
         if (!isBroken) {
-            eatList.add(new EatModel(eatElmBase)); // вызывается, если break НЕ сработал
+            eatList.add(new FoodModel(eatElmBase)); // вызывается, если break НЕ сработал
         }
     }
 
-    public void deleteEat(EatModel eatToDelete){
+    public void deleteEat(FoodModel eatToDelete){
         eatList.remove(eatToDelete);
         notifyDataSetChanged();
     }
@@ -162,8 +162,8 @@ public void changeFilterText(String text){
     public void setFilteredList(String text){
         currentFilter = text;
         filteredList.clear();
-        for (EatModel elm:eatList) {
-            if(elm.getEat_name().toLowerCase().contains(currentFilter)){
+        for (FoodModel elm:eatList) {
+            if(elm.getFood_name().toLowerCase().contains(currentFilter)){
                 filteredList.add(elm);
             }
         }

@@ -21,7 +21,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.workoutapp.DAO.BaseEatDao;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.NutritionModels.EatModel;
+import com.example.workoutapp.NutritionModels.FoodModel;
 import com.example.workoutapp.R;
 
 import java.util.ArrayList;
@@ -31,13 +31,13 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 
-public class CreateEatFragment extends Fragment {
+public class CreateFoodFragment extends Fragment {
 
     private boolean isAmountDropdownManuallyShown = false;
     private boolean isTypeDropdownManuallyShown = false;
     private BaseEatDao baseEatDao;
 
-    public CreateEatFragment() {
+    public CreateFoodFragment() {
         // Required empty public constructor
     }
 
@@ -147,7 +147,7 @@ public class CreateEatFragment extends Fragment {
 
                 String measurementType = autoCompleteType.getText().toString().trim();
 
-                EatModel newEat = new EatModel(
+                FoodModel newEat = new FoodModel(
                         0, // eat_id, можно оставить 0
                         eatName,
                         protein,

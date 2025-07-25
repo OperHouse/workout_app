@@ -14,10 +14,8 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Adapters.InnerAdapter;
-import com.example.workoutapp.Models.TempExModel;
-import com.example.workoutapp.NutritionModels.EatModel;
-import com.example.workoutapp.NutritionModels.MealNameModel;
-import com.example.workoutapp.NutritionModels.PresetMealModel;
+import com.example.workoutapp.NutritionModels.FoodModel;
+import com.example.workoutapp.NutritionModels.MealModel;
 import com.example.workoutapp.R;
 
 import java.util.List;
@@ -27,7 +25,7 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
 
     private RecyclerView outsideRecyclerView;
     private final SparseArray<InnerAdapter> allInnerFoodAdapters = new SparseArray<>();
-    private List<PresetMealModel> allMealList;
+    private List<MealModel> allMealList;
     private Fragment fragment;
     private final Context context;
     public OutsideMealAdapter(@NonNull Fragment fragment, RecyclerView recyclerView) {
@@ -48,15 +46,15 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
     public void onBindViewHolder(@NonNull OutsideMealAdapter.MyViewHolder holder, int position) {
         if (allMealList == null || allMealList.isEmpty()) return;
 
-        PresetMealModel mealElm = allMealList.get(position);
-        holder.mealName_TV.setText(mealElm.getPresetMealName());
+        MealModel mealElm = allMealList.get(position);
+        holder.mealName_TV.setText(mealElm.getMeal_name());
 
         double totalProtein = 0;
         double totalFat = 0;
         double totalCarb = 0;
         double totalCalories = 0;
 
-        for (EatModel eat : mealElm.getPresetMealEat()) {
+        for (FoodModel eat : mealElm.getMeal_food_list()) {
             totalProtein += eat.getProtein();
             totalFat += eat.getFat();
             totalCarb += eat.getCarb();
@@ -82,8 +80,8 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    public void updateOuterAdapterList(List<PresetMealModel> newList) {
-        this.allMealList = newList.stream().map(PresetMealModel::new).collect(Collectors.toList());
+    public void updateOuterAdapterList(List<MealModel> newList) {
+        this.allMealList = newList.stream().map(MealModel::new).collect(Collectors.toList());
         notifyDataSetChanged();
     }
 

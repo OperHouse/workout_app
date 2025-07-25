@@ -2,8 +2,8 @@ package com.example.workoutapp;
 
 import android.content.Context;
 
-import com.example.workoutapp.NutritionModels.EatModel;
+import com.example.workoutapp.NutritionModels.FoodModel;
 
 public interface OnEatItemClickListener {
-    void onEatItemClick(Context context, EatModel eatModel);
+    void onEatItemClick(Context context, FoodModel foodModel);
 }

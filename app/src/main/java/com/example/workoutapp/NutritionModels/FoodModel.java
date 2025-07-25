@@ -1,8 +1,8 @@
 package com.example.workoutapp.NutritionModels;
 
-public class EatModel {
-    int eat_id;
-    String eat_name;
+public class FoodModel {
+    int food_id;
+    String food_name;
     double protein;
     double fat;
     double carb;
@@ -14,9 +14,9 @@ public class EatModel {
     boolean isSelected = false;
 
 
-    public EatModel(int eat_id, String eat_name, double protein, double fat, double carb, double calories, int amount, String measurement_type) {
-        this.eat_id = eat_id;
-        this.eat_name = eat_name;
+    public FoodModel(int food_id, String food_name, double protein, double fat, double carb, double calories, int amount, String measurement_type) {
+        this.food_id = food_id;
+        this.food_name = food_name;
         this.protein = protein;
         this.fat = fat;
         this.carb = carb;
@@ -24,9 +24,9 @@ public class EatModel {
         this.amount = amount;
         this.measurement_type = measurement_type;
     }
-    public EatModel(int eat_id, String eat_name, double protein, double fat, double carb, double calories, int amount, String measurement_type, boolean isSelected) {
-        this.eat_id = eat_id;
-        this.eat_name = eat_name;
+    public FoodModel(int food_id, String food_name, double protein, double fat, double carb, double calories, int amount, String measurement_type, boolean isSelected) {
+        this.food_id = food_id;
+        this.food_name = food_name;
         this.protein = protein;
         this.fat = fat;
         this.carb = carb;
@@ -36,9 +36,9 @@ public class EatModel {
         this.isSelected = isSelected;
     }
 
-    public void copyFrom(EatModel other) {
-        this.eat_id = other.eat_id;
-        this.eat_name = other.eat_name;
+    public void copyFrom(FoodModel other) {
+        this.food_id = other.food_id;
+        this.food_name = other.food_name;
         this.protein = other.protein;
         this.fat = other.fat;
         this.carb = other.carb;
@@ -48,9 +48,9 @@ public class EatModel {
         this.isSelected = other.isSelected;
     }
 
-    public EatModel(EatModel other) {
-        this.eat_id = other.eat_id;
-        this.eat_name = other.eat_name;
+    public FoodModel(FoodModel other) {
+        this.food_id = other.food_id;
+        this.food_name = other.food_name;
         this.protein = other.protein;
         this.fat = other.fat;
         this.carb = other.carb;
@@ -60,20 +60,20 @@ public class EatModel {
         this.isSelected = other.isSelected;
     }
 
-    public int getEat_id() {
-        return eat_id;
+    public int getFood_id() {
+        return food_id;
     }
 
-    public void setEat_id(int eat_id) {
-        this.eat_id = eat_id;
+    public void setFood_id(int food_id) {
+        this.food_id = food_id;
     }
 
-    public String getEat_name() {
-        return eat_name;
+    public String getFood_name() {
+        return food_name;
     }
 
-    public void setEat_name(String eat_name) {
-        this.eat_name = eat_name;
+    public void setFood_name(String food_name) {
+        this.food_name = food_name;
     }
 
     public double getProtein() {
@@ -136,12 +136,12 @@ public class EatModel {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
 
-        EatModel eat = (EatModel) obj;
-        return this.eat_id == eat.eat_id; // сравнение по ID, или по нужным полям
+        FoodModel eat = (FoodModel) obj;
+        return this.food_id == eat.food_id; // сравнение по ID, или по нужным полям
     }
 
     @Override
     public int hashCode() {
-        return Integer.hashCode(eat_id);
+        return Integer.hashCode(food_id);
     }
 }

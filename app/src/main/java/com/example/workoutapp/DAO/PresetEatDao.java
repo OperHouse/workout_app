@@ -1,14 +1,14 @@
 package com.example.workoutapp.DAO;
 
-import static com.example.workoutapp.Data.AppDataBase.PRESET_EAT_TABLE;
-import static com.example.workoutapp.Data.AppDataBase.PRESET_EAT_ID;
-import static com.example.workoutapp.Data.AppDataBase.PRESET_EAT_NAME;
-import static com.example.workoutapp.Data.AppDataBase.PRESET_EAT_PROTEIN;
-import static com.example.workoutapp.Data.AppDataBase.PRESET_EAT_FAT;
-import static com.example.workoutapp.Data.AppDataBase.PRESET_EAT_CARB;
-import static com.example.workoutapp.Data.AppDataBase.PRESET_EAT_CALORIES;
-import static com.example.workoutapp.Data.AppDataBase.PRESET_EAT_AMOUNT;
-import static com.example.workoutapp.Data.AppDataBase.PRESET_EAT_MEASUREMENT_TYPE;
+import static com.example.workoutapp.Data.AppDataBase.PRESET_FOOD_TABLE;
+import static com.example.workoutapp.Data.AppDataBase.PRESET_FOOD_ID;
+import static com.example.workoutapp.Data.AppDataBase.PRESET_FOOD_NAME;
+import static com.example.workoutapp.Data.AppDataBase.PRESET_FOOD_PROTEIN;
+import static com.example.workoutapp.Data.AppDataBase.PRESET_FOOD_FAT;
+import static com.example.workoutapp.Data.AppDataBase.PRESET_FOOD_CARB;
+import static com.example.workoutapp.Data.AppDataBase.PRESET_FOOD_CALORIES;
+import static com.example.workoutapp.Data.AppDataBase.PRESET_FOOD_AMOUNT;
+import static com.example.workoutapp.Data.AppDataBase.PRESET_FOOD_MEASUREMENT_TYPE;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -16,7 +16,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.example.workoutapp.Data.AppDataBase;
-import com.example.workoutapp.NutritionModels.EatModel;
+import com.example.workoutapp.NutritionModels.FoodModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,36 +29,36 @@ public class PresetEatDao {
     }
 
     // Добавление записи preset eat и возврат её ID
-    public void addPresetEat(EatModel eat) {
+    public void addPresetFood(FoodModel eat) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(PRESET_EAT_NAME, eat.getEat_name());
-        values.put(PRESET_EAT_PROTEIN, roundToOneDecimal(eat.getProtein()));
-        values.put(PRESET_EAT_FAT, roundToOneDecimal(eat.getFat()));
-        values.put(PRESET_EAT_CARB, roundToOneDecimal(eat.getCarb()));
-        values.put(PRESET_EAT_CALORIES, roundToOneDecimal(eat.getCalories()));
-        values.put(PRESET_EAT_AMOUNT, roundToOneDecimal(eat.getAmount()));
-        values.put(PRESET_EAT_MEASUREMENT_TYPE, eat.getMeasurement_type());
+        values.put(PRESET_FOOD_NAME, eat.getFood_name());
+        values.put(PRESET_FOOD_PROTEIN, roundToOneDecimal(eat.getProtein()));
+        values.put(PRESET_FOOD_FAT, roundToOneDecimal(eat.getFat()));
+        values.put(PRESET_FOOD_CARB, roundToOneDecimal(eat.getCarb()));
+        values.put(PRESET_FOOD_CALORIES, roundToOneDecimal(eat.getCalories()));
+        values.put(PRESET_FOOD_AMOUNT, roundToOneDecimal(eat.getAmount()));
+        values.put(PRESET_FOOD_MEASUREMENT_TYPE, eat.getMeasurement_type());
 
 
-        db.insert(PRESET_EAT_TABLE, null, values);
+        db.insert(PRESET_FOOD_TABLE, null, values);
         db.close();
     }
 
     // Удаление записи по ID
-    public void deletePresetEat(int eatId) {
+    public void deletePresetFood(int eatId) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
-        db.delete(PRESET_EAT_TABLE, PRESET_EAT_ID + " = ?", new String[]{String.valueOf(eatId)});
+        db.delete(PRESET_FOOD_TABLE, PRESET_FOOD_ID + " = ?", new String[]{String.valueOf(eatId)});
         db.close();
     }
 
     // Получение всех записей preset eat
-    public List<EatModel> getAllPresetEat() {
-        List<EatModel> eatList = new ArrayList<>();
+    public List<FoodModel> getAllPresetFood() {
+        List<FoodModel> foodList = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         Cursor cursor = db.query(
-                PRESET_EAT_TABLE,
+                PRESET_FOOD_TABLE,
                 null,
                 null,
                 null,
@@ -69,33 +69,33 @@ public class PresetEatDao {
 
         if (cursor != null && cursor.moveToFirst()) {
             do {
-                int id = cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_EAT_ID));
-                String name = cursor.getString(cursor.getColumnIndexOrThrow(PRESET_EAT_NAME));
-                double protein = cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_PROTEIN));
-                double fat = cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_FAT));
-                double carb = cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_CARB));
-                double calories = cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_CALORIES));
-                int amount = cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_EAT_AMOUNT));
-                String measurementType = cursor.getString(cursor.getColumnIndexOrThrow(PRESET_EAT_MEASUREMENT_TYPE));
+                int id = cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_FOOD_ID));
+                String name = cursor.getString(cursor.getColumnIndexOrThrow(PRESET_FOOD_NAME));
+                double protein = cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_FOOD_PROTEIN));
+                double fat = cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_FOOD_FAT));
+                double carb = cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_FOOD_CARB));
+                double calories = cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_FOOD_CALORIES));
+                int amount = cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_FOOD_AMOUNT));
+                String measurementType = cursor.getString(cursor.getColumnIndexOrThrow(PRESET_FOOD_MEASUREMENT_TYPE));
 
-                EatModel eat = new EatModel(id, name, protein, fat, carb, calories, amount, measurementType);
-                eatList.add(eat);
+                FoodModel food = new FoodModel(id, name, protein, fat, carb, calories, amount, measurementType);
+                foodList.add(food);
             } while (cursor.moveToNext());
 
             cursor.close();
         }
 
         db.close();
-        return eatList;
+        return foodList;
     }
 
     // Получение последнего ID из таблицы preset eat
-    public int getLastInsertedPresetEatId() {
+    public int getLastInsertedPresetFoodId() {
         int lastId = -1;
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         Cursor cursor = db.rawQuery(
-                "SELECT MAX(" + PRESET_EAT_ID + ") FROM " + PRESET_EAT_TABLE,
+                "SELECT MAX(" + PRESET_FOOD_ID + ") FROM " + PRESET_FOOD_TABLE,
                 null
         );
 
@@ -108,48 +108,48 @@ public class PresetEatDao {
         return lastId;
     }
 
-    public EatModel getPresetEatById(int id) {
+    public FoodModel getPresetFoodById(int id) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         Cursor cursor = db.rawQuery(
-                "SELECT * FROM " + PRESET_EAT_TABLE + " WHERE " + PRESET_EAT_ID + " = ?",
+                "SELECT * FROM " + PRESET_FOOD_TABLE + " WHERE " + PRESET_FOOD_ID + " = ?",
                 new String[]{String.valueOf(id)}
         );
 
-        EatModel eat = null;
+        FoodModel food = null;
         if (cursor.moveToFirst()) {
-            eat = new EatModel(
-                    cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_EAT_ID)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(PRESET_EAT_NAME)),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_PROTEIN)),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_FAT)),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_CARB)),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_CALORIES)),
-                    cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_EAT_AMOUNT)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(PRESET_EAT_MEASUREMENT_TYPE))
+            food = new FoodModel(
+                    cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_FOOD_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(PRESET_FOOD_NAME)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_FOOD_PROTEIN)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_FOOD_FAT)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_FOOD_CARB)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_FOOD_CALORIES)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_FOOD_AMOUNT)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(PRESET_FOOD_MEASUREMENT_TYPE))
             );
         }
 
         cursor.close();
         db.close();
-        return eat;
+        return food;
     }
 
-    public EatModel findDuplicateEat(EatModel eat) {
+    public FoodModel findDuplicateFood(FoodModel eat) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         Cursor cursor = db.query(
-                PRESET_EAT_TABLE,
+                PRESET_FOOD_TABLE,
                 null,
-                PRESET_EAT_NAME + " = ? AND " +
-                        PRESET_EAT_PROTEIN + " = ? AND " +
-                        PRESET_EAT_FAT + " = ? AND " +
-                        PRESET_EAT_CARB + " = ? AND " +
-                        PRESET_EAT_CALORIES + " = ? AND " +
-                        PRESET_EAT_AMOUNT + " = ? AND " +
-                        PRESET_EAT_MEASUREMENT_TYPE + " = ?",
+                PRESET_FOOD_NAME + " = ? AND " +
+                        PRESET_FOOD_PROTEIN + " = ? AND " +
+                        PRESET_FOOD_FAT + " = ? AND " +
+                        PRESET_FOOD_CARB + " = ? AND " +
+                        PRESET_FOOD_CALORIES + " = ? AND " +
+                        PRESET_FOOD_AMOUNT + " = ? AND " +
+                        PRESET_FOOD_MEASUREMENT_TYPE + " = ?",
                 new String[]{
-                        eat.getEat_name(),
+                        eat.getFood_name(),
                         String.valueOf(eat.getProtein()),
                         String.valueOf(eat.getFat()),
                         String.valueOf(eat.getCarb()),
@@ -162,23 +162,23 @@ public class PresetEatDao {
                 null
         );
 
-        EatModel duplicate = null;
+        FoodModel duplicateFood = null;
         if (cursor != null && cursor.moveToFirst()) {
-            duplicate = new EatModel(
-                    cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_EAT_ID)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(PRESET_EAT_NAME)),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_PROTEIN)),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_FAT)),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_CARB)),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_EAT_CALORIES)),
-                    cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_EAT_AMOUNT)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(PRESET_EAT_MEASUREMENT_TYPE))
+            duplicateFood = new FoodModel(
+                    cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_FOOD_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(PRESET_FOOD_NAME)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_FOOD_PROTEIN)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_FOOD_FAT)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_FOOD_CARB)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(PRESET_FOOD_CALORIES)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(PRESET_FOOD_AMOUNT)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(PRESET_FOOD_MEASUREMENT_TYPE))
             );
             cursor.close();
         }
 
         db.close();
-        return duplicate;
+        return duplicateFood;
     }
 
     private double roundToOneDecimal(double value) {
@@ -187,17 +187,17 @@ public class PresetEatDao {
 
 
     // Логирование всех preset eat записей
-    public void logAllPresetEat() {
-        List<EatModel> allEats = getAllPresetEat();
-        for (EatModel eat : allEats) {
-            Log.d("PresetEatDao", "ID: " + eat.getEat_id()
-                    + ", Name: " + eat.getEat_name()
-                    + ", Protein: " + eat.getProtein()
-                    + ", Fat: " + eat.getFat()
-                    + ", Carb: " + eat.getCarb()
-                    + ", Calories: " + eat.getCalories()
-                    + ", Amount: " + eat.getAmount()
-                    + ", Measurement: " + eat.getMeasurement_type());
+    public void logAllPresetFood() {
+        List<FoodModel> allFoods = getAllPresetFood();
+        for (FoodModel food : allFoods) {
+            Log.d("PresetEatDao", "ID: " + food.getFood_id()
+                    + ", Name: " + food.getFood_name()
+                    + ", Protein: " + food.getProtein()
+                    + ", Fat: " + food.getFat()
+                    + ", Carb: " + food.getCarb()
+                    + ", Calories: " + food.getCalories()
+                    + ", Amount: " + food.getAmount()
+                    + ", Measurement: " + food.getMeasurement_type());
         }
     }
 }
