@@ -1,6 +1,6 @@
 package com.example.workoutapp.DAO;
 
-import static com.example.workoutapp.Data.AppDataBase.CONNECTING_MEAL_PRESET_EAT_ID;
+import static com.example.workoutapp.Data.AppDataBase.CONNECTING_MEAL_PRESET_FOOD_ID;
 import static com.example.workoutapp.Data.AppDataBase.CONNECTING_MEAL_PRESET_NAME_ID;
 import static com.example.workoutapp.Data.AppDataBase.CONNECTING_MEAL_PRESET_TABLE;
 
@@ -25,7 +25,7 @@ public class ConnectingMealPresetDao {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(CONNECTING_MEAL_PRESET_NAME_ID, mealNameId);
-        values.put(CONNECTING_MEAL_PRESET_EAT_ID, presetEatId);
+        values.put(CONNECTING_MEAL_PRESET_FOOD_ID, presetEatId);
         db.insert(CONNECTING_MEAL_PRESET_TABLE, null, values);
         db.close();
     }
@@ -35,13 +35,13 @@ public class ConnectingMealPresetDao {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         Cursor cursor = db.rawQuery(
-                "SELECT " + CONNECTING_MEAL_PRESET_EAT_ID + " FROM " + CONNECTING_MEAL_PRESET_TABLE + " WHERE " + CONNECTING_MEAL_PRESET_NAME_ID + " = ?",
+                "SELECT " + CONNECTING_MEAL_PRESET_FOOD_ID + " FROM " + CONNECTING_MEAL_PRESET_TABLE + " WHERE " + CONNECTING_MEAL_PRESET_NAME_ID + " = ?",
                 new String[]{String.valueOf(presetId)}
         );
 
         if (cursor.moveToFirst()) {
             do {
-                int eatId = cursor.getInt(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_PRESET_EAT_ID));
+                int eatId = cursor.getInt(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_PRESET_FOOD_ID));
                 eatIds.add(eatId);
             } while (cursor.moveToNext());
         }
@@ -62,7 +62,7 @@ public class ConnectingMealPresetDao {
 
         Cursor cursor = db.rawQuery(
                 "SELECT 1 FROM " + CONNECTING_MEAL_PRESET_TABLE +
-                        " WHERE " + CONNECTING_MEAL_PRESET_EAT_ID + " = ? LIMIT 1",
+                        " WHERE " + CONNECTING_MEAL_PRESET_FOOD_ID + " = ? LIMIT 1",
                 new String[]{String.valueOf(eatId)}
         );
 
@@ -89,7 +89,7 @@ public class ConnectingMealPresetDao {
         if (cursor != null && cursor.moveToFirst()) {
             do {
                 int mealNameId = cursor.getInt(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_PRESET_NAME_ID));
-                int eatId = cursor.getInt(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_PRESET_EAT_ID));
+                int eatId = cursor.getInt(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_PRESET_FOOD_ID));
 
                 Log.d("MealPresetConnection", "Meal Name ID: " + mealNameId + ", Eat ID: " + eatId);
             } while (cursor.moveToNext());
@@ -100,4 +100,6 @@ public class ConnectingMealPresetDao {
 
         db.close();
     }
+
+
 }

@@ -3,6 +3,7 @@ package com.example.workoutapp.NutritionFragments;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,13 +19,21 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.workoutapp.Adapters.OutsideAdapter;
+import com.example.workoutapp.DAO.ConnectingMealDao;
+import com.example.workoutapp.DAO.MealFoodDao;
+import com.example.workoutapp.DAO.MealNameDao;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.NutritionAdapters.OutsideMealAdapter;
+import com.example.workoutapp.NutritionModels.MealNameModel;
+import com.example.workoutapp.NutritionModels.MealModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.WorkoutFragments.WorkoutFragment;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -33,6 +42,10 @@ public class NutritionFragment extends Fragment {
 
     private RecyclerView outer_RV;
     private OutsideMealAdapter outsideMealAdapter;
+    private List<MealModel> mealLeast = new ArrayList<>();
+    private MealNameDao mealNameDao = new MealNameDao(MainActivity.getAppDataBase());
+    private ConnectingMealDao connectingMealDao = new ConnectingMealDao(MainActivity.getAppDataBase());
+    private MealFoodDao foodMealDao = new MealFoodDao(MainActivity.getAppDataBase());
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -43,13 +56,35 @@ public class NutritionFragment extends Fragment {
         outer_RV = NutritionFragmentView.findViewById(R.id.MealRecyclerView);
 
 
+        String formattedDate1 = "";
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            LocalDate currentDate = LocalDate.now();
+            formattedDate1 = currentDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+        }
+
+        List<Integer> mealIds = mealNameDao.getMealNamesIdsByDate(formattedDate1);
+
+        for (Integer mealId : mealIds) {
+            MealNameModel mealName = mealNameDao.getMealNameModelById(mealId);
+            if (mealName == null) continue;
+
+            String name = mealName.getMeal_name();
+            String mealData = mealName.getMealData();
+
+
+            // Создаем новый MealModel с текущим списком eatModels
+            MealModel meal = new MealModel(mealId, name, mealData, foodMealDao.getMealFoodsByIds(connectingMealDao.getFoodIdsForMeal(mealId)));
+            mealLeast.add(meal);
+        }
+
+
         outsideMealAdapter = new OutsideMealAdapter(NutritionFragment.this, outer_RV);
 
         outer_RV.setHasFixedSize(true);
         outer_RV.setLayoutManager(new LinearLayoutManager(requireContext()));
         outer_RV.setAdapter(outsideMealAdapter);
 
-        outsideMealAdapter.updateOuterAdapterList();
+        outsideMealAdapter.updateOuterAdapterList(mealLeast);
 
 
         addMealBtn.setOnClickListener(new View.OnClickListener() {
@@ -109,6 +144,8 @@ public class NutritionFragment extends Fragment {
         });
     }
     private void replaceFragment(Fragment newFragment) {
+
+        mealLeast.clear();
         // Получаем менеджер фрагментов
         FragmentManager fragmentManager = getFragmentManager();
         if (fragmentManager != null) {

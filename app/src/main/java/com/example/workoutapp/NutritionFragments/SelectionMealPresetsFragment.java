@@ -22,13 +22,13 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.workoutapp.NutritionAdapters.EatAdapter;
+import com.example.workoutapp.NutritionAdapters.FoodAdapter;
 import com.example.workoutapp.NutritionAdapters.PresetMealAdapter;
 import com.example.workoutapp.DAO.ConnectingMealPresetDao;
 import com.example.workoutapp.DAO.PresetEatDao;
 import com.example.workoutapp.DAO.PresetMealNameDao;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.NutritionModels.PresetMealModel;
+import com.example.workoutapp.NutritionModels.MealModel;
 import com.example.workoutapp.R;
 
 import java.util.List;
@@ -74,7 +74,7 @@ public class SelectionMealPresetsFragment extends Fragment {
         presetRecycler = AddMealFragmentView.findViewById(R.id.presetsRecycler);
         textPressedBtn = AddMealFragmentView.findViewById(R.id.textView7);
 
-        List<PresetMealModel> presets = presetMealNameDao.getAllPresetMealModels(
+        List<MealModel> presets = presetMealNameDao.getAllPresetMealModels(
                 connectingMealPresetDao,
                 presetEatDao
         );
@@ -133,7 +133,7 @@ public class SelectionMealPresetsFragment extends Fragment {
         return AddMealFragmentView;
     }
 
-    private void showPresetDetailDialog(PresetMealModel preset) {
+    private void showPresetDetailDialog(MealModel preset) {
         Dialog dialog = new Dialog(requireContext());
         dialog.setContentView(R.layout.dialog_preset_detail);
         Objects.requireNonNull(dialog.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -144,7 +144,7 @@ public class SelectionMealPresetsFragment extends Fragment {
         Button changePresetBtn = dialog.findViewById(R.id.changePresetBtn);
         RecyclerView eatRecycler = dialog.findViewById(R.id.recyclerView);
 
-        if (preset.getPresetMealEat().size() > 5) {
+        if (preset.getMeal_food_list().size() > 5) {
             ViewGroup.LayoutParams params = eatRecycler.getLayoutParams();
             params.height = (int) TypedValue.applyDimension(
                     TypedValue.COMPLEX_UNIT_DIP,
@@ -154,26 +154,26 @@ public class SelectionMealPresetsFragment extends Fragment {
             eatRecycler.setLayoutParams(params);
         }
 
-        EatAdapter eatAdapter = new EatAdapter(requireContext(), SelectionMealPresetsFragment.this);
+        FoodAdapter foodAdapter = new FoodAdapter(requireContext(), SelectionMealPresetsFragment.this);
 
         eatRecycler.setHasFixedSize(true);
         eatRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
-        eatRecycler.setAdapter(eatAdapter);
+        eatRecycler.setAdapter(foodAdapter);
 
 
-        eatAdapter.updateEatList(preset.getPresetMealEat());
-        title.setText(preset.getPresetMealName());
+        foodAdapter.updateEatList(preset.getMeal_food_list());
+        title.setText(preset.getMeal_name());
 
         changePresetBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 dialog.dismiss();
-                replaceFragment(new CreateMealPresetFragment(preset.getPresetMealName_id()));
+                replaceFragment(new CreateMealPresetFragment(preset.getMeal_name_id()));
             }
         });
 
 
-        title.setText(preset.getPresetMealName());
+        title.setText(preset.getMeal_name());
         closeBtn.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
@@ -189,7 +189,7 @@ public class SelectionMealPresetsFragment extends Fragment {
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 searchPreset.clearFocus();
                 int position = viewHolder.getAdapterPosition();
-                PresetMealModel item = (PresetMealModel) presetMealAdapter.getList().get(position);
+                MealModel item = (MealModel) presetMealAdapter.getList().get(position);
                 showDeleteConfirmationDialog(item, position, recyclerView);
 
             }
@@ -214,7 +214,7 @@ public class SelectionMealPresetsFragment extends Fragment {
     }
 
     @SuppressLint("SetTextI18n")
-    private void showDeleteConfirmationDialog(PresetMealModel presetToDelete, int position, RecyclerView r) {
+    private void showDeleteConfirmationDialog(MealModel presetToDelete, int position, RecyclerView r) {
         Dialog dialogDeleteEat = new Dialog(requireContext());
         dialogDeleteEat.setContentView(R.layout.confirm_dialog_layout);
         Objects.requireNonNull(dialogDeleteEat.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -230,7 +230,7 @@ public class SelectionMealPresetsFragment extends Fragment {
         Button chanelBtn = dialogDeleteEat.findViewById(R.id.btnChanel);
 
         text1.setText("Удаление пресета");
-        text2.setText("Вы действивтельно хотите удалить пресет \"" + presetToDelete.getPresetMealName() + "\"");
+        text2.setText("Вы действивтельно хотите удалить пресет \"" + presetToDelete.getMeal_name() + "\"");
 
         if(dialogDeleteEat.getWindow() != null){
             dialogDeleteEat.getWindow().setBackgroundDrawable(new ColorDrawable(0));
@@ -248,7 +248,7 @@ public class SelectionMealPresetsFragment extends Fragment {
         deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int presetId = presetToDelete.getPresetMealName_id();
+                int presetId = presetToDelete.getMeal_name_id();
                 List<Integer> eatIds = connectingMealPresetDao.getEatIdsForPreset(presetId);
                 connectingMealPresetDao.deleteAllForPreset(presetId);
                 presetMealNameDao.deleteMealPresetName(presetId);
@@ -256,13 +256,13 @@ public class SelectionMealPresetsFragment extends Fragment {
 
                 for(Integer id: eatIds){
                     if(!connectingMealPresetDao.doesEatIdExist(id)){
-                        presetEatDao.deletePresetEat(id);
+                        presetEatDao.deletePresetFood(id);
                     }
                 }
 
                 connectingMealPresetDao.logAllMealPresetConnections();
                 presetMealNameDao.logAllMealPresetNames();
-                presetEatDao.logAllPresetEat();
+                presetEatDao.logAllPresetFood();
 
                 if (!searchText.isEmpty()) {
                     presetMealAdapter.removePresetElm(presetToDelete);

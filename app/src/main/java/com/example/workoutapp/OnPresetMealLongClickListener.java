@@ -1,7 +1,7 @@
 package com.example.workoutapp;
 
-import com.example.workoutapp.NutritionModels.PresetMealModel;
+import com.example.workoutapp.NutritionModels.MealModel;
 
 public interface OnPresetMealLongClickListener {
-    void onPresetMealLongClick(PresetMealModel preset);
+    void onPresetMealLongClick(MealModel preset);
 }

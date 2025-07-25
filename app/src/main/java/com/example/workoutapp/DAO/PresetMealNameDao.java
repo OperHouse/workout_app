@@ -10,9 +10,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.example.workoutapp.Data.AppDataBase;
-import com.example.workoutapp.NutritionModels.EatModel;
+import com.example.workoutapp.NutritionModels.FoodModel;
 import com.example.workoutapp.NutritionModels.MealNameModel;
-import com.example.workoutapp.NutritionModels.PresetMealModel;
+import com.example.workoutapp.NutritionModels.MealModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,30 +72,30 @@ public class PresetMealNameDao {
         return nameList;
     }
 
-    public List<PresetMealModel> getAllPresetMealModels(
+    public List<MealModel> getAllPresetMealModels(
             ConnectingMealPresetDao connectionDao,
             PresetEatDao eatDao
     ) {
-        List<PresetMealModel> presetMeals = new ArrayList<>();
+        List<MealModel> presetMeals = new ArrayList<>();
         List<MealNameModel> mealNames = getAllMealPresetNames(); // твой метод
 
         for (MealNameModel meal : mealNames) {
-            int mealId = meal.getId();
-            String name = meal.getName();
+            int mealId = meal.getMeal_name_id();
+            String name = meal.getMeal_name();
 
             // Получаем связи
             List<Integer> eatIds = connectionDao.getEatIdsForPreset(mealId);
 
-            // Получаем EatModel по id
-            List<EatModel> eatList = new ArrayList<>();
+            // Получаем FoodModel по id
+            List<FoodModel> eatList = new ArrayList<>();
             for (int eatId : eatIds) {
-                EatModel eat = eatDao.getPresetEatById(eatId);
+                FoodModel eat = eatDao.getPresetFoodById(eatId);
                 if (eat != null) {
                     eatList.add(eat);
                 }
             }
 
-            presetMeals.add(new PresetMealModel(mealId, name, eatList));
+            presetMeals.add(new MealModel(mealId, name, eatList));
         }
 
         return presetMeals;
@@ -138,7 +138,7 @@ public class PresetMealNameDao {
     public void logAllMealPresetNames() {
         List<MealNameModel> all = getAllMealPresetNames();
         for (MealNameModel model : all) {
-            Log.d("PresetMealNameDao", "ID: " + model.getId() + ", Name: " + model.getName());
+            Log.d("PresetMealNameDao", "ID: " + model.getMeal_name_id() + ", Name: " + model.getMeal_name());
         }
     }
 }
