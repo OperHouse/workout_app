@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
@@ -42,7 +43,7 @@ public class NutritionFragment extends Fragment {
 
     private RecyclerView outer_RV;
     private OutsideMealAdapter outsideMealAdapter;
-    private List<MealModel> mealLeast = new ArrayList<>();
+    private List<MealModel> mealList = new ArrayList<>();
     private MealNameDao mealNameDao = new MealNameDao(MainActivity.getAppDataBase());
     private ConnectingMealDao connectingMealDao = new ConnectingMealDao(MainActivity.getAppDataBase());
     private MealFoodDao foodMealDao = new MealFoodDao(MainActivity.getAppDataBase());
@@ -54,6 +55,11 @@ public class NutritionFragment extends Fragment {
         View NutritionFragmentView = inflater.inflate(R.layout.fragment_nutrition, container, false);
         Button addMealBtn = NutritionFragmentView.findViewById(R.id.addMealBtn);
         outer_RV = NutritionFragmentView.findViewById(R.id.MealRecyclerView);
+        ImageView imageView = NutritionFragmentView.findViewById(R.id.imageView);
+        TextView text1 = NutritionFragmentView.findViewById(R.id.textView1);
+        TextView text2 = NutritionFragmentView.findViewById(R.id.textView2);
+
+
 
 
         String formattedDate1 = "";
@@ -74,9 +80,16 @@ public class NutritionFragment extends Fragment {
 
             // Создаем новый MealModel с текущим списком eatModels
             MealModel meal = new MealModel(mealId, name, mealData, foodMealDao.getMealFoodsByIds(connectingMealDao.getFoodIdsForMeal(mealId)));
-            mealLeast.add(meal);
+            mealList.add(meal);
         }
 
+
+
+        if(!mealList.isEmpty()){
+            imageView.setVisibility(View.GONE);
+            text1.setVisibility(View.GONE);
+            text2.setVisibility(View.GONE);
+        }
 
         outsideMealAdapter = new OutsideMealAdapter(NutritionFragment.this, outer_RV);
 
@@ -84,7 +97,7 @@ public class NutritionFragment extends Fragment {
         outer_RV.setLayoutManager(new LinearLayoutManager(requireContext()));
         outer_RV.setAdapter(outsideMealAdapter);
 
-        outsideMealAdapter.updateOuterAdapterList(mealLeast);
+        outsideMealAdapter.updateOuterAdapterList(mealList);
 
 
         addMealBtn.setOnClickListener(new View.OnClickListener() {
@@ -145,7 +158,7 @@ public class NutritionFragment extends Fragment {
     }
     private void replaceFragment(Fragment newFragment) {
 
-        mealLeast.clear();
+        mealList.clear();
         // Получаем менеджер фрагментов
         FragmentManager fragmentManager = getFragmentManager();
         if (fragmentManager != null) {

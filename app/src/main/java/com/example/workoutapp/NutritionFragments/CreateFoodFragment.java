@@ -132,7 +132,7 @@ public class CreateFoodFragment extends Fragment {
         );
         createEatBtn.setOnClickListener(v -> {
             try {
-                String eatName = editTextNameEat.getText().toString().trim();
+                String foodName = editTextNameEat.getText().toString().trim();
                 double protein = parseDoubleOrZero(editTextProtein.getText().toString());
                 double fat = parseDoubleOrZero(editTextFat.getText().toString());
                 double carb = parseDoubleOrZero(editTextCarb.getText().toString());
@@ -149,7 +149,7 @@ public class CreateFoodFragment extends Fragment {
 
                 FoodModel newEat = new FoodModel(
                         0, // eat_id, можно оставить 0
-                        eatName,
+                        foodName,
                         protein,
                         fat,
                         carb,

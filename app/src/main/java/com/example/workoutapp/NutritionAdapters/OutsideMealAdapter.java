@@ -2,6 +2,7 @@ package com.example.workoutapp.NutritionAdapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,6 +48,9 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
     @Override
     public void onBindViewHolder(@NonNull OutsideMealAdapter.MyViewHolder holder, int position) {
         if (allMealList == null || allMealList.isEmpty()) return;
+
+        String path = context.getDatabasePath("mydatabase.db").getAbsolutePath();
+        Log.d("DB_PATH", "Путь к базе данных: " + path);
 
         MealModel mealElm = allMealList.get(position);
         holder.mealName_TV.setText(mealElm.getMeal_name());

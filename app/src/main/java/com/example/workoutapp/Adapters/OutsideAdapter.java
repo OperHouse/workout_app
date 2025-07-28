@@ -108,8 +108,8 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
 
         Button deleteBtn = dialogCreateEx.findViewById(R.id.btnDelete);
         Button chanelBtn = dialogCreateEx.findViewById(R.id.btnChanel);
-        TextView text1 = dialogCreateEx.findViewById(R.id.textView);
-        TextView text2 = dialogCreateEx.findViewById(R.id.text1);
+        TextView text1 = dialogCreateEx.findViewById(R.id.text1);
+        TextView text2 = dialogCreateEx.findViewById(R.id.text2);
 
         deleteBtn.setText("Удалить");
         text1.setText("Удаление упражнения");
