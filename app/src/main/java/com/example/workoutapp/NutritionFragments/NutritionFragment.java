@@ -26,8 +26,9 @@ import com.example.workoutapp.DAO.MealFoodDao;
 import com.example.workoutapp.DAO.MealNameDao;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.NutritionAdapters.OutsideMealAdapter;
-import com.example.workoutapp.NutritionModels.MealNameModel;
 import com.example.workoutapp.NutritionModels.MealModel;
+import com.example.workoutapp.NutritionModels.MealNameModel;
+import com.example.workoutapp.OnMealListChangedListener;
 import com.example.workoutapp.R;
 
 import java.text.SimpleDateFormat;
@@ -40,7 +41,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 
-public class NutritionFragment extends Fragment {
+public class NutritionFragment extends Fragment implements OnMealListChangedListener {
 
     private RecyclerView outer_RV;
     private OutsideMealAdapter outsideMealAdapter;
@@ -52,6 +53,7 @@ public class NutritionFragment extends Fragment {
     private ImageView imageView;
     private TextView text1;
     private TextView text2;
+    private String currentFormattedDate;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -64,25 +66,24 @@ public class NutritionFragment extends Fragment {
         text1 = NutritionFragmentView.findViewById(R.id.textView1);
         text2 = NutritionFragmentView.findViewById(R.id.textView2);
 
-        final String formattedDate1;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             LocalDate currentDate = LocalDate.now();
-            formattedDate1 = currentDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+            currentFormattedDate = currentDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
         } else {
-            formattedDate1 = "";
+            currentFormattedDate = "";
         }
 
 
 
-        outsideMealAdapter = new OutsideMealAdapter(NutritionFragment.this, outer_RV);
+        outsideMealAdapter = new OutsideMealAdapter(NutritionFragment.this, outer_RV, this);
 
         outer_RV.setHasFixedSize(true);
         outer_RV.setLayoutManager(new LinearLayoutManager(requireContext()));
         outer_RV.setAdapter(outsideMealAdapter);
 
-        updateMealList(formattedDate1);
+        updateMealList(currentFormattedDate);
 
-        addMealBtn.setOnClickListener(v -> ShowDialogAddMeal(formattedDate1));
+        addMealBtn.setOnClickListener(v -> ShowDialogAddMeal(currentFormattedDate));
 
         // Настройка отображения даты
         TextView dateTextView = NutritionFragmentView.findViewById(R.id.dateTextNutrition);
@@ -172,6 +173,42 @@ public class NutritionFragment extends Fragment {
         }
     }
 
+    public void refreshAdapter() {
+        mealList = new ArrayList<>();
+
+        List<Integer> mealIds = mealNameDao.getMealNamesIdsByDate(currentFormattedDate);
+        for (Integer mealId : mealIds) {
+            MealNameModel mealName = mealNameDao.getMealNameModelById(mealId);
+            if (mealName == null) continue;
+
+            MealModel meal = new MealModel(
+                    mealId,
+                    mealName.getMeal_name(),
+                    mealName.getMealData(),
+                    foodMealDao.getMealFoodsByIds(
+                            connectingMealDao.getFoodIdsForMeal(mealId)
+                    )
+            );
+
+            mealList.add(new MealModel(meal));
+        }
+
+        outsideMealAdapter = new OutsideMealAdapter(NutritionFragment.this, outer_RV, this);
+        outsideMealAdapter.updateOuterAdapterList(mealList);
+        outer_RV.setAdapter(outsideMealAdapter);
+
+        // Показ или скрытие заглушки
+        if (!mealList.isEmpty()) {
+            imageView.setVisibility(View.GONE);
+            text1.setVisibility(View.GONE);
+            text2.setVisibility(View.GONE);
+        } else {
+            imageView.setVisibility(View.VISIBLE);
+            text1.setVisibility(View.VISIBLE);
+            text2.setVisibility(View.VISIBLE);
+        }
+    }
+
     private void replaceFragment(Fragment newFragment) {
 
         mealList.clear();
@@ -190,4 +227,8 @@ public class NutritionFragment extends Fragment {
     }
 
 
+    @Override
+    public void onMealListChanged() {
+        updateMealList(currentFormattedDate);
+    }
 }

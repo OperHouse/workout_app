@@ -168,7 +168,7 @@ public class SelectionMealPresetsFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 dialog.dismiss();
-                replaceFragment(new CreateMealPresetFragment(preset.getMeal_name_id()));
+                replaceFragment(new CreateMealPresetFragment(preset.getMeal_name_id(), CreateMealPresetFragment.Mode.EDIT_PRESET));
             }
         });
 
