@@ -33,6 +33,12 @@ import java.util.function.Consumer;
 
 public class CreateFoodFragment extends Fragment {
 
+    public static final String ARG_SOURCE_FRAGMENT = "source_fragment";
+    public static final String SOURCE_PRESET = "preset";
+    public static final String SOURCE_MEAL = "meal";
+
+    private String sourceFragment;
+
     private boolean isAmountDropdownManuallyShown = false;
     private boolean isTypeDropdownManuallyShown = false;
     private BaseEatDao baseEatDao;
@@ -47,6 +53,9 @@ public class CreateFoodFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.baseEatDao = new BaseEatDao(MainActivity.getAppDataBase());
+        if (getArguments() != null) {
+            sourceFragment = getArguments().getString(ARG_SOURCE_FRAGMENT);
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -159,8 +168,20 @@ public class CreateFoodFragment extends Fragment {
                 );
                 baseEatDao.addEat(newEat);
                 baseEatDao.logAllEat();
-                // Теперь можешь передать его в БД, ViewModel и т.д.
-                requireActivity().getSupportFragmentManager().popBackStack();
+
+                if (SOURCE_PRESET.equals(sourceFragment)) {
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.frameLayout, new CreateMealPresetFragment())
+                            .commit();
+                } else if (SOURCE_MEAL.equals(sourceFragment)) {
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.frameLayout, new CreateMealPresetFragment(CreateMealPresetFragment.Mode.ADD_MEAL))
+                            .commit();
+                } else {
+                    requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                }
 
             } catch (Exception e) {
                 Toast.makeText(requireContext(), "Ошибка при создании еды: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -239,6 +260,14 @@ public class CreateFoodFragment extends Fragment {
         double calories = (protein * 4) + (fat * 9) + (carb * 4);
 
         caloriesField.setText(String.format("%.1f", calories));
+    }
+
+    public static CreateFoodFragment newInstance(String source) {
+        CreateFoodFragment fragment = new CreateFoodFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_SOURCE_FRAGMENT, source);
+        fragment.setArguments(args);
+        return fragment;
     }
 
 }

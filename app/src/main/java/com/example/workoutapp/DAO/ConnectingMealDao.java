@@ -35,6 +35,16 @@ public class ConnectingMealDao {
     }
 
 
+    public void connectingSingleFood(long mealId, long food_id) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.CONNECTING_MEAL_NAME_ID, mealId);
+        values.put(AppDataBase.CONNECTING_MEAL_FOOD_ID, food_id);
+        db.insert(AppDataBase.CONNECTING_MEAL_TABLE, null, values);
+        db.close();
+    }
+
+
     public List<Long> getFoodIdsForMeal(int mealId) {
         List<Long> eatIds = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
@@ -64,6 +74,26 @@ public class ConnectingMealDao {
         db.close();
 
         return eatIds;
+    }
+
+    public void deleteConnection(int mealId, int foodId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        db.delete(
+                AppDataBase.CONNECTING_MEAL_TABLE,
+                AppDataBase.CONNECTING_MEAL_NAME_ID + " = ? AND " + AppDataBase.CONNECTING_MEAL_FOOD_ID + " = ?",
+                new String[]{String.valueOf(mealId), String.valueOf(foodId)}
+        );
+        db.close();
+    }
+
+    public void deleteAllConnectionsForMeal(int mealId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        db.delete(
+                AppDataBase.CONNECTING_MEAL_TABLE,
+                AppDataBase.CONNECTING_MEAL_NAME_ID + " = ?",
+                new String[]{String.valueOf(mealId)}
+        );
+        db.close();
     }
 
     //==============================Логирование======================================//

@@ -68,6 +68,12 @@ public class MealFoodDao {
         return foodList;
     }
 
+    public void deleteMealFoodById(int foodId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        db.delete(AppDataBase.MEAL_FOOD_TABLE, AppDataBase.MEAL_FOOD_ID + " = ?", new String[]{String.valueOf(foodId)});
+        db.close();
+    }
+
     public long addSingleFood(FoodModel food) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -82,6 +88,35 @@ public class MealFoodDao {
         long id = db.insert(AppDataBase.MEAL_FOOD_TABLE, null, values);
         db.close();
         return id;
+    }
+
+    public void deleteMealFoodsByIds(List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) return;
+
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+        // Формируем строку вида (?, ?, ?)
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < ids.size(); i++) {
+            placeholders.append("?");
+            if (i < ids.size() - 1) {
+                placeholders.append(",");
+            }
+        }
+
+        // Преобразуем список в массив строк для подстановки в запрос
+        String[] args = new String[ids.size()];
+        for (int i = 0; i < ids.size(); i++) {
+            args[i] = String.valueOf(ids.get(i));
+        }
+
+        db.delete(
+                AppDataBase.MEAL_FOOD_TABLE,
+                AppDataBase.MEAL_FOOD_ID + " IN (" + placeholders + ")",
+                args
+        );
+
+        db.close();
     }
 
 
