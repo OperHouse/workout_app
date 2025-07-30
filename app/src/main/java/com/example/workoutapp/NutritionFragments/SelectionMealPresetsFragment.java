@@ -28,6 +28,7 @@ import com.example.workoutapp.DAO.ConnectingMealPresetDao;
 import com.example.workoutapp.DAO.PresetEatDao;
 import com.example.workoutapp.DAO.PresetMealNameDao;
 import com.example.workoutapp.MainActivity;
+import com.example.workoutapp.NutritionMode;
 import com.example.workoutapp.NutritionModels.MealModel;
 import com.example.workoutapp.R;
 
@@ -168,7 +169,7 @@ public class SelectionMealPresetsFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 dialog.dismiss();
-                replaceFragment(new CreateMealPresetFragment(preset.getMeal_name_id(), CreateMealPresetFragment.Mode.EDIT_PRESET));
+                replaceFragment(new CreateMealPresetFragment(preset.getMeal_name_id(), NutritionMode.EDIT_PRESET));
             }
         });
 

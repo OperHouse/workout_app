@@ -2,7 +2,9 @@ package com.example.workoutapp.NutritionModels;
 
 import android.os.Build;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class MealModel {
     int meal_name_id;
@@ -79,6 +81,29 @@ public class MealModel {
 
     public void setMealData(String mealData) {
         this.mealData = mealData;
+    }
+
+    public void removeFoodById(int foodId) {
+        if (meal_food_list instanceof ArrayList) {
+            meal_food_list.removeIf(food -> food.getFood_id() == foodId);
+        } else {
+            meal_food_list = new ArrayList<>(meal_food_list);
+            meal_food_list.removeIf(food -> food.getFood_id() == foodId);
+        }
+    }
+
+    public void updateFood(FoodModel updatedFood) {
+        // Если список неизменяемый, создаём изменяемую копию
+        if (meal_food_list != null) {
+            meal_food_list = new ArrayList<>(meal_food_list);
+        }
+
+        for (int i = 0; i < Objects.requireNonNull(meal_food_list).size(); i++) {
+            if (meal_food_list.get(i).getFood_id() == updatedFood.getFood_id()) {
+                meal_food_list.set(i, new FoodModel(updatedFood));
+                break;
+            }
+        }
     }
 
 
