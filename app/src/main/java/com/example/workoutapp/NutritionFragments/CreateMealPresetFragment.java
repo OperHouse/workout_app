@@ -38,6 +38,7 @@ import com.example.workoutapp.DAO.ConnectingMealPresetDao;
 import com.example.workoutapp.DAO.PresetEatDao;
 import com.example.workoutapp.DAO.PresetMealNameDao;
 import com.example.workoutapp.MainActivity;
+import com.example.workoutapp.NutritionMode;
 import com.example.workoutapp.NutritionModels.FoodModel;
 import com.example.workoutapp.OnEatItemClickListener;
 import com.example.workoutapp.R;
@@ -73,15 +74,11 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
 
     private boolean isAmountDropdownManuallyShown = false;
 
-    public enum Mode {
-        CREATE_PRESET,
-        EDIT_PRESET,
-        ADD_MEAL
-    }
-    private Mode currentMode = Mode.CREATE_PRESET;
+
+    private NutritionMode currentMode = NutritionMode.CREATE_PRESET;
     private int mealId = -1; // для добавления в конкретный приём пищи
 
-    public CreateMealPresetFragment(int mealId, Mode mode) {
+    public CreateMealPresetFragment(int mealId, NutritionMode mode) {
         this.mealId = mealId;
         this.currentMode = mode;
     }
@@ -89,7 +86,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
     public CreateMealPresetFragment() {
     }
 
-    public CreateMealPresetFragment( Mode mode) {
+    public CreateMealPresetFragment( NutritionMode mode) {
         this.currentMode = mode;
     }
 
@@ -122,7 +119,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         //Обособленная копия eatList, которая никак не связанна с другими листами
         baseEatList = eatList.stream().map(FoodModel::new).collect(Collectors.toList());
         foodAdapter = new FoodAdapter(requireContext(), this, CreateMealPresetFragment.this);
-        if (currentMode == Mode.EDIT_PRESET ){
+        if (currentMode == NutritionMode.EDIT_PRESET ){
             List<Integer> connectedEatIds = connectingMealPresetDao.getEatIdsForPreset(presetId);
 
             for (int i = connectedEatIds.size() - 1; i >= 0; i--) {
@@ -147,7 +144,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
             }
 
             text_2.setText("Изменение пресета");
-        } else if (currentMode == Mode.ADD_MEAL) {
+        } else if (currentMode == NutritionMode.ADD_MEAL) {
             text_2.setText("Добавление еды");
         }
 
@@ -176,9 +173,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         createEatBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                replaceFragment(CreateFoodFragment.newInstance(
-                        currentMode == Mode.ADD_MEAL ? CreateFoodFragment.SOURCE_MEAL : CreateFoodFragment.SOURCE_PRESET
-                ));
+                replaceFragment(new CreateFoodFragment(currentMode));
             }
         });
 
@@ -212,7 +207,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
             @Override
             public void onClick(View v) {
 
-                if (currentMode == Mode.ADD_MEAL) {
+                if (currentMode == NutritionMode.ADD_MEAL) {
                     // Получаем выбранные продукты
                     List<FoodModel> selected = foodAdapter.getPressedEat();
                     if (selected.isEmpty()) {
@@ -706,7 +701,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
             textViewCalories.setText(String.format("Калории: %.0f ккал", (float) calories));
 
         }
-        if(currentMode == Mode.EDIT_PRESET){
+        if(currentMode == NutritionMode.EDIT_PRESET){
             text1.setText("Изменение пресета");
             text2.setText("Название пресета");
             nameMealPreset.setText(presetMealNameDao.getMealPresetNameById(presetId));

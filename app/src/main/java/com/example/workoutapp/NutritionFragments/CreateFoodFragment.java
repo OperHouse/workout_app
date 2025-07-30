@@ -21,6 +21,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.workoutapp.DAO.BaseEatDao;
 import com.example.workoutapp.MainActivity;
+import com.example.workoutapp.NutritionMode;
 import com.example.workoutapp.NutritionModels.FoodModel;
 import com.example.workoutapp.R;
 
@@ -33,11 +34,8 @@ import java.util.function.Consumer;
 
 public class CreateFoodFragment extends Fragment {
 
-    public static final String ARG_SOURCE_FRAGMENT = "source_fragment";
-    public static final String SOURCE_PRESET = "preset";
-    public static final String SOURCE_MEAL = "meal";
 
-    private String sourceFragment;
+    private NutritionMode mode;
 
     private boolean isAmountDropdownManuallyShown = false;
     private boolean isTypeDropdownManuallyShown = false;
@@ -47,15 +45,16 @@ public class CreateFoodFragment extends Fragment {
         // Required empty public constructor
     }
 
+    public CreateFoodFragment(NutritionMode mode) {
+        this.mode = mode;
+    }
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.baseEatDao = new BaseEatDao(MainActivity.getAppDataBase());
-        if (getArguments() != null) {
-            sourceFragment = getArguments().getString(ARG_SOURCE_FRAGMENT);
-        }
+
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -169,15 +168,15 @@ public class CreateFoodFragment extends Fragment {
                 baseEatDao.addEat(newEat);
                 baseEatDao.logAllEat();
 
-                if (SOURCE_PRESET.equals(sourceFragment)) {
+                if (mode ==  NutritionMode.CREATE_PRESET) {
                     requireActivity().getSupportFragmentManager()
                             .beginTransaction()
                             .replace(R.id.frameLayout, new CreateMealPresetFragment())
                             .commit();
-                } else if (SOURCE_MEAL.equals(sourceFragment)) {
+                } else if (mode == NutritionMode.ADD_MEAL) {
                     requireActivity().getSupportFragmentManager()
                             .beginTransaction()
-                            .replace(R.id.frameLayout, new CreateMealPresetFragment(CreateMealPresetFragment.Mode.ADD_MEAL))
+                            .replace(R.id.frameLayout, new CreateMealPresetFragment(NutritionMode.ADD_MEAL))
                             .commit();
                 } else {
                     requireActivity().getOnBackPressedDispatcher().onBackPressed();
@@ -262,12 +261,5 @@ public class CreateFoodFragment extends Fragment {
         caloriesField.setText(String.format("%.1f", calories));
     }
 
-    public static CreateFoodFragment newInstance(String source) {
-        CreateFoodFragment fragment = new CreateFoodFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_SOURCE_FRAGMENT, source);
-        fragment.setArguments(args);
-        return fragment;
-    }
 
 }

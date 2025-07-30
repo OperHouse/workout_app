@@ -24,9 +24,9 @@ import com.example.workoutapp.DAO.MealNameDao;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.NutritionFragments.CreateMealPresetFragment;
 import com.example.workoutapp.NutritionFragments.NutritionFragment;
+import com.example.workoutapp.NutritionMode;
 import com.example.workoutapp.NutritionModels.FoodModel;
 import com.example.workoutapp.NutritionModels.MealModel;
-import com.example.workoutapp.OnMealListChangedListener;
 import com.example.workoutapp.R;
 
 import java.util.List;
@@ -41,13 +41,11 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
     private final Context context;
 
     private final SparseArray<InnerFoodAdapter> allInnerFoodAdapters = new SparseArray<>();
-    private final OnMealListChangedListener callback;
 
-    public OutsideMealAdapter(@NonNull Fragment fragment, RecyclerView recyclerView, OnMealListChangedListener callback) {
+    public OutsideMealAdapter(@NonNull Fragment fragment, RecyclerView recyclerView) {
         this.context = fragment.requireContext();
         this.fragment = fragment;
         this.outsideRecyclerView = recyclerView;
-        this.callback = callback;
     }
 
     @NonNull
@@ -59,39 +57,20 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
 
     @SuppressLint("SetTextI18n")
     @Override
-    public void onBindViewHolder(@NonNull OutsideMealAdapter.MyViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull OutsideMealAdapter.MyViewHolder holder, @SuppressLint("RecyclerView") int position) {
         if (allMealList == null || allMealList.isEmpty()) return;
 
         MealModel mealElm = allMealList.get(position);
         holder.mealName_TV.setText(mealElm.getMeal_name());
 
-        double totalProtein = 0;
-        double totalFat = 0;
-        double totalCarb = 0;
-        double totalCalories = 0;
-
-        for (FoodModel eat : mealElm.getMeal_food_list()) {
-            totalProtein += eat.getProtein();
-            totalFat += eat.getFat();
-            totalCarb += eat.getCarb();
-            totalCalories += eat.getCalories();
-        }
-
-        @SuppressLint("DefaultLocale") String protein = String.format("%.1f", totalProtein);
-        @SuppressLint("DefaultLocale") String fat = String.format("%.1f", totalFat);
-        @SuppressLint("DefaultLocale") String carb = String.format("%.1f", totalCarb);
-        @SuppressLint("DefaultLocale") String calories = String.format("%.0f", totalCalories);
-
-
-        holder.KKAL_TV.setText("Калории: " + calories);
-        holder.PFC_TV.setText("Б: " + protein + " / Ж: " + fat + " / У: " + carb);
+        setMacros(mealElm, holder);
 
         int meal_id = mealElm.getMeal_name_id();
 
 
         InnerFoodAdapter innerFoodAdapter = allInnerFoodAdapters.get(meal_id);
         if (innerFoodAdapter == null) {
-            innerFoodAdapter = new InnerFoodAdapter(context ,mealElm.getMeal_food_list(), meal_id);
+            innerFoodAdapter = new InnerFoodAdapter(context, fragment, mealElm.getMeal_food_list(), meal_id);
             allInnerFoodAdapters.put(meal_id, innerFoodAdapter);
         } else {
             innerFoodAdapter.updateData(mealElm.getMeal_food_list(), meal_id);
@@ -100,15 +79,31 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
         holder.innerFoodRecycler.setAdapter(innerFoodAdapter);
         innerFoodAdapter.attachSwipeToDelete(holder.innerFoodRecycler, meal_id);
 
+
         holder.addFood_BTN.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Переход к новому фрагменту
                 FragmentManager fragmentManager = fragment.getParentFragmentManager(); // Use the fragment reference to get FragmentManager
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                fragmentTransaction.replace(R.id.frameLayout, new CreateMealPresetFragment(meal_id, CreateMealPresetFragment.Mode.ADD_MEAL)); // Replace with the new fragment
+                fragmentTransaction.replace(R.id.frameLayout, new CreateMealPresetFragment(meal_id, NutritionMode.ADD_MEAL)); // Replace with the new fragment
                 fragmentTransaction.addToBackStack(null); // Add to back stack if you want to navigate back
                 fragmentTransaction.commit();
+            }
+        });
+
+
+        innerFoodAdapter.setOnMealUpdatedListener(new OnMealUpdatedListener() {
+            @Override
+            public void onFoodUpdated(FoodModel updated) {
+                mealElm.updateFood(updated); // метод внутри MealModel
+                notifyItemChanged(position);
+            }
+
+            @Override
+            public void onFoodDeleted(int foodId) {
+                mealElm.removeFoodById(foodId);
+                notifyItemChanged(position);
             }
         });
 
@@ -184,6 +179,40 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
         });
 
         dialogDeleteMeal.show();
+    }
+
+    public void setMacros(MealModel mealElm, MyViewHolder holder){
+        double totalProtein = 0;
+        double totalFat = 0;
+        double totalCarb = 0;
+        double totalCalories = 0;
+
+        for (FoodModel eat : mealElm.getMeal_food_list()) {
+            totalProtein += eat.getProtein();
+            totalFat += eat.getFat();
+            totalCarb += eat.getCarb();
+            totalCalories += eat.getCalories();
+        }
+
+        @SuppressLint("DefaultLocale") String protein = String.format("%.1f", totalProtein);
+        @SuppressLint("DefaultLocale") String fat = String.format("%.1f", totalFat);
+        @SuppressLint("DefaultLocale") String carb = String.format("%.1f", totalCarb);
+        @SuppressLint("DefaultLocale") String calories = String.format("%.0f", totalCalories);
+
+
+        holder.KKAL_TV.setText("Калории: " + calories);
+        holder.PFC_TV.setText("Б: " + protein + " / Ж: " + fat + " / У: " + carb);
+    };
+
+    public void updateFoodInMeal(int mealId, FoodModel updatedFood) {
+        for (int i = 0; i < allMealList.size(); i++) {
+            MealModel meal = allMealList.get(i);
+            if (meal.getMeal_name_id() == mealId) {
+                meal.updateFood(updatedFood);
+                notifyItemChanged(i);
+                break;
+            }
+        }
     }
 
 

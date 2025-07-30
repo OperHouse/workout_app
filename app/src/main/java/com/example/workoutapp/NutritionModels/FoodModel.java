@@ -1,5 +1,7 @@
 package com.example.workoutapp.NutritionModels;
 
+import java.util.ArrayList;
+
 public class FoodModel {
     int food_id;
     String food_name;
@@ -144,4 +146,6 @@ public class FoodModel {
     public int hashCode() {
         return Integer.hashCode(food_id);
     }
+
+
 }

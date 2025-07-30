@@ -26,9 +26,9 @@ import com.example.workoutapp.DAO.MealFoodDao;
 import com.example.workoutapp.DAO.MealNameDao;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.NutritionAdapters.OutsideMealAdapter;
+import com.example.workoutapp.NutritionModels.FoodModel;
 import com.example.workoutapp.NutritionModels.MealModel;
 import com.example.workoutapp.NutritionModels.MealNameModel;
-import com.example.workoutapp.OnMealListChangedListener;
 import com.example.workoutapp.R;
 
 import java.text.SimpleDateFormat;
@@ -41,7 +41,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 
-public class NutritionFragment extends Fragment implements OnMealListChangedListener {
+public class NutritionFragment extends Fragment {
 
     private RecyclerView outer_RV;
     private OutsideMealAdapter outsideMealAdapter;
@@ -75,7 +75,7 @@ public class NutritionFragment extends Fragment implements OnMealListChangedList
 
 
 
-        outsideMealAdapter = new OutsideMealAdapter(NutritionFragment.this, outer_RV, this);
+        outsideMealAdapter = new OutsideMealAdapter(NutritionFragment.this, outer_RV);
 
         outer_RV.setHasFixedSize(true);
         outer_RV.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -173,6 +173,39 @@ public class NutritionFragment extends Fragment implements OnMealListChangedList
         }
     }
 
+    public void removeFoodFromMeal() {
+        mealList.clear();
+
+
+
+        // Получаем все ID приемов пищи на текущую дату
+        List<Integer> mealIds = mealNameDao.getMealNamesIdsByDate(currentFormattedDate);
+
+        for (Integer mealId : mealIds) {
+            MealNameModel mealName = mealNameDao.getMealNameModelById(mealId);
+            if (mealName == null) continue;
+
+            String name = mealName.getMeal_name();
+            String mealData = mealName.getMealData();
+
+            // Создаем новый MealModel с текущим списком foodModels
+            MealModel meal = new MealModel(mealId, name, mealData, foodMealDao.getMealFoodsByIds(connectingMealDao.getFoodIdsForMeal(mealId)));
+            mealList.add(new MealModel(meal));  // Добавляем в новый список
+        }
+    }
+    @SuppressLint("NotifyDataSetChanged")
+    public void updateFoodInMeal(int mealId, FoodModel updatedFood) {
+        for (MealModel meal : mealList) {
+            if (meal.getMeal_name_id() == mealId) {
+                meal.updateFood(updatedFood); // ты должен реализовать этот метод в MealModel
+                break;
+            }
+        }
+
+        // Обновляем только нужную карточку
+        outsideMealAdapter.notifyDataSetChanged();
+    }
+
     public void refreshAdapter() {
         mealList = new ArrayList<>();
 
@@ -193,7 +226,7 @@ public class NutritionFragment extends Fragment implements OnMealListChangedList
             mealList.add(new MealModel(meal));
         }
 
-        outsideMealAdapter = new OutsideMealAdapter(NutritionFragment.this, outer_RV, this);
+        outsideMealAdapter = new OutsideMealAdapter(NutritionFragment.this, outer_RV);
         outsideMealAdapter.updateOuterAdapterList(mealList);
         outer_RV.setAdapter(outsideMealAdapter);
 
@@ -227,8 +260,7 @@ public class NutritionFragment extends Fragment implements OnMealListChangedList
     }
 
 
-    @Override
-    public void onMealListChanged() {
-        updateMealList(currentFormattedDate);
+    public OutsideMealAdapter getOutsideMealAdapter() {
+        return outsideMealAdapter;
     }
 }

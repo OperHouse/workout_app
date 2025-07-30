@@ -119,6 +119,28 @@ public class MealFoodDao {
         db.close();
     }
 
+    public void updateMealFood(FoodModel food) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put(AppDataBase.MEAL_FOOD_NAME, food.getFood_name());
+        values.put(AppDataBase.MEAL_FOOD_PROTEIN, food.getProtein());
+        values.put(AppDataBase.MEAL_FOOD_FAT, food.getFat());
+        values.put(AppDataBase.MEAL_FOOD_CARB, food.getCarb());
+        values.put(AppDataBase.MEAL_FOOD_CALORIES, food.getCalories());
+        values.put(AppDataBase.MEAL_FOOD_AMOUNT, food.getAmount());
+        values.put(AppDataBase.MEAL_FOOD_MEASUREMENT_TYPE, food.getMeasurement_type());
+
+        db.update(
+                AppDataBase.MEAL_FOOD_TABLE,
+                values,
+                AppDataBase.MEAL_FOOD_ID + " = ?",
+                new String[]{String.valueOf(food.getFood_id())}
+        );
+
+        db.close();
+    }
+
 
 
     //==============================Логирование======================================//
