@@ -19,7 +19,7 @@
 
 
             <TextView
-                android:id="@+id/nameEx"
+                android:id="@+id/nameEat"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="left|center"
@@ -34,7 +34,7 @@
             </TextView>
 
             <TextView
-                android:id="@+id/exType"
+                android:id="@+id/amountEat"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="left|center"
@@ -43,7 +43,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginLeft="5dp"
                 android:text="(Гантели)"
-                app:layout_constraintStart_toEndOf="@+id/nameEx"
+                app:layout_constraintStart_toEndOf="@+id/nameEat"
                 app:layout_constraintTop_toTopOf="parent">
 
             </TextView>
@@ -60,7 +60,7 @@
                 android:textColor="@color/white"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/nameEx">
+                app:layout_constraintTop_toBottomOf="@+id/nameEat">
 
             </TextView>
 

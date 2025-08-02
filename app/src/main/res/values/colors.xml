@@ -15,5 +15,8 @@
     <color name="black_overlay">#66000000</color>
     <color name="yellow">#FFEB3B</color>
     <color name="red">#F44336</color>
-    <color name="lime">#00FF00 </color>
+    <color name="lime">#00FF00</color>
+    <color name="protein_red">#D32F2F</color>
+    <color name="fat_yellow">#FFEB3B</color>
+    <color name="carb_green">#81C784</color>
 </resources>

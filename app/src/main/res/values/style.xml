@@ -6,4 +6,8 @@
     </style>
     <style name="ExposedDropdownMenu" parent="Widget.Material3.TextInputLayout.FilledBox.Dense.ExposedDropdownMenu">
     </style>
+
+    <style name="AppPopupTheme" parent="ThemeOverlay.MaterialComponents.Light">
+        <item name="android:popupBackground">@color/light_gray2</item>
+    </style>
 </resources>
