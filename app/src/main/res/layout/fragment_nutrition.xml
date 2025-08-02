@@ -8,7 +8,7 @@ android:layout_height="wrap_content"
 android:scrollbars = "vertical"
 android:scrollbarStyle="insideInset"
 android:fillViewport="true"
-tools:context=".NutritionFragments.NutritionFragment">
+tools:context=".Fragments.NutritionFragments.NutritionFragment">
 
 <androidx.constraintlayout.widget.ConstraintLayout
     android:layout_width="match_parent"
