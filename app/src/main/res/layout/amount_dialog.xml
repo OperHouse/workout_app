@@ -37,7 +37,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <!-- NutritionCircleView -->
-    <com.example.workoutapp.NutritionCircleView
+    <com.example.workoutapp.Tools.NutritionCircleView
         android:id="@+id/NutritionCircleView"
         android:layout_width="150dp"
         android:layout_height="150dp"

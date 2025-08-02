@@ -9,9 +9,9 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import com.example.workoutapp.Data.AppDataBase;
-import com.example.workoutapp.NutritionFragments.NutritionFragment;
-import com.example.workoutapp.WorkoutFragments.WorkoutFragment;
+import com.example.workoutapp.Data.Tables.AppDataBase;
+import com.example.workoutapp.Fragments.NutritionFragments.NutritionFragment;
+import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutFragment;
 import com.example.workoutapp.databinding.ActivityMainBinding;
 
 
