@@ -19,181 +19,124 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Adapters.WorkoutAdapters.ExAdapter;
-import com.example.workoutapp.Data.WorkoutDao.ExerciseDao;
-import com.example.workoutapp.Data.WorkoutDao.PresetDao;
+import com.example.workoutapp.Data.WorkoutDao.BASE_EXERCISE_TABLE_DAO;
+import com.example.workoutapp.Data.WorkoutDao.CONNECTING_WORKOUT_PRESET_TABLE_DAO;
+import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
-import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
+import com.example.workoutapp.Tools.WorkoutMode;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 
 public class CreatePresetFragment extends Fragment {
-    ExerciseDao ExDao;
-    PresetDao PresetDao;
+    // Используем новые DAO-классы
+    WORKOUT_PRESET_NAME_TABLE_DAO presetNameDao;
+    CONNECTING_WORKOUT_PRESET_TABLE_DAO connectingPresetDao;
+    BASE_EXERCISE_TABLE_DAO baseExerciseDao;
 
     private List<BaseExModel> exList;
+    private ExAdapter exAdapter;
     SearchView searchView;
 
     public CreatePresetFragment() {
         // Required empty public constructor
     }
 
-
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.ExDao = new ExerciseDao(MainActivity.getAppDataBase());
-        this.PresetDao = new PresetDao(MainActivity.getAppDataBase());
+        // Инициализируем новые DAO-классы
+        presetNameDao = new WORKOUT_PRESET_NAME_TABLE_DAO(MainActivity.getAppDataBase());
+        connectingPresetDao = new CONNECTING_WORKOUT_PRESET_TABLE_DAO(MainActivity.getAppDataBase());
+        baseExerciseDao = new BASE_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View RootViewCreatePresetFragment = inflater.inflate(R.layout.fragment_create_preset, container, false);
+        View view = inflater.inflate(R.layout.fragment_create_preset, container, false);
+        RecyclerView recyclerView = view.findViewById(R.id.ExercisePresets_RV);
+        Button createPresetBtn = view.findViewById(R.id.createPresetBtn);
+        searchView = view.findViewById(R.id.exercise_SV);
 
-        RecyclerView exRecycler = RootViewCreatePresetFragment.findViewById(R.id.ExerciseRecyclerViewPresets);
-        ImageButton backBtn = RootViewCreatePresetFragment.findViewById(R.id.imageButtonBack);
-        Button nextBtn = RootViewCreatePresetFragment.findViewById(R.id.nextBtn);
-        searchView = RootViewCreatePresetFragment.findViewById(R.id.searchExercise3);
+        // Получаем полный список базовых упражнений из DAO
+        exList = baseExerciseDao.getAllExercises();
+        exAdapter = new ExAdapter(requireContext(), exList, WorkoutMode.SELECTED);
+        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        recyclerView.setAdapter(exAdapter);
 
-
-        exList = ExDao.getAllExercises();
-        ExAdapter exAdapter = new ExAdapter( CreatePresetFragment.this, true);
-        exAdapter.updateExList2(exList);
-        exRecycler.setHasFixedSize(true);
-        exRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
-        exRecycler.setAdapter(exAdapter);
-
-
-
-        backBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FragmentManager fragmentManager = getFragmentManager();
-                assert fragmentManager != null;
-                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                try {
-                    fragmentTransaction.replace(R.id.frameLayout, Selection_Ex_Preset_Fragment.class.newInstance());
-                } catch (IllegalAccessException | java.lang.InstantiationException e) {
-                    throw new RuntimeException(e);
-                }
-                fragmentTransaction.commit();
-            }
-        });
-
-        nextBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (exAdapter.getList().isEmpty()) {
-                    Toast.makeText(requireContext(), "Выберите хотя бы одно упражнение", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                searchView.clearFocus();
-                exRecycler.requestFocus();
-                showDialogConfirmation(exAdapter);
-            }
-        });
+        createPresetBtn.setOnClickListener(v -> createPresetDialog());
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                // Убираем фокус после отправки
-                searchView.clearFocus();
-                exRecycler.requestFocus();
-                return true;
+                return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                exAdapter.updateExListFiltered(newText);
-                return true;
+                //exAdapter.getFilter().filter(newText);
+                return false;
             }
         });
 
-
-
-        return RootViewCreatePresetFragment;
+        return view;
     }
 
-    private void filterExerciseList(String query, ExAdapter adapter) {
-        List<BaseExModel> filteredList = new ArrayList<>();
-        for (BaseExModel ex : exList) {
-            if (ex.getExName().toLowerCase().contains(query.toLowerCase())) {
-                filteredList.add(ex);
-            }
-        }
-        //adapter.updateExListFiltered(query, filteredList);
-
-    }
-
-
-    private void showDialogConfirmation(ExAdapter exAdapter){
+    private void createPresetDialog() {
         Dialog dialogCreatePreset = new Dialog(requireContext());
         dialogCreatePreset.setContentView(R.layout.confirm_dialog_preset);
         Objects.requireNonNull(dialogCreatePreset.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialogCreatePreset.setCancelable(false);
+        dialogCreatePreset.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+
+        EditText namePreset = dialogCreatePreset.findViewById(R.id.namePreset_ET);
+        Button createBtn = dialogCreatePreset.findViewById(R.id.createBtn);
+        ImageButton closeBtn = dialogCreatePreset.findViewById(R.id.closeBtn);
+
+        closeBtn.setOnClickListener(v -> dialogCreatePreset.dismiss());
+
+        createBtn.setOnClickListener(v -> {
+            String presetName = namePreset.getText().toString().trim();
+            List<BaseExModel> selectedExercises = exAdapter.getSelectedItems();
+
+            if (presetName.isEmpty()) {
+                namePreset.setError("Пожалуйста, введите название пресета");
+                return;
+            }
+
+            if (selectedExercises.isEmpty()) {
+                Toast.makeText(requireContext(), "Выберите хотя бы одно упражнение", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // 1. Сохраняем имя пресета и получаем ID
+            long newPresetId = presetNameDao.addPresetName(presetName);
+
+            // 2. Сохраняем выбранные упражнения в соединяющую таблицу
+            for (BaseExModel exercise : selectedExercises) {
+                connectingPresetDao.addPresetExercise(newPresetId, exercise.getBase_ex_id());
+            }
+
+            dialogCreatePreset.dismiss();
+
+            Toast.makeText(requireContext(), "Пресет создан!", Toast.LENGTH_SHORT).show();
+
+            FragmentManager fragmentManager = getFragmentManager();
+            assert fragmentManager != null;
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.replace(R.id.frameLayout, new Selection_Ex_Preset_Fragment());
+            fragmentTransaction.commit();
+        });
         dialogCreatePreset.show();
-        searchView.clearFocus();
-
-        EditText namePreset = dialogCreatePreset.findViewById(R.id.editText);
-        Button btnAdd = dialogCreatePreset.findViewById(R.id.btnAdd);
-        Button btnChanel = dialogCreatePreset.findViewById(R.id.btnChanel);
-
-
-        if(dialogCreatePreset.getWindow() != null){
-            dialogCreatePreset.getWindow().setBackgroundDrawable(new ColorDrawable(0));
-        }
-        btnChanel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialogCreatePreset.dismiss();
-                searchView.clearFocus();
-                
-            }
-        });
-
-        btnAdd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String presetName = namePreset.getText().toString().trim();
-
-                if (presetName.isEmpty()) {
-                    namePreset.setError("Пожалуйста, введите название пресета");
-                    return;
-                }
-
-                if (exAdapter.getList().isEmpty()) {
-                    Toast.makeText(requireContext(), "Выберите хотя бы одно упражнение", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                ExerciseModel newPreset = new ExerciseModel(presetName, exAdapter.getList());
-                PresetDao.addPreset(newPreset);
-                dialogCreatePreset.dismiss();
-
-                Toast.makeText(requireContext(), "Пресет создан!", Toast.LENGTH_SHORT).show();
-
-                FragmentManager fragmentManager = getFragmentManager();
-                assert fragmentManager != null;
-                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                try {
-                    fragmentTransaction.replace(R.id.frameLayout, Selection_Ex_Preset_Fragment.class.newInstance());
-                } catch (IllegalAccessException | java.lang.InstantiationException e) {
-                    throw new RuntimeException(e);
-                }
-                fragmentTransaction.commit();
-            }
-        });
     }
+
     public void clearSearchFocus() {
         if (searchView != null) {
             searchView.clearFocus();
         }
     }
-
 }

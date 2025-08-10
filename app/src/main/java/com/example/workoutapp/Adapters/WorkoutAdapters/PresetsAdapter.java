@@ -5,31 +5,31 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.example.workoutapp.Data.WorkoutDao.TempWorkoutDao;
+import com.example.workoutapp.Data.WorkoutDao.BASE_EXERCISE_TABLE_DAO;
+import com.example.workoutapp.Data.WorkoutDao.CONNECTING_WORKOUT_PRESET_TABLE_DAO;
+import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutFragment;
-
 import java.util.List;
 
-public class PresetsAdapter  extends RecyclerView.Adapter<PresetsAdapter.MyViewHolder> {
+public class PresetsAdapter extends RecyclerView.Adapter<PresetsAdapter.MyViewHolder> {
 
     private List<ExerciseModel> presetsList;
-    private TempWorkoutDao TempWorkDao;
-    private Fragment fragment;
+    private final WORKOUT_PRESET_NAME_TABLE_DAO presetNameDao;
+    private final CONNECTING_WORKOUT_PRESET_TABLE_DAO connectingPresetDao;
+    private final BASE_EXERCISE_TABLE_DAO baseExerciseDao;
+    private final Fragment fragment;
 
     public PresetsAdapter(@NonNull Fragment fragment) {
         this.fragment = fragment;
-        this.TempWorkDao = new TempWorkoutDao(MainActivity.getAppDataBase());
+        this.presetNameDao = new WORKOUT_PRESET_NAME_TABLE_DAO(MainActivity.getAppDataBase());
+        this.connectingPresetDao = new CONNECTING_WORKOUT_PRESET_TABLE_DAO(MainActivity.getAppDataBase());
+        this.baseExerciseDao = new BASE_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
     }
 
     @NonNull
@@ -41,40 +41,38 @@ public class PresetsAdapter  extends RecyclerView.Adapter<PresetsAdapter.MyViewH
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-            ExerciseModel currentExerciseModel = presetsList.get(position);
+        if (presetsList == null || position >= presetsList.size()) {
+            return;
+        }
 
-            holder.namePreset.setText(currentExerciseModel.getPresetName());
+        ExerciseModel currentPreset = presetsList.get(position);
+        holder.namePreset.setText(currentPreset.getExerciseName());
 
-            // Формируем строку для отображения всех упражнений в пресете
-            StringBuilder exercisesListText = new StringBuilder();
-            for (BaseExModel exercise : currentExerciseModel.getExercises()) {
+        StringBuilder exercisesListText = new StringBuilder();
+        List<Long> baseExIds = connectingPresetDao.getBaseExIdsByPresetId(currentPreset.getExercise_id());
+
+        for (Long baseExId : baseExIds) {
+            BaseExModel exercise = baseExerciseDao.getExerciseById(baseExId);
+            if (exercise != null) {
                 exercisesListText.append(exercise.getExName())
-                        .append(" ")
+                        .append(" (")
                         .append(exercise.getExType())
-                        .append(", ");
+                        .append("), ");
             }
+        }
 
-            holder.exListText.setText(exercisesListText.toString());
+        if (exercisesListText.length() > 0) {
+            exercisesListText.setLength(exercisesListText.length() - 2);
+        }
 
-        holder.itemView.setOnClickListener(v ->{
-                for (BaseExModel s: currentExerciseModel.getExercises()) {
-                    String exName = s.getExName();
-                    boolean exerciseExists = TempWorkDao.checkIfTempExerciseExists(exName);
-                    if(!exerciseExists){
-                        TempWorkDao.addTempExercise(s.getExName(), s.getExType(), s.getBodyType());
-                    }
-                }
-                // Переход к новому фрагменту
-                FragmentManager fragmentManager = fragment.getParentFragmentManager(); // Use the fragment reference to get FragmentManager
-                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                fragmentTransaction.replace(R.id.frameLayout, new WorkoutFragment()); // Replace with the new fragment
-                fragmentTransaction.addToBackStack(null); // Add to back stack if you want to navigate back
-                fragmentTransaction.commit();
-            });
+        holder.exListText.setText(exercisesListText.toString());
 
-
-
+        holder.itemView.setOnClickListener(v -> {
+            // Здесь должна быть логика для загрузки пресета в текущую тренировку.
+            // Например, вызов метода во Fragment'е или DAO для добавления упражнений
+        });
     }
+
     @SuppressLint("NotifyDataSetChanged")
     public void updatePresetsList(List<ExerciseModel> exerciseModelList) {
         this.presetsList = exerciseModelList;
@@ -88,6 +86,7 @@ public class PresetsAdapter  extends RecyclerView.Adapter<PresetsAdapter.MyViewH
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
         TextView namePreset, exListText;
+
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             namePreset = itemView.findViewById(R.id.namePreset);

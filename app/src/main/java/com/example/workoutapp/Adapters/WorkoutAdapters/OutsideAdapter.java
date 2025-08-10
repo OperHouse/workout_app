@@ -4,8 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
-import android.util.Log;
-import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,32 +16,25 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.workoutapp.Data.WorkoutDao.TempWorkoutDao;
+import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.Models.WorkoutModels.TempExModel;
+import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutFragment;
-
 import java.util.List;
 import java.util.Objects;
 
 public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHolder> {
 
-    private TempWorkoutDao TempWorkDao;
-    private List<TempExModel> tempExModelList;
+    private WORKOUT_EXERCISE_TABLE_DAO workoutExerciseTableDao;
+    private List<ExerciseModel> exerciseModelList;
     private Fragment fragment;
     private final Context context;
 
-    // Список для хранения всех адаптеров InnerAdapter
-    private RecyclerView outerRecyclerView;
-    public OutsideAdapter(@NonNull Fragment fragment, RecyclerView recyclerView) {
+    public OutsideAdapter(@NonNull Fragment fragment) {
         this.context = fragment.requireContext();
         this.fragment = fragment;
-        this.TempWorkDao = new TempWorkoutDao(MainActivity.getAppDataBase());
-        this.outerRecyclerView = recyclerView; // сохраняем ссылку
+        this.workoutExerciseTableDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
     }
-
-    private final SparseArray<InnerAdapter> allInnerAdapters = new SparseArray<>();
 
     @NonNull
     @Override
@@ -54,57 +45,54 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        if (tempExModelList == null || tempExModelList.isEmpty()) return;
+        if (exerciseModelList == null || exerciseModelList.isEmpty()) return;
 
-        TempExModel tempExModelElm = tempExModelList.get(position);
-        holder.name.setText(tempExModelElm.getExName());
-        holder.type.setText(tempExModelElm.getTypeEx());
+        ExerciseModel exerciseModelListElm = exerciseModelList.get(position);
+        holder.name.setText(exerciseModelListElm.getExerciseName());
+        holder.type.setText(exerciseModelListElm.getExerciseType());
 
-        final int exerciseId = tempExModelElm.getEx_id();
+        final int exerciseId = (int) exerciseModelListElm.getExercise_id();
 
-
-        InnerAdapter innerAdapter = allInnerAdapters.get(exerciseId);
-        if (innerAdapter == null) {
-            innerAdapter = new InnerAdapter(tempExModelElm.getSetsList(), exerciseId);
-            allInnerAdapters.put(exerciseId, innerAdapter);
+        // --- Логика для динамического отображения заголовков ---
+        if ("strength".equalsIgnoreCase(exerciseModelListElm.getExerciseType())) {
+            holder.strengthCL.setVisibility(View.VISIBLE);
+            holder.cardioCL.setVisibility(View.GONE);
+        } else if ("cardio".equalsIgnoreCase(exerciseModelListElm.getExerciseType())) {
+            holder.strengthCL.setVisibility(View.GONE);
+            holder.cardioCL.setVisibility(View.VISIBLE);
         } else {
-            innerAdapter.updateData(tempExModelElm.getSetsList(), exerciseId);
+            // Скрываем оба, если тип неизвестен
+            holder.strengthCL.setVisibility(View.GONE);
+            holder.cardioCL.setVisibility(View.GONE);
         }
 
-        RecyclerView.Adapter currentAdapter = holder.innerRecycler.getAdapter();
-        if (currentAdapter != innerAdapter) {
-            holder.innerRecycler.setAdapter(innerAdapter);
-            innerAdapter.attachSwipeToDelete(holder.innerRecycler, exerciseId); // <- важно делать при смене адаптера
-        }
+        InnerAdapter innerAdapter = new InnerAdapter(exerciseModelListElm.getSets(), exerciseId);
+        holder.innerRecycler.setAdapter(innerAdapter);
 
+        // Устанавливаем слушатель для изменения видимости
         innerAdapter.setOnSetListChangedListener((changedExerciseId, isEmpty) -> {
-            if (changedExerciseId == exerciseId) {
-                holder.constraintLayout.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+            if (exerciseId == changedExerciseId) {
+                holder.innerRecycler.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
             }
         });
 
-        holder.constraintLayout.setVisibility(tempExModelElm.getSetsList().isEmpty() ? View.GONE : View.VISIBLE);
+        // Проверяем, пуст ли список сетов, чтобы скрыть RecyclerView
+        holder.innerRecycler.setVisibility(exerciseModelListElm.getSets().isEmpty() ? View.GONE : View.VISIBLE);
 
-        InnerAdapter finalInnerAdapter = innerAdapter;
+        innerAdapter.attachSwipeToDelete(holder.innerRecycler, exerciseId);
+
         holder.addSet.setOnClickListener(v -> {
-            saveAllInnerAdapters();
-            TempWorkDao.addTempSet(exerciseId);
-            tempExModelElm.setSetsList(TempWorkDao.getTempSetsByExercise(exerciseId));
-            finalInnerAdapter.updateData(tempExModelElm.getSetsList(), exerciseId);
-            finalInnerAdapter.notifyItemInserted(finalInnerAdapter.getItemCount() - 1);
-            outerRecyclerView.scrollToPosition(0);
+
         });
 
-        holder.delEx.setOnClickListener(v -> delConfirmDialog(tempExModelElm, position));
+        holder.delEx.setOnClickListener(v -> delConfirmDialog(exerciseModelListElm, position));
     }
 
-    // Метод для отображения диалога подтверждения удаления
-    private void delConfirmDialog(TempExModel elm, int position) {
+    private void delConfirmDialog(ExerciseModel elm, int position) {
         Dialog dialogCreateEx = new Dialog(context);
         dialogCreateEx.setContentView(R.layout.confirm_dialog_layout);
         Objects.requireNonNull(dialogCreateEx.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dialogCreateEx.setCancelable(true);
-        dialogCreateEx.setCanceledOnTouchOutside(true);
 
         Button deleteBtn = dialogCreateEx.findViewById(R.id.btnDelete);
         Button chanelBtn = dialogCreateEx.findViewById(R.id.btnChanel);
@@ -124,63 +112,35 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
         deleteBtn.setOnClickListener(v -> {
             dialogCreateEx.dismiss();
 
-            int exIdToDelete = elm.getEx_id();
-            TempWorkDao.deleteTempExerciseWithSets(exIdToDelete);
-
-            // Обновляем ID всех упражнений
-            tempExModelList.remove(position);
-            for (int i = 0; i < tempExModelList.size(); i++) {
-                TempExModel model = tempExModelList.get(i);
-                int newId = i;
-                int oldId = model.getEx_id();
-                if (oldId != newId) {
-                    TempWorkDao.updateTempExerciseId(oldId, newId);
-                    TempWorkDao.updateTempSetsExerciseId(oldId, newId);
-                }
-            }
-
-            //Вот тут я удаляю RecyclerView и потом пересоздаю его
-            outerRecyclerView.setAdapter(null);
-            ((WorkoutFragment) fragment).refreshAdapter();
-
+            exerciseModelList.remove(position);
+            notifyItemRemoved(position);
         });
 
         dialogCreateEx.show();
     }
 
-
-    // Метод для сохранения изменений во всех адаптерах
     public void saveAllInnerAdapters() {
-        for (int i = 0; i < allInnerAdapters.size(); i++) {
-            InnerAdapter adapter = allInnerAdapters.valueAt(i);
-            adapter.saveModifiedSetsToDb();
-        }
-        Log.d("OutsideAdapter", "All inner adapter changes saved");
+        // Логика сохранения должна быть пересмотрена.
     }
 
     @Override
     public int getItemCount() {
-        if (tempExModelList != null) {
-            return tempExModelList.size();
-        }
-        return 0;
+        return exerciseModelList != null ? exerciseModelList.size() : 0;
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    public void updateExList(List<TempExModel> tempExModelList) {
-        this.tempExModelList = tempExModelList;
+    public void updateExList(List<ExerciseModel> ExModelList) {
+        this.exerciseModelList = ExModelList;
         notifyDataSetChanged();
     }
 
-
     public static class MyViewHolder extends RecyclerView.ViewHolder {
-
         TextView name;
         TextView type;
         Button addSet;
         Button delEx;
-        ConstraintLayout constraintLayout;
-
+        ConstraintLayout strengthCL;
+        ConstraintLayout cardioCL;
         RecyclerView innerRecycler;
 
         public MyViewHolder(@NonNull View itemView) {
@@ -189,11 +149,10 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
             type = itemView.findViewById(R.id.type);
             addSet = itemView.findViewById(R.id.addSetBtn);
             delEx = itemView.findViewById(R.id.delExBtn);
-            constraintLayout = itemView.findViewById(R.id.cons);
+            strengthCL = itemView.findViewById(R.id.strength_CL);
+            cardioCL = itemView.findViewById(R.id.cardio_CL);
             innerRecycler = itemView.findViewById(R.id.innerRecycle);
-            innerRecycler.setLayoutManager(new LinearLayoutManager(itemView.getContext())); // Устанавливаем LayoutManager для внутреннего RecyclerView
+            innerRecycler.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
         }
-
-
     }
 }

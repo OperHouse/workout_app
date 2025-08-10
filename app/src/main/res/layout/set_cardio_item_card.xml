@@ -20,12 +20,12 @@
 
 
             <EditText
-                android:id="@+id/kg_textEd"
+                android:id="@+id/time_ET"
                 android:layout_width="50dp"
                 android:layout_height="30dp"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="4dp"
-                android:layout_marginStart="50dp"
+                android:layout_marginStart="30dp"
                 android:gravity="center"
                 android:autofillHints="0"
                 android:hint="@string/ed_text"
@@ -42,7 +42,7 @@
             </EditText>
 
             <EditText
-                android:id="@+id/reps_textEd"
+                android:id="@+id/temp_ET"
                 android:layout_width="50dp"
                 android:layout_height="30dp"
                 android:layout_marginTop="4dp"
@@ -58,7 +58,29 @@
                 android:inputType="number"
                 android:background="@drawable/edit_text_back2"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/kg_textEd"
+                app:layout_constraintStart_toEndOf="@+id/time_ET"
+                app:layout_constraintTop_toTopOf="parent">
+
+            </EditText>
+
+            <EditText
+                android:id="@+id/distance_ET"
+                android:layout_width="50dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="4dp"
+                android:layout_marginStart="50dp"
+                android:gravity="center"
+                android:autofillHints="0"
+                android:hint="@string/ed_text"
+                android:singleLine="true"
+                android:imeOptions="actionDone"
+                android:textSize="15sp"
+                android:textColor="@color/white"
+                android:inputType="number"
+                android:background="@drawable/edit_text_back2"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/temp_ET"
                 app:layout_constraintTop_toTopOf="parent">
 
             </EditText>
@@ -70,7 +92,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 android:button="@null"
-                app:layout_constraintStart_toEndOf="@+id/reps_textEd"
+                app:layout_constraintStart_toEndOf="@+id/distance_ET"
                 android:background="@drawable/checkbox_bg"
                 app:layout_constraintTop_toTopOf="parent">
 
