@@ -93,14 +93,26 @@ public class SelectionMealPresetsFragment extends Fragment {
         backBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                replaceFragment(new NutritionFragment());
+                FragmentManager fragmentManager = getFragmentManager();
+                assert fragmentManager != null;
+                if (fragmentManager.getBackStackEntryCount() > 0) {
+                    fragmentManager.popBackStack();
+                }
             }
         });
 
         createPresetBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                replaceFragment(new CreateMealPresetFragment());
+                Fragment selectionFragment = new CreateMealPresetFragment();
+                FragmentManager fragmentManager = getParentFragmentManager(); // или getFragmentManager()
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+                fragmentTransaction
+                        .hide(SelectionMealPresetsFragment.this)
+                        .add(R.id.frameLayout, selectionFragment, "create_meal_preset") // Добавляем новый фрагмент с тегом
+                        .addToBackStack(null)  // Чтобы можно было вернуться назад
+                        .commit();
             }
         });
 
@@ -169,7 +181,15 @@ public class SelectionMealPresetsFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 dialog.dismiss();
-                replaceFragment(new CreateMealPresetFragment(preset.getMeal_name_id(), NutritionMode.EDIT_PRESET));
+                Fragment selectionFragment = new CreateMealPresetFragment(preset.getMeal_name_id(), NutritionMode.EDIT_PRESET);
+                FragmentManager fragmentManager = getParentFragmentManager(); // или getFragmentManager()
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+                fragmentTransaction
+                        .hide(SelectionMealPresetsFragment.this)
+                        .add(R.id.frameLayout, selectionFragment, "create_meal_preset") // Добавляем новый фрагмент с тегом
+                        .addToBackStack(null)  // Чтобы можно было вернуться назад
+                        .commit();
             }
         });
 
@@ -293,18 +313,4 @@ public class SelectionMealPresetsFragment extends Fragment {
         dialogDeleteEat.show();
     }
 
-    private void replaceFragment(Fragment newFragment) {
-        // Получаем менеджер фрагментов
-        FragmentManager fragmentManager = getFragmentManager();
-        if (fragmentManager != null) {
-            // Начинаем транзакцию фрагментов
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            // Заменяем текущий фрагмент на новый
-            fragmentTransaction.replace(R.id.frameLayout, newFragment);
-            // Добавляем транзакцию в бэкстек (если нужно)
-            fragmentTransaction.addToBackStack(null);
-            // Выполняем транзакцию
-            fragmentTransaction.commit();
-        }
-    }
 }

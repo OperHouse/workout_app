@@ -126,4 +126,12 @@ public class ExerciseModel {
     public List<Object> getSets() {
         return sets;
     }
+    /**
+     * Добавляет новый сет в список сетов для этого упражнения.
+     * @param set Объект сета для добавления.
+     */
+    public void addSet(Object set) {
+        this.sets.add(set);
+    }
+
 }

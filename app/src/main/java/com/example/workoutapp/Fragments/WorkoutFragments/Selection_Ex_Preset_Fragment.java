@@ -38,8 +38,6 @@ import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.WorkoutMode;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -99,7 +97,8 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
 
         exRecycler = RootViewAddExFragment.findViewById(R.id.ExercisePresets_RV);
         exList = baseExerciseDao.getAllExercises();
-        exAdapter = new ExAdapter(requireContext(), exList, WorkoutMode.NOT_SELECTED);
+        exAdapter = new ExAdapter(this, requireContext(), WorkoutMode.NOT_SELECTED);
+        exAdapter.updateExList(exList);
 
         exRecycler.setHasFixedSize(true);
         exRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -135,19 +134,23 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
         });
 
         BackBtn.setOnClickListener(v -> {
-            FragmentManager fragmentManager = getFragmentManager();
-            assert fragmentManager != null;
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.frameLayout, new WorkoutFragment());
-            fragmentTransaction.commit();
+            FragmentManager fragmentManager = requireActivity().getSupportFragmentManager();
+            if (fragmentManager.getBackStackEntryCount() > 0) {
+                fragmentManager.popBackStack();
+            } else {
+                // Если в стеке нет фрагментов, можно закрыть активность.
+                requireActivity().finish();
+            }
         });
 
         CreatePresetBtn.setOnClickListener(v -> {
             FragmentManager fragmentManager = getFragmentManager();
             assert fragmentManager != null;
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.frameLayout, new CreatePresetFragment());
-            fragmentTransaction.commit();
+            fragmentTransaction
+                    .replace(R.id.frameLayout, new CreatePresetFragment())
+                    .addToBackStack(null) // ✅ Добавьте эту строку
+                    .commit();
         });
 
         CreateExBtn.setOnClickListener(v -> {
@@ -156,7 +159,6 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
         });
 
         setupSwipeLeftForRecycler(presetRecycler, presetsList, true);
-        setupSwipeRightForRecycler(presetRecycler, presetsList, true);
 
         setupSwipeLeftForRecycler(exRecycler, exList, false);
         setupSwipeRightForRecycler(exRecycler, exList, false);
@@ -176,10 +178,10 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
         EditText nameEx = dialogCreateEx.findViewById(R.id.editText);
         AutoCompleteTextView spinnerTypeEx = dialogCreateEx.findViewById(R.id.exerciseType_ACTV);
         AutoCompleteTextView spinnerBodyType = dialogCreateEx.findViewById(R.id.bodyType_ACTV);
-        Button createExecise_Btn = dialogCreateEx.findViewById(R.id.createWorkBtn);
+        Button createExercise_Btn = dialogCreateEx.findViewById(R.id.createWorkBtn);
 
-        String[] ExercisesType = {"Гантели", "Гриф", "Вес тела", "Кроссовер", "Тренажер", "Время", "Другое"};
-        String[] BodyPart = {"Грудь", "Плечи", "Ноги", "Руки", "Тренажер", "Спина", "Пресс", "Кардио", "Другое"};
+        String[] ExercisesType = {"Гантели", "Гриф", "Вес тела", "Кроссовер", "Тренажер", "Время", "Кардио", "Другое"};
+        String[] BodyPart = {"Грудь", "Плечи", "Ноги", "Руки", "Тренажер", "Спина", "Пресс", "Другое"};
 
         ArrayAdapter<String> ExercisesTypeAdapter = createStyledAdapter(requireContext(), Arrays.asList(ExercisesType));
         ArrayAdapter<String> BodyPartAdapter = createStyledAdapter(requireContext(), Arrays.asList(BodyPart));
@@ -212,7 +214,7 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
             isBodyPartDropdownManuallyShown = false;
         });
 
-        createExecise_Btn.setOnClickListener(v -> {
+        createExercise_Btn.setOnClickListener(v -> {
             String exName = nameEx.getText().toString().trim();
             String exType = spinnerTypeEx.getText().toString().trim();
             String bodyType = spinnerBodyType.getText().toString().trim();
@@ -229,8 +231,7 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
 
             baseExerciseDao.addExercise(newExercise);
 
-            exList = new ArrayList<>();
-            exList.addAll(baseExerciseDao.getAllExercises());
+            exList.add(new BaseExModel(newExercise));
             exAdapter.updateExList(exList);
             exerciseVisibility(textEx, "Жми '+ Добавить упражнение' чтобы начать", exList.isEmpty());
 
@@ -458,8 +459,8 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
         Button deleteBtn = dialogCreateEx.findViewById(R.id.btnDelete);
         Button chanelBtn = dialogCreateEx.findViewById(R.id.btnChanel);
 
-        TextView text1 = dialogCreateEx.findViewById(R.id.textView);
-        TextView text2 = dialogCreateEx.findViewById(R.id.text1);
+        TextView text1 = dialogCreateEx.findViewById(R.id.text1);
+        TextView text2 = dialogCreateEx.findViewById(R.id.text2);
 
         text1.setText("Удаление Пресета");
         text2.setText("Вы действительно хотите удалить Пресет?");
@@ -541,21 +542,9 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 searchView.clearFocus();
                 int position = viewHolder.getAdapterPosition();
-                if (isPreset) {
-                    ExerciseModel preset = (ExerciseModel) dataList.get(position);
-                    Bundle bundle = new Bundle();
-                    // Переиспользуем CreatePresetFragment для изменения
-                    bundle.putSerializable("preset", (Serializable) preset);
-                    CreatePresetFragment createPresetFragment = new CreatePresetFragment();
-                    createPresetFragment.setArguments(bundle);
+                BaseExModel ex = (BaseExModel) dataList.get(position);
+                showDialogChangeEx(ex, position);
 
-                    FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
-                    transaction.replace(R.id.frameLayout, createPresetFragment);
-                    transaction.commit();
-                } else {
-                    BaseExModel ex = (BaseExModel) dataList.get(position);
-                    showDialogChangeEx(ex, position);
-                }
             }
 
             @Override
@@ -579,7 +568,6 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
 
 
     private void filterExerciseList(String text) {
-        exAdapter.getFilter().filter(text);
         if (exAdapter.getItemCount() == 0) {
             exerciseVisibility(
                     textEx,

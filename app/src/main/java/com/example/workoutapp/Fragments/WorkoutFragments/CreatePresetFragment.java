@@ -14,7 +14,6 @@ import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,31 +23,38 @@ import com.example.workoutapp.Data.WorkoutDao.CONNECTING_WORKOUT_PRESET_TABLE_DA
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
+import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.WorkoutMode;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 
 public class CreatePresetFragment extends Fragment {
-    // Используем новые DAO-классы
-    WORKOUT_PRESET_NAME_TABLE_DAO presetNameDao;
-    CONNECTING_WORKOUT_PRESET_TABLE_DAO connectingPresetDao;
-    BASE_EXERCISE_TABLE_DAO baseExerciseDao;
+
+    private WORKOUT_PRESET_NAME_TABLE_DAO presetNameDao;
+    private CONNECTING_WORKOUT_PRESET_TABLE_DAO connectingPresetDao;
+    private BASE_EXERCISE_TABLE_DAO baseExerciseDao;
 
     private List<BaseExModel> exList;
+    private ExerciseModel preset;
     private ExAdapter exAdapter;
-    SearchView searchView;
+    private WorkoutMode currentState = WorkoutMode.CREATE_PRESET;
+    private SearchView searchView;
 
     public CreatePresetFragment() {
-        // Required empty public constructor
+    }
+
+    public CreatePresetFragment(ExerciseModel preset, WorkoutMode mode) {
+        this.preset = new ExerciseModel(preset); // копия
+        this.currentState = mode;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Инициализируем новые DAO-классы
         presetNameDao = new WORKOUT_PRESET_NAME_TABLE_DAO(MainActivity.getAppDataBase());
         connectingPresetDao = new CONNECTING_WORKOUT_PRESET_TABLE_DAO(MainActivity.getAppDataBase());
         baseExerciseDao = new BASE_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
@@ -58,46 +64,79 @@ public class CreatePresetFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_create_preset, container, false);
+
         RecyclerView recyclerView = view.findViewById(R.id.ExercisePresets_RV);
         Button createPresetBtn = view.findViewById(R.id.createPresetBtn);
+        ImageButton back_BTN = view.findViewById(R.id.imageButtonBack);
         searchView = view.findViewById(R.id.exercise_SV);
 
-        // Получаем полный список базовых упражнений из DAO
         exList = baseExerciseDao.getAllExercises();
-        exAdapter = new ExAdapter(requireContext(), exList, WorkoutMode.SELECTED);
+
+        if (currentState == WorkoutMode.EDIT_PRESET && preset != null) {
+            List<Long> presetExerciseIds = connectingPresetDao.getBaseExIdsByPresetId(preset.getExercise_id());
+            List<BaseExModel> updatedList = new ArrayList<>();
+
+            // 1. Добавляем упражнения из пресета (с выделением)
+            for (Long exId : presetExerciseIds) {
+                BaseExModel exerciseFromDb = baseExerciseDao.getExerciseById(exId);
+                if (exerciseFromDb != null) {
+                    BaseExModel copy = new BaseExModel(exerciseFromDb); // глубокое копирование
+                    copy.setIsPressed(true); // выделяем
+                    updatedList.add(copy);
+                }
+            }
+
+            // 2. Добавляем остальные упражнения, которых нет в пресете
+            for (BaseExModel ex : exList) {
+                if (!presetExerciseIds.contains(ex.getBase_ex_id())) {
+                    updatedList.add(new BaseExModel(ex)); // глубокое копирование
+                }
+            }
+
+            exList = new ArrayList<>(updatedList);
+        }
+
+        exAdapter = new ExAdapter(this, requireContext(), WorkoutMode.SELECTED);
+        exAdapter.updateExList(exList);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         recyclerView.setAdapter(exAdapter);
 
-        createPresetBtn.setOnClickListener(v -> createPresetDialog());
+        // текст кнопки в зависимости от режима
+        if (currentState == WorkoutMode.EDIT_PRESET) {
+            createPresetBtn.setText("Сохранить изменения");
+        }
 
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                return false;
-            }
+        createPresetBtn.setOnClickListener(v -> showPresetDialog());
 
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                //exAdapter.getFilter().filter(newText);
-                return false;
+        back_BTN.setOnClickListener(v -> {
+            FragmentManager fragmentManager = getFragmentManager();
+            assert fragmentManager != null;
+            if (fragmentManager.getBackStackEntryCount() > 0) {
+                fragmentManager.popBackStack();
             }
         });
 
         return view;
     }
 
-    private void createPresetDialog() {
-        Dialog dialogCreatePreset = new Dialog(requireContext());
-        dialogCreatePreset.setContentView(R.layout.confirm_dialog_preset);
-        Objects.requireNonNull(dialogCreatePreset.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        dialogCreatePreset.setCancelable(false);
-        dialogCreatePreset.getWindow().setBackgroundDrawable(new ColorDrawable(0));
+    private void showPresetDialog() {
+        Dialog dialog = new Dialog(requireContext());
+        dialog.setContentView(R.layout.confirm_dialog_preset);
+        Objects.requireNonNull(dialog.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.setCancelable(false);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(0));
 
-        EditText namePreset = dialogCreatePreset.findViewById(R.id.namePreset_ET);
-        Button createBtn = dialogCreatePreset.findViewById(R.id.createBtn);
-        ImageButton closeBtn = dialogCreatePreset.findViewById(R.id.closeBtn);
+        EditText namePreset = dialog.findViewById(R.id.namePreset_ET);
+        Button createBtn = dialog.findViewById(R.id.createBtn);
+        Button closeBtn = dialog.findViewById(R.id.closeBtn);
 
-        closeBtn.setOnClickListener(v -> dialogCreatePreset.dismiss());
+        // если редактирование — показываем имя
+        if (currentState == WorkoutMode.EDIT_PRESET && preset != null) {
+            namePreset.setText(preset.getExerciseName());
+            createBtn.setText("Сохранить");
+        }
+
+        closeBtn.setOnClickListener(v -> dialog.dismiss());
 
         createBtn.setOnClickListener(v -> {
             String presetName = namePreset.getText().toString().trim();
@@ -113,25 +152,37 @@ public class CreatePresetFragment extends Fragment {
                 return;
             }
 
-            // 1. Сохраняем имя пресета и получаем ID
-            long newPresetId = presetNameDao.addPresetName(presetName);
+            if (currentState == WorkoutMode.CREATE_PRESET) {
+                long newPresetId = presetNameDao.addPresetName(presetName);
+                for (BaseExModel exercise : selectedExercises) {
+                    connectingPresetDao.addPresetExercise(newPresetId, exercise.getBase_ex_id());
+                }
+                Toast.makeText(requireContext(), "Пресет создан!", Toast.LENGTH_SHORT).show();
 
-            // 2. Сохраняем выбранные упражнения в соединяющую таблицу
-            for (BaseExModel exercise : selectedExercises) {
-                connectingPresetDao.addPresetExercise(newPresetId, exercise.getBase_ex_id());
+            } else if (currentState == WorkoutMode.EDIT_PRESET && preset != null) {
+                // обновляем имя
+                if (!preset.getExerciseName().equals(presetName)) {
+                    presetNameDao.updatePresetName(preset.getExercise_id(), presetName);
+                }
+                // очищаем связи
+                connectingPresetDao.deleteExercisesByPresetId(preset.getExercise_id());
+                // добавляем новые связи
+                for (BaseExModel exercise : selectedExercises) {
+                    connectingPresetDao.addPresetExercise(preset.getExercise_id(), exercise.getBase_ex_id());
+                }
+                Toast.makeText(requireContext(), "Пресет обновлён!", Toast.LENGTH_SHORT).show();
             }
 
-            dialogCreatePreset.dismiss();
-
-            Toast.makeText(requireContext(), "Пресет создан!", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
 
             FragmentManager fragmentManager = getFragmentManager();
             assert fragmentManager != null;
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.frameLayout, new Selection_Ex_Preset_Fragment());
-            fragmentTransaction.commit();
+            if (fragmentManager.getBackStackEntryCount() > 0) {
+                fragmentManager.popBackStack();
+            }
         });
-        dialogCreatePreset.show();
+
+        dialog.show();
     }
 
     public void clearSearchFocus() {

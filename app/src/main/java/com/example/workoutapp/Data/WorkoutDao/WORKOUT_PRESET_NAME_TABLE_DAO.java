@@ -8,31 +8,31 @@ import android.database.sqlite.SQLiteDatabase;
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
-import com.example.workoutapp.MainActivity;
-
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class WORKOUT_PRESET_NAME_TABLE_DAO {
-    private final SQLiteDatabase database;
+    private final AppDataBase dbHelper;
     private final CONNECTING_WORKOUT_PRESET_TABLE_DAO connectingPresetDao;
     private final BASE_EXERCISE_TABLE_DAO baseExerciseDao;
 
 
     public WORKOUT_PRESET_NAME_TABLE_DAO(AppDataBase dbHelper) {
-        this.database = dbHelper.getReadableDatabase();
-        this.connectingPresetDao = new CONNECTING_WORKOUT_PRESET_TABLE_DAO(MainActivity.getAppDataBase());
-        this.baseExerciseDao = new BASE_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
+        this.dbHelper = dbHelper;
+        this.connectingPresetDao = new CONNECTING_WORKOUT_PRESET_TABLE_DAO(dbHelper);
+        this.baseExerciseDao = new BASE_EXERCISE_TABLE_DAO(dbHelper);
     }
 
     public long addPresetName(String presetName) {
+        SQLiteDatabase database = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(AppDataBase.WORKOUT_PRESET_NAME, presetName);
         return database.insert(AppDataBase.WORKOUT_PRESET_NAME_TABLE, null, values);
     }
 
     public void deletePreset(long presetId) {
+        SQLiteDatabase database = dbHelper.getWritableDatabase();
         String whereClause = AppDataBase.WORKOUT_PRESET_NAME_ID + " = ?";
         String[] whereArgs = {String.valueOf(presetId)};
         database.delete(AppDataBase.WORKOUT_PRESET_NAME_TABLE, whereClause, whereArgs);
@@ -48,6 +48,7 @@ public class WORKOUT_PRESET_NAME_TABLE_DAO {
      * @return Список объектов ExerciseModel, представляющих пресеты.
      */
     public List<ExerciseModel> getAllPresets() {
+        SQLiteDatabase database = dbHelper.getWritableDatabase();
         List<ExerciseModel> presets = new ArrayList<>();
         String[] columns = {
                 AppDataBase.WORKOUT_PRESET_NAME_ID,
@@ -89,5 +90,16 @@ public class WORKOUT_PRESET_NAME_TABLE_DAO {
             }
         }
         return presets;
+    }
+
+    public void updatePresetName(long presetId, String newName) {
+        SQLiteDatabase database = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.WORKOUT_PRESET_NAME, newName);
+
+        String whereClause = AppDataBase.WORKOUT_PRESET_NAME_ID + " = ?";
+        String[] whereArgs = {String.valueOf(presetId)};
+
+        database.update(AppDataBase.WORKOUT_PRESET_NAME_TABLE, values, whereClause, whereArgs);
     }
 }

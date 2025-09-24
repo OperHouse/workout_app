@@ -45,4 +45,8 @@ dependencies {
     implementation ("androidx.sqlite:sqlite:2.5.1")
     implementation ("it.xabaras.android:recyclerview-swipedecorator:1.4")
     implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.2")
+    implementation("androidx.paging:paging-runtime:3.3.6")
+    //noinspection UseTomlInstead
+    implementation("androidx.paging:paging-common:3.3.6")
 }

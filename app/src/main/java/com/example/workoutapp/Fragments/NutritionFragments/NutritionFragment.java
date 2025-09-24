@@ -21,11 +21,11 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.Adapters.NutritionAdapters.OutsideMealAdapter;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.Adapters.NutritionAdapters.OutsideMealAdapter;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.Models.NutritionModels.MealNameModel;
@@ -119,7 +119,15 @@ public class NutritionFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 dialogAddMeal.dismiss();
-                replaceFragment(new SelectionMealPresetsFragment());
+                Fragment selectionFragment = new SelectionMealPresetsFragment();
+                FragmentManager fragmentManager = getParentFragmentManager(); // или getFragmentManager()
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+                fragmentTransaction
+                        .hide(NutritionFragment.this)
+                        .add(R.id.frameLayout, selectionFragment, "selection_meal_preset") // Добавляем новый фрагмент с тегом
+                        .addToBackStack(null)  // Чтобы можно было вернуться назад
+                        .commit();
             }
         });
 
@@ -256,6 +264,12 @@ public class NutritionFragment extends Fragment {
             fragmentTransaction.addToBackStack(null);
             // Выполняем транзакцию
             fragmentTransaction.commit();
+        }
+    }
+
+    public void refreshMealData() {
+        if (outer_RV != null) {
+            updateMealList(currentFormattedDate);
         }
     }
 

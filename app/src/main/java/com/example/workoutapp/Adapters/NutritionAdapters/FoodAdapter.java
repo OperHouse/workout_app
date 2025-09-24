@@ -154,7 +154,7 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.MyViewHolder>{
         eatList.remove(eatToDelete);
         notifyDataSetChanged();
     }
-public void changeFilterText(String text){
+    public void changeFilterText(String text){
         currentFilter = text;
 }
 
