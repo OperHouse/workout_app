@@ -124,10 +124,17 @@ public class AppDataBase extends SQLiteOpenHelper {
     public static synchronized AppDataBase getInstance(Context context) {
         if (instance == null) {
             instance = new AppDataBase(context.getApplicationContext());
+        } else {
+            // Попытка получить доступ к базе, если она закрыта
+            try {
+                SQLiteDatabase db = instance.getReadableDatabase();
+            } catch (IllegalStateException e) {
+                // Если база закрыта — пересоздаём
+                instance = new AppDataBase(context.getApplicationContext());
+            }
         }
         return instance;
     }
-
 
     @Override
     public void onCreate(SQLiteDatabase db) {
@@ -278,6 +285,8 @@ public class AppDataBase extends SQLiteOpenHelper {
         // Пересоздаём таблицы
         onCreate(db);
     }
+
+
 
 
 }

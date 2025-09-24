@@ -72,4 +72,12 @@ public class CardioSetModel {
     public void setState(String state) {
         this.state = state;
     }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
+    }
 }

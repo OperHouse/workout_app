@@ -29,6 +29,13 @@ public class BaseExModel {
         this.bodyType = other.bodyType;
         this.isPressed = other.isPressed;
     }
+    public BaseExModel(BaseExModel other, boolean state) {
+        this.base_ex_id = other.base_ex_id;
+        this.exName = other.exName;
+        this.exType = other.exType;
+        this.bodyType = other.bodyType;
+        this.isPressed = state;
+    }
 
     public BaseExModel() {
 

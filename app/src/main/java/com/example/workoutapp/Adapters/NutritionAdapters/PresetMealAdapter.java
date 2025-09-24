@@ -17,12 +17,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
-import com.example.workoutapp.MainActivity;
+import com.example.workoutapp.Fragments.NutritionFragments.NutritionFragment;
 import com.example.workoutapp.Fragments.NutritionFragments.SelectionMealPresetsFragment;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.example.workoutapp.Models.NutritionModels.MealModel;
-import com.example.workoutapp.Tools.OnPresetMealLongClickListener;
 import com.example.workoutapp.R;
+import com.example.workoutapp.Tools.OnPresetMealLongClickListener;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -127,12 +128,14 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
                             insertedEatIds.add(id);
                         }
 
-// Связываем mealId с этими eatId
+                        // Связываем mealId с этими eatId
                         connectingMealDao.connecting(meal_Id, insertedEatIds);
 
                         mealNameDao.logAllMealNames();
                         mealFoodDao.logAllMealFoods();
                         connectingMealDao.logAllConnections();
+
+                        ((NutritionFragment) fragment).refreshAdapter();
 
                         fragment.getParentFragmentManager().popBackStack();
                     } else {
