@@ -28,17 +28,19 @@ import com.example.workoutapp.Data.NutritionDao.ConnectingMealPresetDao;
 import com.example.workoutapp.Data.NutritionDao.PresetEatDao;
 import com.example.workoutapp.Data.NutritionDao.PresetMealNameDao;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.Tools.NutritionMode;
 import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.R;
+import com.example.workoutapp.Tools.NutritionMode;
+import com.example.workoutapp.Tools.OnPresetMealSelectedListener;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
-public class SelectionMealPresetsFragment extends Fragment {
+public class SelectionMealPresetsFragment extends Fragment implements OnPresetMealSelectedListener {
 
     private RecyclerView presetRecycler;
     private PresetMealNameDao presetMealNameDao;
@@ -55,6 +57,13 @@ public class SelectionMealPresetsFragment extends Fragment {
     }
 
 
+    @Override
+    public void onPresetMealSelected() {
+        Bundle result = new Bundle();
+        result.putBoolean("meal_preset_added", true);
+        getParentFragmentManager().setFragmentResult("preset_added_result", result);
+
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -84,7 +93,7 @@ public class SelectionMealPresetsFragment extends Fragment {
             textPressedBtn.setVisibility(View.GONE);
         }
 
-        presetMealAdapter = new PresetMealAdapter(this, requireContext(), this::showPresetDetailDialog);
+        presetMealAdapter = new PresetMealAdapter(this, requireContext(), this::showPresetDetailDialog, this);
         presetRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         presetRecycler.setAdapter(presetMealAdapter);
         presetMealAdapter.updatePresetMealsList(presets);
@@ -142,7 +151,17 @@ public class SelectionMealPresetsFragment extends Fragment {
             }
         });
 
-
+        getParentFragmentManager().setFragmentResultListener(
+                "preset_created",
+                getViewLifecycleOwner(),
+                (requestKey, bundle) -> {
+                    boolean created = bundle.getBoolean("created", false);
+                    if (created) {
+                        // Если вставка в БД делалась в фоне, лучше перезапрашивать явно
+                        loadPresets();
+                    }
+                }
+        );
         return AddMealFragmentView;
     }
 
@@ -313,4 +332,23 @@ public class SelectionMealPresetsFragment extends Fragment {
         dialogDeleteEat.show();
     }
 
+    private void loadPresets() {
+        // Перезапрашиваем из БД
+        List<MealModel> updatedPresets = presetMealNameDao.getAllPresetMealModels(
+                connectingMealPresetDao,
+                presetEatDao
+        );
+
+        if (updatedPresets == null) updatedPresets = new ArrayList<>();
+
+        // Показ/скрытие текста "нет пресетов"
+        if (!updatedPresets.isEmpty()) {
+            textPressedBtn.setVisibility(View.GONE);
+        } else {
+            textPressedBtn.setVisibility(View.VISIBLE);
+        }
+
+        // Обновляем адаптер (см. ниже реализацию метода адаптера)
+        presetMealAdapter.updatePresetMealsList(updatedPresets);
+    }
 }

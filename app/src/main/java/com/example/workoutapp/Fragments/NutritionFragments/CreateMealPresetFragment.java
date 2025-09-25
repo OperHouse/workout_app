@@ -789,6 +789,9 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                     connectingMealPresetDao.logAllMealPresetConnections();
 
                     dialogAddMealPresetName.dismiss();
+                Bundle result = new Bundle();
+                result.putBoolean("created", true);
+                getParentFragmentManager().setFragmentResult("preset_created", result);
                 FragmentManager fragmentManager = getFragmentManager();
                 assert fragmentManager != null;
                 if (fragmentManager.getBackStackEntryCount() > 0) {
