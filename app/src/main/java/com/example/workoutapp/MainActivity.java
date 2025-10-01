@@ -11,6 +11,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Fragments.NutritionFragments.NutritionFragment;
+import com.example.workoutapp.Fragments.ProfileFragments.ProfileFragment;
 import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutFragment;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.databinding.ActivityMainBinding;
