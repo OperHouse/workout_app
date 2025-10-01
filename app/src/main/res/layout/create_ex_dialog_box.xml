@@ -110,36 +110,60 @@
                 android:gravity="start|center"
                 android:text="Часть тела"
                 android:textColor="@color/white"
-                app:layout_constraintStart_toStartOf="@+id/spinnerBodyType"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/textView3"
                 app:layout_constraintTop_toBottomOf="@+id/editText">
 
             </TextView>
 
-            <androidx.appcompat.widget.AppCompatSpinner
-                android:id="@+id/spinnerTypeEx"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="150dp"
                 android:layout_height="wrap_content"
-                android:background="@drawable/spinner_background"
-                android:layout_marginStart="10dp"
-                android:gravity="start|center_vertical"
-                app:layout_constraintStart_toStartOf="parent"
+                app:hintEnabled="false"
+                app:layout_constraintStart_toStartOf="@+id/textView3"
                 app:layout_constraintTop_toBottomOf="@+id/textView3">
-            </androidx.appcompat.widget.AppCompatSpinner>
 
-            <androidx.appcompat.widget.AppCompatSpinner
-                android:id="@+id/spinnerBodyType"
+                <AutoCompleteTextView
+                    android:id="@+id/exerciseType_ACTV"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/spinner_background"
+                    android:clickable="true"
+                    android:cursorVisible="false"
+                    android:dropDownHeight="150dp"
+                    android:focusable="false"
+                    android:focusableInTouchMode="true"
+                    android:inputType="none"
+                    android:paddingStart="10dp"
+                    android:popupTheme="@style/AppPopupTheme" />
+
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/bodyType_TIL"
                 android:layout_width="150dp"
                 android:layout_height="wrap_content"
-                android:background="@drawable/spinner_background"
-                android:layout_marginStart="10dp"
-                android:verticalScrollbarPosition="right"
-                android:overScrollMode="always"
-                android:gravity="start|center_vertical"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/spinnerTypeEx"
+                app:hintEnabled="false"
+                app:layout_constraintStart_toStartOf="@+id/textView4"
                 app:layout_constraintTop_toBottomOf="@+id/textView4">
 
-            </androidx.appcompat.widget.AppCompatSpinner>
+                <AutoCompleteTextView
+                    android:id="@+id/bodyType_ACTV"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/spinner_background"
+                    android:clickable="true"
+                    android:cursorVisible="false"
+                    android:dropDownHeight="150dp"
+                    android:focusable="false"
+                    android:focusableInTouchMode="true"
+                    android:inputType="none"
+                    android:paddingStart="10dp"
+                    android:popupTheme="@style/AppPopupTheme" />
+
+
+            </com.google.android.material.textfield.TextInputLayout>
 
             <Button
                 android:id="@+id/createWorkBtn"
@@ -154,7 +178,7 @@
                 android:textColor="@color/white"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/spinnerTypeEx">
+                app:layout_constraintTop_toBottomOf="@+id/bodyType_TIL">
 
             </Button>
         </androidx.constraintlayout.widget.ConstraintLayout>

@@ -21,11 +21,11 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.Adapters.NutritionAdapters.OutsideMealAdapter;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.Adapters.NutritionAdapters.OutsideMealAdapter;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.Models.NutritionModels.MealNameModel;
@@ -93,7 +93,20 @@ public class NutritionFragment extends Fragment {
         formattedDate = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1);
         dateTextView.setText(formattedDate);
 
+        getParentFragmentManager().setFragmentResultListener("preset_added_result", this, (key, bundle) -> {
+            boolean added = bundle.getBoolean("meal_preset_added", false);
+            if (added) {
+                refreshAdapter(); // твой метод обновления списка
+            }
+        });
+
         return NutritionFragmentView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshMealData(); // Это вызовет updateMealList и обновит UI
     }
     private void ShowDialogAddMeal(String data) {
         Dialog dialogAddMeal = new Dialog(requireContext());
@@ -119,7 +132,15 @@ public class NutritionFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 dialogAddMeal.dismiss();
-                replaceFragment(new SelectionMealPresetsFragment());
+                Fragment selectionFragment = new SelectionMealPresetsFragment();
+                FragmentManager fragmentManager = getParentFragmentManager(); // или getFragmentManager()
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+                fragmentTransaction
+                        .hide(NutritionFragment.this)
+                        .add(R.id.frameLayout, selectionFragment, "selection_meal_preset") // Добавляем новый фрагмент с тегом
+                        .addToBackStack(null)  // Чтобы можно было вернуться назад
+                        .commit();
             }
         });
 
@@ -171,6 +192,7 @@ public class NutritionFragment extends Fragment {
             text1.setVisibility(View.GONE);
             text2.setVisibility(View.GONE);
         }
+
     }
 
     public void removeFoodFromMeal() {
@@ -242,20 +264,10 @@ public class NutritionFragment extends Fragment {
         }
     }
 
-    private void replaceFragment(Fragment newFragment) {
 
-        mealList.clear();
-        // Получаем менеджер фрагментов
-        FragmentManager fragmentManager = getFragmentManager();
-        if (fragmentManager != null) {
-            // Начинаем транзакцию фрагментов
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            // Заменяем текущий фрагмент на новый
-            fragmentTransaction.replace(R.id.frameLayout, newFragment);
-            // Добавляем транзакцию в бэкстек (если нужно)
-            fragmentTransaction.addToBackStack(null);
-            // Выполняем транзакцию
-            fragmentTransaction.commit();
+    public void refreshMealData() {
+        if (outer_RV != null) {
+            updateMealList(currentFormattedDate);
         }
     }
 

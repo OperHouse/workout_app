@@ -31,7 +31,6 @@ public class ConnectingMealDao {
             db.insert(AppDataBase.CONNECTING_MEAL_TABLE, null, values);
         }
 
-        db.close();
     }
 
 

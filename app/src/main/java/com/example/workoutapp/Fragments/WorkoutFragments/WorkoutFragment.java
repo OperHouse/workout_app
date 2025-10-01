@@ -1,7 +1,5 @@
 package com.example.workoutapp.Fragments.WorkoutFragments;
 
-import android.app.Dialog;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,8 +7,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -18,189 +16,191 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Adapters.WorkoutAdapters.OutsideAdapter;
-import com.example.workoutapp.Data.WorkoutDao.CompletedWorkoutDao;
-import com.example.workoutapp.Data.WorkoutDao.TempWorkoutDao;
+import com.example.workoutapp.Data.WorkoutDao.CARDIO_SET_DETAILS_TABLE_DAO;
+import com.example.workoutapp.Data.WorkoutDao.STRENGTH_SET_DETAILS_TABLE_DAO;
+import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.Models.WorkoutModels.TempExModel;
+import com.example.workoutapp.Models.WorkoutModels.CardioSetModel;
+import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
+import com.example.workoutapp.Models.WorkoutModels.StrengthSetModel;
 import com.example.workoutapp.R;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WorkoutFragment extends Fragment {
 
-    TempWorkoutDao TempWorkDao;
-    CompletedWorkoutDao CompletedDao;
-    List<TempExModel> tempExModelList;
-    OutsideAdapter outsideAdapter;
-    RecyclerView exWorkoutRecyclerView;
-    private Button finalWorkoutBtn;
-    private TextView text1, text2;
-    private ImageView image;
+
+    private OutsideAdapter workoutAdapter;
+    private RecyclerView workoutRecyclerView;
+    private List<ExerciseModel> exList;
+    private WORKOUT_EXERCISE_TABLE_DAO workoutExerciseTableDao;
+    private CARDIO_SET_DETAILS_TABLE_DAO cardioSetDetailsTableDao;
+    private STRENGTH_SET_DETAILS_TABLE_DAO strengthSetDetailsTableDao;
+
+    public WorkoutFragment() {
+        // Required empty public constructor
+    }
+
+    public void setExercises(List<ExerciseModel> exercises) {
+        this.exList = exercises; // просто сохраняем ссылку
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.TempWorkDao = new TempWorkoutDao(MainActivity.getAppDataBase());
-        this.CompletedDao = new CompletedWorkoutDao(MainActivity.getAppDataBase());
     }
+
+
+
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Инфлейтим разметку фрагмента
-        View workoutFragmentView = inflater.inflate(R.layout.fragment_workout, container, false);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_workout, container, false);
 
-        exWorkoutRecyclerView = workoutFragmentView.findViewById(R.id.WorkoutRecyclerView);
-        tempExModelList = TempWorkDao.getAllTempExercisesWithSets();
-        outsideAdapter = new OutsideAdapter(WorkoutFragment.this, exWorkoutRecyclerView);
-
-        exWorkoutRecyclerView.setHasFixedSize(true);
-        exWorkoutRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        exWorkoutRecyclerView.setAdapter(outsideAdapter);
-
-        outsideAdapter.updateExList(tempExModelList);
-        // Находим кнопку для добавления упражнения
-        Button addExBtn = workoutFragmentView.findViewById(R.id.addExBtn);
-        finalWorkoutBtn = workoutFragmentView.findViewById(R.id.finalWorkBtn);
-        text1 = workoutFragmentView.findViewById(R.id.textView1);
-        text2 = workoutFragmentView.findViewById(R.id.textView2);
-        image = workoutFragmentView.findViewById(R.id.imageView);
-
-        setVisibility(finalWorkoutBtn,text1,text2,image);
+        TextView dateTextWorkout = view.findViewById(R.id.dateTextWorkout);
+        Button addExBtn = view.findViewById(R.id.addExBtn);
+        Button finalWorkBtn = view.findViewById(R.id.finalWorkBtn);
 
 
-        finalWorkoutBtn.setOnClickListener(v -> {
-            showDialogConfirm();
-        });
 
-        // Устанавливаем обработчик нажатия на кнопку
+
+        // Инициализируем recyclerView
+        workoutRecyclerView = view.findViewById(R.id.WorkoutRecyclerView);
+        workoutRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        workoutRecyclerView.setItemAnimator(null);
+
+        workoutAdapter = new OutsideAdapter(this);
+        workoutAdapter.updateExList(exList);
+        workoutRecyclerView.setAdapter(workoutAdapter);
+
+        updateUI(view, exList);
+
+        workoutAdapter.setOnExerciseListChangedListener(newList -> updateUI(view, newList));
         addExBtn.setOnClickListener(v -> {
-            // Заменяем текущий фрагмент на FullscreenFragment
-            replaceFragment(new Selection_Ex_Preset_Fragment());
+            Fragment selectionFragment = new Selection_Ex_Preset_Fragment();
+            FragmentManager fragmentManager = getParentFragmentManager(); // или getFragmentManager()
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+            fragmentTransaction
+                    .hide(this)  // Скрываем текущий WorkoutFragment
+                    .add(R.id.frameLayout, selectionFragment, "selection_ex") // Добавляем новый фрагмент с тегом
+                    .addToBackStack(null)  // Чтобы можно было вернуться назад
+                    .commit();
         });
 
+        finalWorkBtn.setOnClickListener(v -> {
+            workoutExerciseTableDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
+            cardioSetDetailsTableDao = new CARDIO_SET_DETAILS_TABLE_DAO(MainActivity.getAppDataBase());
+            strengthSetDetailsTableDao = new STRENGTH_SET_DETAILS_TABLE_DAO(MainActivity.getAppDataBase());
 
-        // Настройка отображения даты
-        TextView dateTextView = workoutFragmentView.findViewById(R.id.dateTextWorkout);
+            for (ExerciseModel elm: exList) {
+                if (elm.getSets().isEmpty()) {
+                    workoutExerciseTableDao.deleteExercise(elm);
+                    continue;
+                }
+
+                List<Object> updatedSets = new ArrayList<>(); // временный список для актуальных сетов
+                int orderCounter = 1;
+                boolean exerciseDeleted = false; // Флаг, чтобы отслеживать, было ли удалено упражнение
+
+                for (Object set : elm.getSets()) {
+                    boolean isEmpty = false;
+
+                    if (set instanceof StrengthSetModel) {
+                        StrengthSetModel strengthSet = (StrengthSetModel) set;
+                        // Проверяем, если хотя бы одно поле пустое или равно нулю
+                        isEmpty = (strengthSet.getRep() == 0 || strengthSet.getWeight() == 0);
+                    } else if (set instanceof CardioSetModel) {
+                        CardioSetModel cardioSet = (CardioSetModel) set;
+                        // Проверяем, если хотя бы одно поле пустое или равно нулю
+                        isEmpty = (cardioSet.getTemp() == 0 || cardioSet.getTime() == 0 || cardioSet.getDistance() == 0);
+                    }
+
+                    if (isEmpty) {
+                        if (set instanceof StrengthSetModel) {
+                            StrengthSetModel strengthSet = (StrengthSetModel) set;
+                            strengthSetDetailsTableDao.deleteStrengthSet(strengthSet);
+                            updatedSets.remove(strengthSet);
+                            if (updatedSets.isEmpty()) {
+                                workoutExerciseTableDao.deleteExercise(elm);
+                                exerciseDeleted = true; // Помечаем, что упражнение удалено
+                            }
+                        } else if (set instanceof CardioSetModel) {
+                            CardioSetModel cardioSet = (CardioSetModel) set;
+                            cardioSetDetailsTableDao.deleteCardioSet(cardioSet);
+                            updatedSets.remove(cardioSet);
+                            if (updatedSets.isEmpty()) {
+                                workoutExerciseTableDao.deleteExercise(elm);
+                                exerciseDeleted = true; // Помечаем, что упражнение удалено
+                            }
+                        }
+                    } else {
+                        // обновить порядок
+                        if (set instanceof StrengthSetModel) {
+                            ((StrengthSetModel) set).setOrder(orderCounter);
+                            strengthSetDetailsTableDao.updateSetOrder((StrengthSetModel) set);
+                        } else if (set instanceof CardioSetModel) {
+                            ((CardioSetModel) set).setOrder(orderCounter);
+                            cardioSetDetailsTableDao.updateSetOrder((CardioSetModel) set);
+                        }
+                        orderCounter++;
+                        updatedSets.add(set);
+                    }
+                }
+
+                // Если упражнение не было удалено, то оно становится завершённым
+                if (!exerciseDeleted) {
+                    workoutExerciseTableDao.markExerciseAsFinished(elm.getExercise_id()); // Помечаем как завершённое
+                }
+            }
+
+            // Обновляем список упражнений, чтобы отобразить завершённые
+            exList = workoutExerciseTableDao.getExByState("unfinished");
+            assert getView() != null;
+            updateUI(getView(), exList);
+            workoutAdapter.updateExList(exList);
+            Toast.makeText(requireContext(), "Тренировка завершена!", Toast.LENGTH_SHORT).show();
+        });
+
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, d MMMM", new Locale("ru", "RU"));
         String formattedDate = dateFormat.format(calendar.getTime());
         formattedDate = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1);
-        dateTextView.setText(formattedDate);
+        dateTextWorkout.setText(formattedDate);
 
-        return workoutFragmentView;
+        return view;
     }
 
-    private void showDialogConfirm() {
-        Dialog dialogCreateEx = new Dialog(requireContext());
-        dialogCreateEx.setContentView(R.layout.confirm_dialog_layout);
-        Objects.requireNonNull(dialogCreateEx.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        AtomicBoolean isDialogClosedByOutsideClick = new AtomicBoolean(false);
-        // Разрешаем закрытие диалога при нажатии вне его
-        dialogCreateEx.setCancelable(true); // Делаем диалог закрываемым
-        dialogCreateEx.setCanceledOnTouchOutside(true); // Закрыть при клике вне диалога
+    private void updateUI(View rootView, List<ExerciseModel> list) {
+        TextView textView1 = rootView.findViewById(R.id.textView1);
+        TextView textView2 = rootView.findViewById(R.id.textView2);
+        ImageView image = rootView.findViewById(R.id.imageView);
+        Button finalWorkBtn = rootView.findViewById(R.id.finalWorkBtn);
 
-        Button deleteBtn = dialogCreateEx.findViewById(R.id.btnDelete);
-        Button chanelBtn = dialogCreateEx.findViewById(R.id.btnChanel);
-        TextView text1 = dialogCreateEx.findViewById(R.id.textView);
-        TextView text2 = dialogCreateEx.findViewById(R.id.text1);
-
-        deleteBtn.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.lime));
-        deleteBtn.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
-        deleteBtn.setText("Подтвердить");
-        text1.setText("Завершение тренировки");
-        text2.setText("Вы действительно хотите завершить тренировку?");
-
-
-        if(dialogCreateEx.getWindow() != null){
-            dialogCreateEx.getWindow().setBackgroundDrawable(new ColorDrawable(0));
-        }
-
-        chanelBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialogCreateEx.dismiss();
-
-            }
-        });
-
-        deleteBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                outsideAdapter.saveAllInnerAdapters();
-                CompletedDao.insertCompletedWorkouts(TempWorkDao.extractCompletedWorkoutsFromTemp());
-                TempWorkDao.clearTempWorkoutData();
-                refreshAdapter();
-                dialogCreateEx.dismiss();
-            }
-        });
-
-
-
-        // Слушаем закрытие по клику вне
-        dialogCreateEx.setOnCancelListener(dialog -> isDialogClosedByOutsideClick.set(true));
-        dialogCreateEx.show();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-
-        // Сохраняем изменения в базу данных при уходе с фрагмента
-        if (outsideAdapter != null) {
-            outsideAdapter.saveAllInnerAdapters();
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        // Сохраняем изменения в базу данных при уходе с фрагмента
-        if (outsideAdapter != null) {
-            outsideAdapter.saveAllInnerAdapters();
-        }
-    }
-    public void refreshAdapter() {
-        tempExModelList = TempWorkDao.getAllTempExercisesWithSets();
-        outsideAdapter = new OutsideAdapter(WorkoutFragment.this, exWorkoutRecyclerView);
-        outsideAdapter.updateExList(tempExModelList);
-        exWorkoutRecyclerView.setAdapter(outsideAdapter);
-        setVisibility(finalWorkoutBtn, text1, text2, image);
-    }
-
-    // Метод для замены фрагмента
-    private void replaceFragment(Fragment newFragment) {
-        // Получаем менеджер фрагментов
-        FragmentManager fragmentManager = getFragmentManager();
-        if (fragmentManager != null) {
-            // Начинаем транзакцию фрагментов
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            // Заменяем текущий фрагмент на новый
-            fragmentTransaction.replace(R.id.frameLayout, newFragment);
-            // Добавляем транзакцию в бэкстек (если нужно)
-            fragmentTransaction.addToBackStack(null);
-            // Выполняем транзакцию
-            fragmentTransaction.commit();
-        }
-    }
-
-    private void setVisibility(Button b, TextView t1, TextView t2, ImageView im){
-        if (tempExModelList.isEmpty()) {
-            // Показываем заглушку (тексты и изображение), скрываем кнопку
-            finalWorkoutBtn.setVisibility(View.GONE);
-            t1.setVisibility(View.VISIBLE);
-            t2.setVisibility(View.VISIBLE);
-            im.setVisibility(View.VISIBLE);
+        if (list == null || list.isEmpty()) {
+            textView1.setVisibility(View.VISIBLE);
+            textView2.setVisibility(View.VISIBLE);
+            image.setVisibility(View.VISIBLE);
+            finalWorkBtn.setVisibility(View.GONE);
+            if (workoutRecyclerView != null) workoutRecyclerView.setVisibility(View.GONE);
         } else {
-            // Скрываем заглушку, показываем кнопку
-            finalWorkoutBtn.setVisibility(View.VISIBLE);
-            t1.setVisibility(View.GONE);
-            t2.setVisibility(View.GONE);
-            im.setVisibility(View.GONE);
+            textView1.setVisibility(View.GONE);
+            textView2.setVisibility(View.GONE);
+            image.setVisibility(View.GONE);
+            finalWorkBtn.setVisibility(View.VISIBLE);
+            if (workoutRecyclerView != null) workoutRecyclerView.setVisibility(View.VISIBLE);
         }
     }
 
+    public void refreshWorkoutData() {
+        if (workoutAdapter != null) {
+            workoutAdapter.updateExList(exList); // из setExercises()
+            assert getView() != null;
+            updateUI(getView(), exList);
+        }
+    }
 }

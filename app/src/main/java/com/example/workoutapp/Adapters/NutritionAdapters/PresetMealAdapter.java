@@ -17,12 +17,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
-import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Fragments.NutritionFragments.SelectionMealPresetsFragment;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.example.workoutapp.Models.NutritionModels.MealModel;
-import com.example.workoutapp.Tools.OnPresetMealLongClickListener;
 import com.example.workoutapp.R;
+import com.example.workoutapp.Tools.OnPresetMealLongClickListener;
+import com.example.workoutapp.Tools.OnPresetMealSelectedListener;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -40,16 +41,18 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
     private MealNameDao mealNameDao;
     private ConnectingMealDao connectingMealDao;
     private MealFoodDao mealFoodDao;
+    private final OnPresetMealSelectedListener selectionListener;
 
     private List<MealModel> presetMeals = new ArrayList<>();
     public List<MealModel> filteredList = new ArrayList<>();
     private String currentFilter = "";
 
 
-    public PresetMealAdapter(Fragment fragment, Context context, OnPresetMealLongClickListener longClickListener) {
+    public PresetMealAdapter(Fragment fragment, Context context, OnPresetMealLongClickListener longClickListener, OnPresetMealSelectedListener selectionListener) {
         this.fragment = fragment;
         this.context = context;
         this.longClickListener = longClickListener;
+        this.selectionListener = selectionListener;
     }
 
     @NonNull
@@ -127,13 +130,14 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
                             insertedEatIds.add(id);
                         }
 
-// Связываем mealId с этими eatId
+                        // Связываем mealId с этими eatId
                         connectingMealDao.connecting(meal_Id, insertedEatIds);
 
                         mealNameDao.logAllMealNames();
                         mealFoodDao.logAllMealFoods();
                         connectingMealDao.logAllConnections();
 
+                        selectionListener.onPresetMealSelected();
                         fragment.getParentFragmentManager().popBackStack();
                     } else {
                         Toast.makeText(context, "Такой приём пищи уже добавлен!", Toast.LENGTH_SHORT).show();
@@ -156,6 +160,7 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
     @SuppressLint("NotifyDataSetChanged")
     public void updatePresetMealsList(List<MealModel> presetModelList) {
         this.presetMeals = presetModelList.stream().map(MealModel::new).collect(Collectors.toList());
+        notifyDataSetChanged();
     }
 
     public void setFilteredList(String text){

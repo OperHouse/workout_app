@@ -42,14 +42,13 @@ public class PresetEatDao {
 
 
         db.insert(PRESET_FOOD_TABLE, null, values);
-        db.close();
+
     }
 
     // Удаление записи по ID
     public void deletePresetFood(int eatId) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         db.delete(PRESET_FOOD_TABLE, PRESET_FOOD_ID + " = ?", new String[]{String.valueOf(eatId)});
-        db.close();
     }
 
     // Получение всех записей preset eat
