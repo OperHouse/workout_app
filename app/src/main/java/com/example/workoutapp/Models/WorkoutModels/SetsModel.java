@@ -1,13 +1,10 @@
 package com.example.workoutapp.Models.WorkoutModels;
 
 public class SetsModel {
-    int set_id;
-    int reps;
-    int weight;
-
-
-
-    boolean isSelected;
+    private int set_id;
+    private int reps;
+    private int weight;
+    private boolean isSelected;
 
 
     // Конструктор, принимающий параметры для всех полей

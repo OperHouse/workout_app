@@ -107,7 +107,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         View addEatToPresetFragment = inflater.inflate(R.layout.fragment_create_meal_preset, container, false);
 
         ImageButton backBtn = addEatToPresetFragment.findViewById(R.id.imageButtonBack);
-        Button createEatBtn = addEatToPresetFragment.findViewById(R.id.createEatBtn);
+        Button createFoodBtn = addEatToPresetFragment.findViewById(R.id.createEatBtn);
         Button createPresetBtn = addEatToPresetFragment.findViewById(R.id.nextBtn);
         TextView text = addEatToPresetFragment.findViewById(R.id.textView7);
         TextView text_2 = addEatToPresetFragment.findViewById(R.id.textView);
@@ -167,14 +167,27 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         backBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                replaceFragment(new SelectionMealPresetsFragment());
+                FragmentManager fragmentManager = getFragmentManager();
+                assert fragmentManager != null;
+                if (fragmentManager.getBackStackEntryCount() > 0) {
+                    fragmentManager.popBackStack();
+                }
             }
         });
 
-        createEatBtn.setOnClickListener(new View.OnClickListener() {
+        createFoodBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                replaceFragment(new CreateFoodFragment(currentMode));
+
+                Fragment selectionFragment = new CreateFoodFragment(currentMode);
+                FragmentManager fragmentManager = getParentFragmentManager(); // или getFragmentManager()
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+                fragmentTransaction
+                        .hide(CreateMealPresetFragment.this)
+                        .add(R.id.frameLayout, selectionFragment, "create_food_fragment") // Добавляем новый фрагмент с тегом
+                        .addToBackStack(null)  // Чтобы можно было вернуться назад
+                        .commit();
             }
         });
 
@@ -238,20 +251,6 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         return addEatToPresetFragment;
     }
 
-    private void replaceFragment(Fragment newFragment) {
-        // Получаем менеджер фрагментов
-        FragmentManager fragmentManager = getFragmentManager();
-        if (fragmentManager != null) {
-            // Начинаем транзакцию фрагментов
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            // Заменяем текущий фрагмент на новый
-            fragmentTransaction.replace(R.id.frameLayout, newFragment);
-            // Добавляем транзакцию в бэкстек (если нужно)
-            fragmentTransaction.addToBackStack(null);
-            // Выполняем транзакцию
-            fragmentTransaction.commit();
-        }
-    }
 
     @Override
     public void onEatItemClick(Context context, FoodModel foodModel) {
@@ -790,7 +789,14 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                     connectingMealPresetDao.logAllMealPresetConnections();
 
                     dialogAddMealPresetName.dismiss();
-                    requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                Bundle result = new Bundle();
+                result.putBoolean("created", true);
+                getParentFragmentManager().setFragmentResult("preset_created", result);
+                FragmentManager fragmentManager = getFragmentManager();
+                assert fragmentManager != null;
+                if (fragmentManager.getBackStackEntryCount() > 0) {
+                    fragmentManager.popBackStack();
+                }
             }
         });
 

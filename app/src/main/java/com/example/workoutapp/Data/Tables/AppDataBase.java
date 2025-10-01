@@ -12,50 +12,50 @@ public class AppDataBase extends SQLiteOpenHelper {
     private static AppDataBase instance;
 
 
-    //=========================EXERCISE_TABLE============================//
-    public static final String EXERCISE_TABLE = "exercise_table";
-    public static final String EXERCISE_NAME = "exercise_name";
-    public static final String EXERCISE_TYPE = "exercise_type";
-    public static final String EXERCISE_BODY_TYPE = "exercise_body_type";
+    //=========================BASE_EXERCISE_TABLE============================//
+    public static final String BASE_EXERCISE_TABLE = "base_exercise_table";
+    public static final String BASE_EXERCISE_ID = "base_exercise_id";
+    public static final String BASE_EXERCISE_NAME = "base_exercise_name";
+    public static final String BASE_EXERCISE_TYPE = "base_exercise_type";
+    public static final String BASE_EXERCISE_BODY_TYPE = "base_exercise_body_type";
 
-    //=========================PRESET_TABLE=======================//
-    public static final String PRESET_TABLE = "preset_table";
-    public static final String PRESET_NAME = "preset_name";
-    public static final String PRESET_EXERCISE_NAME = "preset_exercise_name";
-    public static final String PRESET_EXERCISE_TYPE = "preset_exercise_type";
-    public static final String PRESET_EXERCISE_BODY_TYPE = "preset_exercise_body_type";
+    //=========================WORKOUT_PRESET_NAME_TABLE=======================//
+    public static final String WORKOUT_PRESET_NAME_TABLE = "workout_preset_table";
+    public static final String WORKOUT_PRESET_NAME_ID = "workout_preset_name_id";
+    public static final String WORKOUT_PRESET_NAME = "workout_preset_name";
 
-    //=========================TEMP_WORKOUT_EXERCISE_TABLE============================//
-    public static final String TEMP_WORKOUT_EXERCISE_TABLE = "temp_workout_exercise_table";
-    public static final String TEMP_WORKOUT_EXERCISE_ID = "temp_workout_exercise_id";
-    public static final String TEMP_WORKOUT_EXERCISE_NAME = "temp_workout_exercise_name";
-    public static final String TEMP_WORKOUT_EXERCISE_TYPE = "temp_workout_exercise_type";
-    public static final String TEMP_WORKOUT_EXERCISE_BODY_TYPE = "temp_workout_exercise_body_type";
-    public static final String TEMP_WORKOUT_DATE = "temp_workout_data";
+    //=========================CONNECTING_WORKOUT_PRESET_TABLE============================//
+    public static final String CONNECTING_WORKOUT_PRESET_TABLE = "connecting_workout_preset_table";
+    public static final String CONNECTING_WORKOUT_PRESET_NAME_ID = "connecting_workout_preset_name_id";
+    public static final String CONNECTING_WORKOUT_PRESET_BASE_EXERCISE_ID = "connecting_workout_preset_base_exercise_id";
 
-    //=========================TEMP_WORKOUT_SET_TABLE===========================//
-    public static final String TEMP_WORKOUT_SET_TABLE = "temp_workout_set_table";
-    public static final String TEMP_WORKOUT_SET_EXERCISE_ID = "temp_workout_set_exercise_id";
-    public static final String TEMP_WORKOUT_SET_NUMBER = "temp_workout_set_number";
-    public static final String TEMP_WORKOUT_SET_WEIGHT = "temp_workout_set_weight";
-    public static final String TEMP_WORKOUT_SET_REP = "temp_workout_set_rep";
-    public static final String TEMP_WORKOUT_SET_IS_SELECTED = "temp_workout_set_is_selected";
+    //=========================WORKOUT_EXERCISE_TABLE============================//
+    public static final String WORKOUT_EXERCISE_TABLE = "workout_exercise_table";
+    public static final String WORKOUT_EXERCISE_ID = "workout_exercise_id"; // PRIMARY KEY
+    public static final String WORKOUT_EXERCISE_NAME = "workout_exercise_name";
+    public static final String WORKOUT_EXERCISE_TYPE = "workout_exercise_type";
+    public static final String WORKOUT_EXERCISE_BODY_TYPE = "workout_exercise_body_type";
+    public static final String WORKOUT_EXERCISE_DATE = "workout_exercise_data";
+    public static final String WORKOUT_EXERCISE_STATE = "workout_exercise_state";
 
-    //=========================COMPLETED_WORKOUT_TABLE============================//
-    public static final String COMPLETED_WORKOUT_EXERCISE_TABLE = "completed_workout_exercise_table";
-    public static final String COMPLETED_WORKOUT_EXERCISE_ID = "completed_workout_exercise_id";
-    public static final String COMPLETED_WORKOUT_EXERCISE_NAME = "completed_workout_exercise_name";
-    public static final String COMPLETED_WORKOUT_EXERCISE_TYPE = "completed_workout_exercise_type";
-    public static final String COMPLETED_WORKOUT_EXERCISE_BODY_TYPE = "completed_workout_exercise_body_type";
-    public static final String COMPLETED_WORKOUT_DATE = "completed_workout_data";
+    //=========================STRENGTH_SET_DETAILS_TABLE============================//
+    public static final String STRENGTH_SET_DETAILS_TABLE = "strength_set_details_table";
+    public static final String STRENGTH_SET_ID = "strength_set_id"; // PRIMARY KEY
+    public static final String STRENGTH_SET_WEIGHT = "strength_set_weight";
+    public static final String STRENGTH_SET_REP = "strength_set_rep";
+    public static final String STRENGTH_SET_STATE = "strength_set_state";
+    public static final String STRENGTH_SET_ORDER = "strength_set_order";
+    public static final String STRENGTH_SET_FOREIGN_KEY_EXERCISE = "strength_set_foreign_key_exercise"; // FOREIGN KEY -> WORKOUT_EXERCISE_ID
 
-    //=========================COMPLETED_WORKOUT_SET_TABLE===============================//
-    public static final String COMPLETED_WORKOUT_SET_TABLE = "completed_workout_set_table";
-    public static final String COMPLETED_WORKOUT_SET_EXERCISE_ID = "completed_workout_set_exercise_id";
-    public static final String COMPLETED_WORKOUT_SET_NUMBER = "completed_workout_set_number";
-    public static final String COMPLETED_WORKOUT_SET_WEIGHT = "completed_workout_set_weight";
-    public static final String COMPLETED_WORKOUT_SET_REP = "completed_workout_set_rep";
-    public static final String COMPLETED_WORKOUT_SET_IS_SELECTED = "completed_workout_set_is_selected";
+    //=========================CARDIO_SET_DETAILS_TABLE============================//
+    public static final String CARDIO_SET_DETAILS_TABLE = "cardio_set_details_table";
+    public static final String CARDIO_SET_ID = "cardio_set_id"; // PRIMARY
+    public static final String CARDIO_SET_TEMP = "cardio_set_temp";
+    public static final String CARDIO_SET_TIME = "cardio_set_time";
+    public static final String CARDIO_SET_DISTANCE = "cardio_set_distance";
+    public static final String CARDIO_SET_STATE = "cardio_set_state";
+    public static final String CARDIO_SET_ORDER = "cardio_set_order";
+    public static final String CARDIO_SET_FOREIGN_KEY_EXERCISE = "cardio_set_foreign_key_exercise"; // FOREIGN KEY -> WORKOUT_EXERCISE_ID
 
     //=========================BASE_EAT_TABLE============================//
     public static final String BASE_FOOD_TABLE = "base_food_table";
@@ -124,65 +124,75 @@ public class AppDataBase extends SQLiteOpenHelper {
     public static synchronized AppDataBase getInstance(Context context) {
         if (instance == null) {
             instance = new AppDataBase(context.getApplicationContext());
+        } else {
+            // Попытка получить доступ к базе, если она закрыта
+            try {
+                SQLiteDatabase db = instance.getReadableDatabase();
+            } catch (IllegalStateException e) {
+                // Если база закрыта — пересоздаём
+                instance = new AppDataBase(context.getApplicationContext());
+            }
         }
         return instance;
     }
 
-
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String createExerciseTableQuery = "CREATE TABLE IF NOT EXISTS " + EXERCISE_TABLE + " ("
-                + EXERCISE_NAME + " TEXT, "
-                + EXERCISE_TYPE + " TEXT, "
-                + EXERCISE_BODY_TYPE + " TEXT)";
+        // Включаем поддержку внешних ключей
+        db.execSQL("PRAGMA foreign_keys = ON;");
 
-        String createPresetTableQuery = "CREATE TABLE IF NOT EXISTS " + PRESET_TABLE + " ("
-                + PRESET_NAME + " TEXT, "
-                + PRESET_EXERCISE_NAME + " TEXT, "
-                + PRESET_EXERCISE_TYPE + " TEXT, "
-                + PRESET_EXERCISE_BODY_TYPE + " TEXT)";
+        // --- Таблицы для базовых упражнений и пресетов ---
+        String createBaseExerciseTableQuery = "CREATE TABLE IF NOT EXISTS " + BASE_EXERCISE_TABLE + " ("
+                + BASE_EXERCISE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + BASE_EXERCISE_NAME + " TEXT NOT NULL, "
+                + BASE_EXERCISE_TYPE + " TEXT NOT NULL, "
+                + BASE_EXERCISE_BODY_TYPE + " TEXT NOT NULL);";
+
+        String createWorkoutPresetNameTableQuery = "CREATE TABLE IF NOT EXISTS " + WORKOUT_PRESET_NAME_TABLE + " ("
+                + WORKOUT_PRESET_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + WORKOUT_PRESET_NAME + " TEXT NOT NULL UNIQUE);"; // UNIQUE для имен пресетов
+
+        String createConnectingWorkoutPresetTableQuery = "CREATE TABLE IF NOT EXISTS " + CONNECTING_WORKOUT_PRESET_TABLE + " ("
+                + CONNECTING_WORKOUT_PRESET_NAME_ID + " INTEGER NOT NULL, "
+                + CONNECTING_WORKOUT_PRESET_BASE_EXERCISE_ID + " INTEGER NOT NULL, "
+                + "PRIMARY KEY (" + CONNECTING_WORKOUT_PRESET_NAME_ID + ", " + CONNECTING_WORKOUT_PRESET_BASE_EXERCISE_ID + "), "
+                + "FOREIGN KEY (" + CONNECTING_WORKOUT_PRESET_NAME_ID + ") REFERENCES " + WORKOUT_PRESET_NAME_TABLE + "(" + WORKOUT_PRESET_NAME_ID + ") ON DELETE CASCADE, "
+                + "FOREIGN KEY (" + CONNECTING_WORKOUT_PRESET_BASE_EXERCISE_ID + ") REFERENCES " + BASE_EXERCISE_TABLE + "(" + BASE_EXERCISE_ID + ") ON DELETE CASCADE);";
 
 
-        // SQL-запрос для создания временной таблицы упражнений
-        String createTempWorkoutExerciseTableQuery = "CREATE TABLE IF NOT EXISTS " + TEMP_WORKOUT_EXERCISE_TABLE + " (" +
-                TEMP_WORKOUT_EXERCISE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                TEMP_WORKOUT_EXERCISE_NAME + " TEXT NOT NULL, " +
-                TEMP_WORKOUT_EXERCISE_TYPE + " TEXT NOT NULL, " +
-                TEMP_WORKOUT_EXERCISE_BODY_TYPE + " TEXT NOT NULL, " +
-                TEMP_WORKOUT_DATE + " TEXT NOT NULL);";
+        // --- Таблицы для журнала выполненных упражнений ---
+        String createWorkoutExerciseTableQuery = "CREATE TABLE IF NOT EXISTS " + WORKOUT_EXERCISE_TABLE + " ("
+                + WORKOUT_EXERCISE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + WORKOUT_EXERCISE_NAME + " TEXT NOT NULL, "
+                + WORKOUT_EXERCISE_TYPE + " TEXT NOT NULL, "
+                + WORKOUT_EXERCISE_BODY_TYPE + " TEXT NOT NULL, "
+                + WORKOUT_EXERCISE_DATE + " TEXT NOT NULL, "
+                + WORKOUT_EXERCISE_STATE + " TEXT NOT NULL);";
 
-        // SQL-запрос для создания временной таблицы сетов
-        String createTempWorkoutSetTableQuery = "CREATE TABLE IF NOT EXISTS " + TEMP_WORKOUT_SET_TABLE + " (" +
-                TEMP_WORKOUT_SET_EXERCISE_ID + " INTEGER NOT NULL, " +
-                TEMP_WORKOUT_SET_NUMBER + " INTEGER NOT NULL, " +
-                TEMP_WORKOUT_SET_WEIGHT + " INTEGER, " +
-                TEMP_WORKOUT_SET_REP + " INTEGER, " +
-                TEMP_WORKOUT_SET_IS_SELECTED + " INTEGER NOT NULL DEFAULT 0, " +
-                "PRIMARY KEY(" + TEMP_WORKOUT_SET_EXERCISE_ID + ", " + TEMP_WORKOUT_SET_NUMBER + "), " +
-                "FOREIGN KEY(" + TEMP_WORKOUT_SET_EXERCISE_ID + ") REFERENCES " + TEMP_WORKOUT_EXERCISE_TABLE + "(" + TEMP_WORKOUT_EXERCISE_ID + "));";
+        String createStrengthSetDetailsTableQuery = "CREATE TABLE IF NOT EXISTS " + STRENGTH_SET_DETAILS_TABLE + " ("
+                + STRENGTH_SET_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " // Уникальный ID для каждого сета
+                + STRENGTH_SET_FOREIGN_KEY_EXERCISE + " INTEGER NOT NULL, " // FK к WORKOUT_EXERCISE_TABLE
+                + STRENGTH_SET_ORDER + " INTEGER NOT NULL, " // Порядок сета в упражнении
+                + STRENGTH_SET_WEIGHT + " REAL NOT NULL, "
+                + STRENGTH_SET_REP + " INTEGER NOT NULL, "
+                + STRENGTH_SET_STATE + " TEXT NOT NULL, "
+                + "FOREIGN KEY (" + STRENGTH_SET_FOREIGN_KEY_EXERCISE + ") REFERENCES " + WORKOUT_EXERCISE_TABLE + "(" + WORKOUT_EXERCISE_ID + ") ON DELETE CASCADE);";
 
-        // SQL-запрос для создания таблицы завершённых тренировок
-        String createCompletedWorkoutExerciseTableQuery = "CREATE TABLE IF NOT EXISTS " + COMPLETED_WORKOUT_EXERCISE_TABLE + " (" +
-                COMPLETED_WORKOUT_EXERCISE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                COMPLETED_WORKOUT_EXERCISE_NAME + " TEXT NOT NULL, " +
-                COMPLETED_WORKOUT_EXERCISE_TYPE + " TEXT NOT NULL, " +
-                COMPLETED_WORKOUT_EXERCISE_BODY_TYPE + " TEXT NOT NULL, " +
-                COMPLETED_WORKOUT_DATE + " TEXT NOT NULL);";
+        String createCardioSetDetailsTableQuery = "CREATE TABLE IF NOT EXISTS " + CARDIO_SET_DETAILS_TABLE + " ("
+                + CARDIO_SET_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " // Уникальный ID для каждого сета
+                + CARDIO_SET_FOREIGN_KEY_EXERCISE + " INTEGER NOT NULL, " // FK к WORKOUT_EXERCISE_TABLE
+                + CARDIO_SET_ORDER + " INTEGER NOT NULL, " // Порядок сета в упражнении
+                + CARDIO_SET_TEMP + " REAL NOT NULL, "
+                + CARDIO_SET_TIME + " INTEGER NOT NULL, " // Предполагаем секунды или минуты
+                + CARDIO_SET_DISTANCE + " REAL NOT NULL, "
+                + CARDIO_SET_STATE + " TEXT NOT NULL, "
+                + "FOREIGN KEY (" + CARDIO_SET_FOREIGN_KEY_EXERCISE + ") REFERENCES " + WORKOUT_EXERCISE_TABLE + "(" + WORKOUT_EXERCISE_ID + ") ON DELETE CASCADE);";
 
-        // SQL-запрос для создания таблицы сетов завершённых тренировок
-        String createCompletedWorkoutSetTableQuery = "CREATE TABLE IF NOT EXISTS " + COMPLETED_WORKOUT_SET_TABLE + " (" +
-                COMPLETED_WORKOUT_SET_EXERCISE_ID + " INTEGER NOT NULL, " +
-                COMPLETED_WORKOUT_SET_NUMBER + " INTEGER NOT NULL, " +
-                COMPLETED_WORKOUT_SET_WEIGHT + " INTEGER, " +
-                COMPLETED_WORKOUT_SET_REP + " INTEGER, " +
-                COMPLETED_WORKOUT_SET_IS_SELECTED + " INTEGER NOT NULL DEFAULT 0, " +
-                "PRIMARY KEY(" + COMPLETED_WORKOUT_SET_EXERCISE_ID + ", " + COMPLETED_WORKOUT_SET_NUMBER + "), " +
-                "FOREIGN KEY(" + COMPLETED_WORKOUT_SET_EXERCISE_ID + ") REFERENCES " + COMPLETED_WORKOUT_EXERCISE_TABLE + "(" + COMPLETED_WORKOUT_EXERCISE_ID + "));";
 
-        // SQL-запрос для создания таблицы еды
-        String createEatTableQuery = "CREATE TABLE IF NOT EXISTS " + BASE_FOOD_TABLE + " (" +
+        // --- Таблицы для питания ---
+        String createBaseFoodTableQuery = "CREATE TABLE IF NOT EXISTS " + BASE_FOOD_TABLE + " (" +
                 BASE_FOOD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                BASE_FOOD_NAME + " TEXT NOT NULL, " +
+                BASE_FOOD_NAME + " TEXT NOT NULL UNIQUE, " +
                 BASE_FOOD_PROTEIN + " REAL NOT NULL, " +
                 BASE_FOOD_FAT + " REAL NOT NULL, " +
                 BASE_FOOD_CARB + " REAL NOT NULL, " +
@@ -190,102 +200,93 @@ public class AppDataBase extends SQLiteOpenHelper {
                 BASE_FOOD_AMOUNT + " INTEGER NOT NULL, " +
                 BASE_FOOD_MEASUREMENT_TYPE + " TEXT NOT NULL);";
 
-        // SQL-запрос для создания таблицы еды для пресета
-        String createPresetEatTableQuery = "CREATE TABLE IF NOT EXISTS " + PRESET_FOOD_TABLE + " (" +
+        String createPresetFoodTableQuery = "CREATE TABLE IF NOT EXISTS " + PRESET_FOOD_TABLE + " (" +
                 PRESET_FOOD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                PRESET_FOOD_NAME + " TEXT NOT NULL, " +
-                PRESET_FOOD_PROTEIN + " REAL NOT NULL, " +
-                PRESET_FOOD_FAT + " REAL NOT NULL, " +
-                PRESET_FOOD_CARB + " REAL NOT NULL, " +
-                PRESET_FOOD_CALORIES + " REAL NOT NULL, " +
-                PRESET_FOOD_AMOUNT + " INTEGER NOT NULL, " +
-                PRESET_FOOD_MEASUREMENT_TYPE + " TEXT NOT NULL);";
+                PRESET_FOOD_NAME + " TEXT NOT NULL, "
+                + PRESET_FOOD_PROTEIN + " REAL NOT NULL, "
+                + PRESET_FOOD_FAT + " REAL NOT NULL, "
+                + PRESET_FOOD_CARB + " REAL NOT NULL, "
+                + PRESET_FOOD_CALORIES + " REAL NOT NULL, "
+                + PRESET_FOOD_AMOUNT + " INTEGER NOT NULL, "
+                + PRESET_FOOD_MEASUREMENT_TYPE + " TEXT NOT NULL);";
 
-        // SQL-запрос для создания таблицы имени пресета
         String createMealPresetNameTableQuery = "CREATE TABLE IF NOT EXISTS " + MEAL_PRESET_NAME_TABLE + " (" +
                 MEAL_PRESET_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                MEAL_PRESET_NAME + " TEXT NOT NULL);";
+                MEAL_PRESET_NAME + " TEXT NOT NULL UNIQUE);";
 
-        // SQL-запрос для создания связывающей таблици для пресетов приемов пищи
         String createConnectingMealPresetTableQuery = "CREATE TABLE IF NOT EXISTS " + CONNECTING_MEAL_PRESET_TABLE + " (" +
                 CONNECTING_MEAL_PRESET_NAME_ID + " INTEGER NOT NULL, " +
                 CONNECTING_MEAL_PRESET_FOOD_ID + " INTEGER NOT NULL, " +
                 "PRIMARY KEY (" + CONNECTING_MEAL_PRESET_NAME_ID + ", " + CONNECTING_MEAL_PRESET_FOOD_ID + "), " +
-                "FOREIGN KEY (" + CONNECTING_MEAL_PRESET_NAME_ID + ") REFERENCES " + MEAL_PRESET_NAME_TABLE + "(" + MEAL_PRESET_NAME_ID + "), " +
-                "FOREIGN KEY (" + CONNECTING_MEAL_PRESET_FOOD_ID + ") REFERENCES " + PRESET_FOOD_TABLE + "(" + PRESET_FOOD_ID + "));";
+                "FOREIGN KEY (" + CONNECTING_MEAL_PRESET_NAME_ID + ") REFERENCES " + MEAL_PRESET_NAME_TABLE + "(" + MEAL_PRESET_NAME_ID + ") ON DELETE CASCADE, "
+                + "FOREIGN KEY (" + CONNECTING_MEAL_PRESET_FOOD_ID + ") REFERENCES " + PRESET_FOOD_TABLE + "(" + PRESET_FOOD_ID + ") ON DELETE CASCADE);";
 
-        // SQL-запрос для создания таблицы названий приёмов пищи
         String createMealNameTableQuery = "CREATE TABLE IF NOT EXISTS " + MEAL_NAME_TABLE + " (" +
                 MEAL_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 MEAL_NAME + " TEXT NOT NULL, " +
                 MEAL_DATA + " TEXT NOT NULL);";
 
-        // SQL-запрос для создания таблицы еды в приёмах пищи
         String createMealEatTableQuery = "CREATE TABLE IF NOT EXISTS " + MEAL_FOOD_TABLE + " (" +
                 MEAL_FOOD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                MEAL_FOOD_NAME + " TEXT NOT NULL, " +
-                MEAL_FOOD_PROTEIN + " REAL NOT NULL, " +
-                MEAL_FOOD_FAT + " REAL NOT NULL, " +
-                MEAL_FOOD_CARB + " REAL NOT NULL, " +
-                MEAL_FOOD_CALORIES + " REAL NOT NULL, " +
-                MEAL_FOOD_AMOUNT + " INTEGER NOT NULL, " +
-                MEAL_FOOD_MEASUREMENT_TYPE + " TEXT NOT NULL);";
+                MEAL_FOOD_NAME + " TEXT NOT NULL, "
+                + MEAL_FOOD_PROTEIN + " REAL NOT NULL, "
+                + MEAL_FOOD_FAT + " REAL NOT NULL, "
+                + MEAL_FOOD_CARB + " REAL NOT NULL, "
+                + MEAL_FOOD_CALORIES + " REAL NOT NULL, "
+                + MEAL_FOOD_AMOUNT + " INTEGER NOT NULL, "
+                + MEAL_FOOD_MEASUREMENT_TYPE + " TEXT NOT NULL);";
 
-        // SQL-запрос для создания связывающей таблицы для еды и приёмов пищи
         String createConnectingMealTableQuery = "CREATE TABLE IF NOT EXISTS " + CONNECTING_MEAL_TABLE + " (" +
                 CONNECTING_MEAL_NAME_ID + " INTEGER NOT NULL, " +
                 CONNECTING_MEAL_FOOD_ID + " INTEGER NOT NULL, " +
                 "PRIMARY KEY(" + CONNECTING_MEAL_NAME_ID + ", " + CONNECTING_MEAL_FOOD_ID + "), " +
-                "FOREIGN KEY(" + CONNECTING_MEAL_NAME_ID + ") REFERENCES " + MEAL_NAME_TABLE + "(" + MEAL_NAME_ID + "), " +
-                "FOREIGN KEY(" + CONNECTING_MEAL_FOOD_ID + ") REFERENCES " + MEAL_FOOD_TABLE + "(" + MEAL_FOOD_ID + "));";
+                "FOREIGN KEY(" + CONNECTING_MEAL_NAME_ID + ") REFERENCES " + MEAL_NAME_TABLE + "(" + MEAL_NAME_ID + ") ON DELETE CASCADE, " +
+                "FOREIGN KEY(" + CONNECTING_MEAL_FOOD_ID + ") REFERENCES " + MEAL_FOOD_TABLE + "(" + MEAL_FOOD_ID + ") ON DELETE CASCADE);";
 
 
-        //Exercise_Table's
-        db.execSQL(createExerciseTableQuery);
-        db.execSQL(createPresetTableQuery);
-        //Temp_Workout_Table's
-        db.execSQL(createTempWorkoutExerciseTableQuery);
-        db.execSQL(createTempWorkoutSetTableQuery);
-        //Complete_Workout_Table's
-        db.execSQL(createCompletedWorkoutExerciseTableQuery);
-        db.execSQL(createCompletedWorkoutSetTableQuery);
+        // --- Выполнение запросов на создание таблиц ---
+        db.execSQL(createBaseExerciseTableQuery);
+        db.execSQL(createWorkoutPresetNameTableQuery);
+        db.execSQL(createConnectingWorkoutPresetTableQuery);
 
-        //Eat_table
-        db.execSQL(createEatTableQuery);
-        //Preset_Eat_Table
-        db.execSQL(createPresetEatTableQuery);
-        //Meal_Preset_Name_Table
+        db.execSQL(createWorkoutExerciseTableQuery);
+        db.execSQL(createStrengthSetDetailsTableQuery);
+        db.execSQL(createCardioSetDetailsTableQuery);
+
+        db.execSQL(createBaseFoodTableQuery);
+        db.execSQL(createPresetFoodTableQuery);
         db.execSQL(createMealPresetNameTableQuery);
-        //Connecting_Table for Meal_Preset
         db.execSQL(createConnectingMealPresetTableQuery);
-
-        //Meal tables
         db.execSQL(createMealNameTableQuery);
         db.execSQL(createMealEatTableQuery);
         db.execSQL(createConnectingMealTableQuery);
-
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Удаляем существующие таблицы
-        db.execSQL("DROP TABLE IF EXISTS " + EXERCISE_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + PRESET_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + TEMP_WORKOUT_EXERCISE_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + TEMP_WORKOUT_SET_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + COMPLETED_WORKOUT_EXERCISE_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + COMPLETED_WORKOUT_SET_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + BASE_FOOD_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + PRESET_FOOD_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + MEAL_PRESET_NAME_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + CONNECTING_MEAL_PRESET_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + MEAL_NAME_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + MEAL_FOOD_TABLE);
+        // Удаляем существующие таблицы (в обратном порядке зависимостей, если возможно)
         db.execSQL("DROP TABLE IF EXISTS " + CONNECTING_MEAL_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + MEAL_FOOD_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + MEAL_NAME_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + CONNECTING_MEAL_PRESET_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + MEAL_PRESET_NAME_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + PRESET_FOOD_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + BASE_FOOD_TABLE);
+
+        db.execSQL("DROP TABLE IF EXISTS " + CARDIO_SET_DETAILS_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + STRENGTH_SET_DETAILS_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + WORKOUT_EXERCISE_TABLE);
+
+        db.execSQL("DROP TABLE IF EXISTS " + CONNECTING_WORKOUT_PRESET_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + WORKOUT_PRESET_NAME_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + BASE_EXERCISE_TABLE);
+
 
         // Пересоздаём таблицы
         onCreate(db);
     }
+
+
 
 
 }

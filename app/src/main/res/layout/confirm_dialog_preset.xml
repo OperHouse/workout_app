@@ -15,7 +15,7 @@
             android:layout_height="match_parent">
 
             <TextView
-                android:id="@+id/textView"
+                android:id="@+id/namePreset_TV"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="25dp"
@@ -42,12 +42,12 @@
                 android:textSize="17sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView">
+                app:layout_constraintTop_toBottomOf="@+id/namePreset_TV">
 
             </TextView>
 
             <EditText
-                android:id="@+id/editText"
+                android:id="@+id/namePreset_ET"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:layout_marginStart="20dp"
@@ -67,7 +67,7 @@
 
 
             <Button
-                android:id="@+id/btnAdd"
+                android:id="@+id/createBtn"
                 android:layout_width="125dp"
                 android:layout_height="36dp"
                 android:layout_marginStart="50dp"
@@ -79,10 +79,10 @@
                 android:textSize="11sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/editText" />
+                app:layout_constraintTop_toBottomOf="@+id/namePreset_ET" />
 
             <Button
-                android:id="@+id/btnChanel"
+                android:id="@+id/closeBtn"
                 android:layout_width="125dp"
                 android:layout_height="36dp"
                 android:background="@drawable/btn_2"
@@ -94,8 +94,8 @@
                 android:textSize="12sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/btnAdd"
-                app:layout_constraintTop_toBottomOf="@+id/editText" />
+                app:layout_constraintStart_toEndOf="@+id/createBtn"
+                app:layout_constraintTop_toBottomOf="@+id/namePreset_ET" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>
 
