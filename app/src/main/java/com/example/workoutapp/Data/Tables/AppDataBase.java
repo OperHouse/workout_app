@@ -112,6 +112,49 @@ public class AppDataBase extends SQLiteOpenHelper {
     public static final String CONNECTING_MEAL_NAME_ID = "connecting_meal_name_id";
     public static final String CONNECTING_MEAL_FOOD_ID = "connecting_meal_food_id";
 
+
+    // =========================USER_PROFILE_TABLE============================//
+    public static final String USER_PROFILE_TABLE = "user_profile_table";
+    public static final String USER_ID = "user_id";
+    public static final String USER_NAME = "user_name";
+    public static final String USER_HEIGHT = "user_height";
+    public static final String USER_AGE = "user_age";
+
+    // =========================WEIGHT_HISTORY_TABLE============================//
+    public static final String WEIGHT_HISTORY_TABLE = "weight_history_table";
+    public static final String WEIGHT_ID = "weight_id";
+    public static final String WEIGHT_MEASUREMENT_DATE = "weight_measurement_date";
+    public static final String WEIGHT_VALUE = "weight_value";
+
+    // =========================DAILY_ACTIVITY_TRACKING_TABLE============================//
+    public static final String DAILY_ACTIVITY_TRACKING_TABLE = "daily_activity_tracking_table";
+    public static final String TRACKING_ACTIVITY_ID = "tracking_activity_id";
+    public static final String TRACKING_ACTIVITY_DATE = "tracking_activity_date";
+    public static final String TRACKING_ACTIVITY_STEPS = "tracking_activity_steps";
+    public static final String DAILY_ACTIVITY_TRACKING_CALORIES = "daily_activity_tracking_calories";
+
+
+    // =========================GOAL_TABLE============================//
+    public static final String GOAL_TABLE = "goal_table";
+    public static final String GOAL_ID = "goal_id";
+    public static final String USER_GOAL_TEXT = "user_goal_text";
+    public static final String GOAL_CALORIES_GAIN = "goal_calories_gain";
+    public static final String GOAL_PROTEIN = "goal_protein";
+    public static final String GOAL_FAT = "goal_fat";
+    public static final String GOAL_CARB = "goal_carb";
+    public static final String GOAL_TO_BURN_CALORIES = "goal_to_burn_calories";
+    public static final String GOAL_STEPS = "goal_steps";
+    public static final String GOAL_WORKOUTS_WEEKLY = "goal_workouts_weekly";
+    public static final String GOAL_START_DATE = "goal_start_date";
+
+    // =========================DAILY_FOOD_TRACKING_TABLE============================//
+    public static final String DAILY_FOOD_TRACKING_TABLE = "daily_food_tracking_table";
+    public static final String TRACKING_FOOD_ID = "tracking_food_id";
+    public static final String TRACKING_CALORIES = "tracking_calories";
+    public static final String TRACKING_PROTEIN = "tracking_protein";
+    public static final String TRACKING_FAT = "tracking_fat";
+    public static final String TRACKING_CARB = "tracking_carb";
+    public static final String DAILY_FOOD_TRACKING_DATE = "tracking_activity_date";
     //=============================================================================//
 
 
@@ -243,6 +286,48 @@ public class AppDataBase extends SQLiteOpenHelper {
                 "FOREIGN KEY(" + CONNECTING_MEAL_NAME_ID + ") REFERENCES " + MEAL_NAME_TABLE + "(" + MEAL_NAME_ID + ") ON DELETE CASCADE, " +
                 "FOREIGN KEY(" + CONNECTING_MEAL_FOOD_ID + ") REFERENCES " + MEAL_FOOD_TABLE + "(" + MEAL_FOOD_ID + ") ON DELETE CASCADE);";
 
+        String createUserProfileTableQuery = "CREATE TABLE IF NOT EXISTS " + USER_PROFILE_TABLE + " ("
+                + USER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + USER_NAME + " TEXT NOT NULL, "
+                + USER_HEIGHT + " REAL, "
+                + USER_AGE + " TEXT);";
+
+        String createWeightHistoryTableQuery = "CREATE TABLE IF NOT EXISTS " + WEIGHT_HISTORY_TABLE + " ("
+                + WEIGHT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " // Вся декларация в одной строке
+                + WEIGHT_MEASUREMENT_DATE + " TEXT NOT NULL, "
+                + WEIGHT_VALUE + " REAL NOT NULL);";
+
+        String createDailyActivityTrackingTableQuery = "CREATE TABLE IF NOT EXISTS " + DAILY_ACTIVITY_TRACKING_TABLE + " ("
+                + TRACKING_ACTIVITY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + TRACKING_ACTIVITY_DATE + " TEXT NOT NULL, "
+                + TRACKING_ACTIVITY_STEPS + " INTEGER, "
+                + DAILY_ACTIVITY_TRACKING_CALORIES + " REAL);";
+
+        String createGoalTableQuery = "CREATE TABLE IF NOT EXISTS " + GOAL_TABLE + " ("
+                + GOAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + GOAL_START_DATE + " TEXT NOT NULL, "
+                + USER_GOAL_TEXT + " TEXT, "
+                + GOAL_CALORIES_GAIN + " REAL, "
+                + GOAL_PROTEIN + " REAL, "
+                + GOAL_FAT + " REAL, "
+                + GOAL_CARB + " REAL, "
+                + GOAL_TO_BURN_CALORIES + " REAL, "
+                + GOAL_STEPS + " INTEGER, "
+                + GOAL_WORKOUTS_WEEKLY + " INTEGER);";
+
+        String createDailyFoodTrackingTableQuery = "CREATE TABLE IF NOT EXISTS " + DAILY_FOOD_TRACKING_TABLE + " ("
+                + TRACKING_FOOD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + DAILY_FOOD_TRACKING_DATE + " TEXT NOT NULL, "
+                + TRACKING_CALORIES + " INTEGER NOT NULL, "
+                + TRACKING_PROTEIN + " REAL, "
+                + TRACKING_FAT + " REAL, "
+                + TRACKING_CARB + " REAL);";
+
+
+
+
+
+
 
         // --- Выполнение запросов на создание таблиц ---
         db.execSQL(createBaseExerciseTableQuery);
@@ -260,6 +345,15 @@ public class AppDataBase extends SQLiteOpenHelper {
         db.execSQL(createMealNameTableQuery);
         db.execSQL(createMealEatTableQuery);
         db.execSQL(createConnectingMealTableQuery);
+
+        db.execSQL(createUserProfileTableQuery);
+        db.execSQL(createWeightHistoryTableQuery);
+        db.execSQL(createDailyActivityTrackingTableQuery);
+        db.execSQL(createGoalTableQuery);
+        db.execSQL(createDailyFoodTrackingTableQuery);
+
+
+
     }
 
     @Override
@@ -280,6 +374,13 @@ public class AppDataBase extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + CONNECTING_WORKOUT_PRESET_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + WORKOUT_PRESET_NAME_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + BASE_EXERCISE_TABLE);
+
+        db.execSQL("DROP TABLE IF EXISTS " + USER_PROFILE_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + WEIGHT_HISTORY_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + DAILY_ACTIVITY_TRACKING_CALORIES);
+        db.execSQL("DROP TABLE IF EXISTS " + GOAL_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + DAILY_FOOD_TRACKING_TABLE);
+
 
 
         // Пересоздаём таблицы

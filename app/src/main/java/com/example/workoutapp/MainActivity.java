@@ -2,6 +2,7 @@ package com.example.workoutapp;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,16 +15,19 @@ import com.example.workoutapp.Fragments.NutritionFragments.NutritionFragment;
 import com.example.workoutapp.Fragments.ProfileFragments.ProfileFragment;
 import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutFragment;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
+import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
 import com.example.workoutapp.databinding.ActivityMainBinding;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnNavigationVisibilityListener {
     private static final Map<String, Fragment> fragmentCache = new HashMap<>();
     public ActivityMainBinding bindingMain;
     private static AppDataBase appDataBase;
+    private BottomNavigationView bottomNavigationView;
 
     // --- Кэшированный список упражнений ---
     private List<ExerciseModel> cachedExercises;
@@ -35,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         bindingMain = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(bindingMain.getRoot());
+        bottomNavigationView = findViewById(R.id.bottomNavView);
 
         // Инициализация базы данных
         appDataBase = AppDataBase.getInstance(getApplicationContext());
@@ -115,5 +120,13 @@ public class MainActivity extends AppCompatActivity {
         WorkoutFragment fragment = new WorkoutFragment();
         fragment.setExercises(getCachedExercises());
         showOrAddFragment("workout", fragment);
+    }
+
+    @Override
+    public void setBottomNavVisibility(boolean isVisible) {
+        if (bottomNavigationView != null) {
+            // Устанавливаем видимость
+            bottomNavigationView.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+        }
     }
 }
