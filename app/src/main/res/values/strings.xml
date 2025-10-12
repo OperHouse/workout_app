@@ -108,4 +108,31 @@
     <string name="attachment_summary_on">Automatically download attachments for incoming emails
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
+
+
+    <string name="group_profile">Профиль</string>
+    <string name="group_nutrition">Питание</string>
+    <string name="group_activity">Активность</string>
+    <string name="group_data">Данные</string>
+    <string-array name="children_profile">
+        <item>Имя: </item>
+        <item>Рост: </item>
+        <item>Вес: </item>
+        <item>Возраст: </item>
+        <item>Цель: </item>
+    </string-array>
+    <string-array name="children_nutrition">
+        <item>Калории: </item>
+        <item>Белки: </item>
+        <item>Жиры: </item>
+        <item>Углеводы: </item>
+    </string-array>
+    <string-array name="children_activity">
+        <item>Цель подвижности: </item>
+        <item>Цель шагов (в день): </item>
+        <item>Цель тренировок (в неделю): </item>
+        <item>Последняя тренировка: </item>
+    </string-array>
+    <string name="profile_settings">Настройки профиля</string>
+
 </resources>
