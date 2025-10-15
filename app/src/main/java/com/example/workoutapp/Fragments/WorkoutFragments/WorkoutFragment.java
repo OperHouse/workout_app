@@ -203,4 +203,6 @@ public class WorkoutFragment extends Fragment {
             updateUI(getView(), exList);
         }
     }
+
+
 }

@@ -95,7 +95,7 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
         TextView amountLabel = dialog.findViewById(R.id.textView2);
         AutoCompleteTextView autoComplete = dialog.findViewById(R.id.autoCompleteAmount);
         EditText editText = dialog.findViewById(R.id.editTextAmount);
-        Button updateBtn = dialog.findViewById(R.id.createWorkBtn);
+        Button updateBtn = dialog.findViewById(R.id.addFoodBtn_Dialog);
         ImageButton closeBtn = dialog.findViewById(R.id.imageButtonBack1);
 
         TextView proteinTV = dialog.findViewById(R.id.textViewProtein);
