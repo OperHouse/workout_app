@@ -1,8 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.WorkoutApp" parent="Theme.AppCompat.Light.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <style name="Base.Theme.WorkoutApp" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Основные цвета, обеспечивающие контраст с белыми полями ввода и темным фоном. -->
+        <item name="colorPrimary">@color/white</item>
+        <item name="colorPrimaryVariant">@color/light_gray2</item>
+        <item name="colorSecondary">@color/light_gray2</item>
+        <item name="colorControlActivated">@color/white</item>
+
+        <!-- Цвет поверхности, используемый для контрастных элементов (например, карточек, диалогов) -->
+        <item name="colorSurface">@android:color/white</item>
+
+        <!-- Цвет текста на светлом фоне, чтобы текст в полях был виден -->
+        <item name="colorOnSurface">@android:color/black</item>
+
+        <!-- Цвет для выделения, используется для обводки полей и активных элементов.
+             Явно устанавливаем его в light_gray2 (предполагаем, что он контрастен к white/background_1) -->
+        <item name="colorAccent">@color/light_gray2</item>
     </style>
 
     <style name="Theme.WorkoutApp" parent="Base.Theme.WorkoutApp" />

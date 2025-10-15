@@ -117,7 +117,7 @@ public class NutritionFragment extends Fragment {
 
         ImageButton backBtn = dialogAddMeal.findViewById(R.id.imageButtonBack1);
         EditText nameMeal_ET = dialogAddMeal.findViewById(R.id.editText);
-        Button createMealBtn = dialogAddMeal.findViewById(R.id.createWorkBtn);
+        Button createMealBtn = dialogAddMeal.findViewById(R.id.addFoodBtn_Dialog);
         Button goToPresetsBtn = dialogAddMeal.findViewById(R.id.presetsMealBtn);
 
         // Обработчик кнопки "Назад"

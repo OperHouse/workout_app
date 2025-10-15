@@ -178,7 +178,7 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
         EditText nameEx = dialogCreateEx.findViewById(R.id.editText);
         AutoCompleteTextView spinnerTypeEx = dialogCreateEx.findViewById(R.id.exerciseType_ACTV);
         AutoCompleteTextView spinnerBodyType = dialogCreateEx.findViewById(R.id.bodyType_ACTV);
-        Button createExercise_Btn = dialogCreateEx.findViewById(R.id.createWorkBtn);
+        Button createExercise_Btn = dialogCreateEx.findViewById(R.id.addFoodBtn_Dialog);
 
         String[] ExercisesType = {"Гантели", "Гриф", "Вес тела", "Кроссовер", "Тренажер", "Время", "Кардио", "Другое"};
         String[] BodyPart = {"Грудь", "Плечи", "Ноги", "Руки", "Тренажер", "Спина", "Пресс", "Другое"};
@@ -273,7 +273,7 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
         EditText nameEx = dialogCreateEx.findViewById(R.id.editText);
         AutoCompleteTextView spinnerTypeEx = dialogCreateEx.findViewById(R.id.exerciseType_ACTV);
         AutoCompleteTextView spinnerBodyType = dialogCreateEx.findViewById(R.id.bodyType_ACTV);
-        Button changeExercise_Btn = dialogCreateEx.findViewById(R.id.createWorkBtn);
+        Button changeExercise_Btn = dialogCreateEx.findViewById(R.id.addFoodBtn_Dialog);
         TextView text = dialogCreateEx.findViewById(R.id.textView1);
 
         text.setText("Изменение упражнения");

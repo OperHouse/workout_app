@@ -270,7 +270,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
             NutritionCircleView circle = dialog.findViewById(R.id.NutritionCircleView);
             AutoCompleteTextView autoComplete = dialog.findViewById(R.id.autoCompleteAmount);
             EditText editText = dialog.findViewById(R.id.editTextAmount);
-            Button createBtn = dialog.findViewById(R.id.createWorkBtn);
+            Button createBtn = dialog.findViewById(R.id.addFoodBtn_Dialog);
             ImageButton closeBtn = dialog.findViewById(R.id.imageButtonBack1);
 
             // Новые TextView для макросов
@@ -666,7 +666,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         TextView textViewFat = dialogAddMealPresetName.findViewById(R.id.textViewFat);
         TextView textViewCarb = dialogAddMealPresetName.findViewById(R.id.textViewCarb);
         TextView textViewCalories = dialogAddMealPresetName.findViewById(R.id.textViewCalories);
-        Button createMealPresetBtn = dialogAddMealPresetName.findViewById(R.id.createWorkBtn);
+        Button createMealPresetBtn = dialogAddMealPresetName.findViewById(R.id.addFoodBtn_Dialog);
         NutritionCircleView circle = dialogAddMealPresetName.findViewById(R.id.NutritionCircleView);
         ConstraintLayout detailsLayout = dialogAddMealPresetName.findViewById(R.id.detailsLayout);
 
