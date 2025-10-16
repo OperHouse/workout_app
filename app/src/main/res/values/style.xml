@@ -74,6 +74,34 @@
 
     </style>
 
+    <style name="CustomTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/white</item> <!-- Цвет обводки -->
+        <item name="boxBackgroundMode">outline</item> <!-- Режим фона: только обводка -->
+        <item name="android:focusable">true</item> <!-- Фокусируемость -->
+        <item name="hintTextColor">@color/white</item> <!-- Цвет подсказки -->
+        <item name="android:textColorHint">@color/light_gray2</item> <!-- Цвет текста подсказки -->
+    </style>
+
+    <!-- Стиль для TextInputEditText -->
+    <style name="CustomTextInputEditText">
+        <item name="android:textColor">@color/white</item> <!-- Цвет текста -->
+        <item name="android:textCursorDrawable">@drawable/custom_cursor</item> <!-- Кастомный курсор -->
+        <item name="android:cursorVisible">true</item> <!-- Видимость курсора -->
+        <item name="android:focusable">true</item> <!-- Фокусируемость -->
+    </style>
+
+    <!-- Стиль для кнопки с анимацией парения и нажатия -->
+    <style name="CustomImageButton" parent="Widget.MaterialComponents.Button">
+        <!-- Убираем фон по умолчанию -->
+        <item name="android:background">@drawable/ic_back</item>
+
+        <!-- Добавляем тень -->
+        <item name="android:elevation">4dp</item> <!-- Эффект парения (поднятие над фоном) -->
+        <item name="android:translationZ">4dp</item> <!-- Эффект при взаимодействии, чтобы кнопка выглядела, как будто "плавает" -->
+        <item name="android:layout_marginStart">10dp</item> <!-- Отступ от начала -->
+        <item name="android:layout_marginTop">10dp</item> <!-- Отступ сверху -->
+    </style>
+
     <!-- ==========================Вид текста========================== -->
 
 
