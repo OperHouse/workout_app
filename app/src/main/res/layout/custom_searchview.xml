@@ -1,0 +1,75 @@
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card_search"
+    android:layout_width="match_parent"
+    android:layout_height="40dp"
+
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:elevation="3dp"
+    android:paddingTop="5dp"
+    android:clickable="true"
+    android:focusableInTouchMode="true"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="19dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/CARD_search_CL"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="4dp"
+        android:layout_marginBottom="4dp"
+        android:background="@drawable/search_back">
+
+
+        <ImageView
+            android:id="@+id/iv_search_icon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:adjustViewBounds="true"
+            android:src="@drawable/ic_search"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginBottom="10dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/light_gray2" />
+
+        <EditText
+            android:id="@+id/edt_search_text"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="40dp"
+            android:background="@android:color/transparent"
+            android:gravity="center_vertical"
+            android:hint="@string/search_exercise"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:maxLines="1"
+            app:layout_constraintHorizontal_weight="2"
+            android:singleLine="true"
+            android:textColor="@color/white"
+            android:textColorHint="@color/light_gray2"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/iv_clear_text"
+            app:layout_constraintStart_toEndOf="@id/iv_search_icon"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/iv_clear_text"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:padding="10dp"
+            android:layout_marginEnd="10dp"
+            android:adjustViewBounds="true"
+            android:src="@drawable/ic_close_foreground"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

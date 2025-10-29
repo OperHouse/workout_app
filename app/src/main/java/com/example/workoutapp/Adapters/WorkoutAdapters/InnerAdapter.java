@@ -189,7 +189,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             weight = itemView.findViewById(R.id.weight_ET);
             reps = itemView.findViewById(R.id.reps_ET);
             isSelected = itemView.findViewById(R.id.isSelected);
-            liner = itemView.findViewById(R.id.linearLayout);
+            liner = itemView.findViewById(R.id.foodCaloriesContainer_D_LL);
         }
 
         public void bind(StrengthSetModel set, boolean isFinished, STRENGTH_SET_DETAILS_TABLE_DAO dao, ExecutorService executor) {
@@ -273,7 +273,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             distance = itemView.findViewById(R.id.distance_ET);
             temp = itemView.findViewById(R.id.temp_ET);
             isSelected = itemView.findViewById(R.id.isSelected);
-            liner = itemView.findViewById(R.id.linearLayout);
+            liner = itemView.findViewById(R.id.foodCaloriesContainer_D_LL);
         }
 
         public void bind(CardioSetModel set, boolean isFinished, CARDIO_SET_DETAILS_TABLE_DAO dao, ExecutorService executor) {

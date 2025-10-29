@@ -8,9 +8,6 @@ import android.database.sqlite.SQLiteDatabase;
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class UserProfileDao {
     private final AppDataBase dbHelper;
 
@@ -53,30 +50,55 @@ public class UserProfileDao {
 
     // Получение текущего профиля (по ID)
     public UserProfileModel getProfileById(long userId) {
+        // Получение базы данных для чтения
+        // ВНИМАНИЕ: Вызов getReadableDatabase() может запустить AppDataBase.onCreate()
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         UserProfileModel profile = null;
+        Cursor cursor = null;
 
-        Cursor cursor = db.query(
-                AppDataBase.USER_PROFILE_TABLE,
-                null, // Все столбцы
-                AppDataBase.USER_ID + " = ?",
-                new String[]{String.valueOf(userId)},
-                null,
-                null,
-                null
-        );
-
-        if (cursor != null && cursor.moveToFirst()) {
-            profile = new UserProfileModel(
-                    cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.USER_ID)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.USER_NAME)),
-                    cursor.getFloat(cursor.getColumnIndexOrThrow(AppDataBase.USER_HEIGHT)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.USER_AGE))
+        try {
+            // Здесь выполняется SQL-запрос SELECT.
+            // Если таблица еще не создана (из-за race condition), здесь возникнет ошибка.
+            cursor = db.query(
+                    AppDataBase.USER_PROFILE_TABLE,
+                    null, // Все столбцы
+                    AppDataBase.USER_ID + " = ?",
+                    new String[]{String.valueOf(userId)},
+                    null,
+                    null,
+                    null
             );
-            cursor.close();
+
+            // --- Логика чтения данных из курсора (неизменна) ---
+            if (cursor != null && cursor.moveToFirst()) {
+                profile = new UserProfileModel(
+                        cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.USER_ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.USER_NAME)),
+                        cursor.getFloat(cursor.getColumnIndexOrThrow(AppDataBase.USER_HEIGHT)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.USER_AGE))
+                );
+                cursor.close();
+            }
+            // ---------------------------------------------------
+
+        } catch (android.database.sqlite.SQLiteException e) {
+            // *** КЛЮЧЕВОЙ МОМЕНТ: ПЕРЕХВАТ ОШИБКИ "no such table" ***
+            if (e.getMessage() != null && e.getMessage().contains("no such table")) {
+                // Эта ошибка означает, что таблица еще не успела создаться.
+                // Это ожидаемо при race condition на реальном устройстве.
+                android.util.Log.w("UserProfileDao", "Таблица user_profile_table временно отсутствует. Возвращаем NULL.");
+                return null; // Возвращаем null, чтобы предотвратить краш приложения
+            }
+            // Если это другая, неожиданная ошибка SQLite, перебрасываем ее.
+            throw e;
+        } finally {
+            if (cursor != null) cursor.close();
+            // ВНИМАНИЕ: Не закрывайте базу данных, если она используется в других потоках.
+            // Если dbHelper - Singleton, закрытие здесь может вызвать ошибки.
+            // Но так как у вас SQLiteOpenHelper, db.close() тут остается.
+            db.close();
         }
 
-        db.close();
         return profile;
     }
 }

@@ -1,214 +1,165 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<androidx.core.widget.NestedScrollView
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".Fragments.WorkoutFragments.Selection_Ex_Preset_Fragment"
-    android:background="#2E3042">
+    android:layout_height="wrap_content"
+    android:background="@color/background_1"
+    android:clickable="true"
+    android:focusableInTouchMode="true"
+    tools:context=".Fragments.WorkoutFragments.Selection_Ex_Preset_Fragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraintLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/light_gray2"
-        android:paddingBottom="10dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageButton
-            android:id="@+id/imageButtonBack"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/ic_back"
+        <!-- Верхняя панель -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/selection_header_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/light_gray2"
+            android:paddingBottom="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-        </ImageButton>
+            <ImageButton
+                android:id="@+id/selection_back_btn"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/ic_back"
+                android:contentDescription="@string/desc_back_button"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
+            <TextView
+                android:id="@+id/selection_title_tv"
+                style="@style/TextStyle.Big.Bold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:text="@string/title_add_exercise"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.4"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <include
+                android:id="@+id/selection_search_include"
+                layout="@layout/custom_searchview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginTop="10dp"
+                app:layout_constraintTop_toBottomOf="@+id/selection_title_tv" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- Блок с тренировками -->
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/selection_workouts_label_tv"
+            style="@style/TextStyle.Big.Bold"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:text="@string/label_workouts"
+            app:layout_constraintBottom_toBottomOf="@+id/selection_add_workout_btn"
+            app:layout_constraintEnd_toStartOf="@+id/selection_add_workout_btn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/selection_add_workout_btn" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/selection_add_workout_btn"
+            style="@style/SmallButtonWithIc_Plus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:gravity="start|center"
-            android:text="Добавление упражнений"
-            android:textColor="@color/white"
-            android:textSize="20sp"
-            android:textStyle="bold"
+            android:layout_marginEnd="10dp"
+            android:clickable="true"
+            android:text="@string/btn_add_workout"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.4"
-            app:layout_constraintStart_toEndOf="@+id/imageButtonBack"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toBottomOf="@+id/selection_header_layout" />
 
-        </TextView>
-
-         <SearchView
-            android:id="@+id/searchExercise2"
-            android:layout_width="0dp"
-            android:layout_height="30dp"
+        <TextView
+            android:id="@+id/selection_workouts_hint_tv"
+            style="@style/TextStyle.Small"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text="@string/hint_add_workout"
+            app:layout_constraintTop_toBottomOf="@+id/selection_add_workout_btn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/selection_workout_recycler_rv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:scrollbars="none"
+            android:nestedScrollingEnabled="false"
+            app:layout_constraintTop_toBottomOf="@+id/selection_workouts_hint_tv"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:listitem="@layout/preset_item_layout" />
+
+        <!-- Блок с упражнениями -->
+        <TextView
+            android:id="@+id/selection_exercises_label_tv"
+            style="@style/TextStyle.Big.Bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:text="@string/label_exercises"
+            app:layout_constraintBottom_toBottomOf="@+id/selection_add_exercise_btn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/selection_add_exercise_btn" />
+
+        <Button
+            android:id="@+id/selection_add_exercise_btn"
+            style="@style/SmallButtonWithIc_Plus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginTop="15dp"
             android:layout_marginEnd="10dp"
-            android:background="@drawable/search_back"
-            android:iconifiedByDefault="false"
-            android:queryHint="Поиск упражнений"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:text="@string/btn_add_exercise"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/selection_workout_recycler_rv" />
+
+        <TextView
+            android:id="@+id/selection_exercises_hint_tv"
+            style="@style/TextStyle.Small"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text="@string/hint_add_exercise"
+            app:layout_constraintTop_toBottomOf="@+id/selection_add_exercise_btn"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView" >
-
-        </SearchView>
-
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/presetBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="36dp"
-        android:layout_marginTop="15dp"
-        android:layout_marginEnd="10dp"
-        android:background="@drawable/btn_1"
-        android:drawableStart="@drawable/ic_plus"
-        android:drawablePadding="4dp"
-        android:elegantTextHeight="true"
-        android:gravity="start|center_vertical"
-        android:paddingStart="4dp"
-        android:paddingEnd="6dp"
-        android:text="Добавить тренировку"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textSize="13sp"
-        android:textStyle="normal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/constraintLayout">
-
-    </com.google.android.material.button.MaterialButton>
-
-    <TextView
-        android:id="@+id/textView4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Тренировки"
-        android:layout_marginStart="10dp"
-        android:textColor="@color/white"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_marginTop="15dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/constraintLayout">
-
-    </TextView>
-
-    <TextView
-        android:id="@+id/textView7"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginTop="10dp"
-        android:text="Жми '+ Добавить тренировку' чтобы начать"
-        android:textColor="@color/white"
-        android:textAlignment="center"
-        android:gravity="center"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/presetBtn">
-
-    </TextView>
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/presetRecycler"
+            android:id="@+id/selection_exercise_recycler_rv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:scrollbars="none"
+            android:nestedScrollingEnabled="false"
+            app:layout_constraintTop_toBottomOf="@+id/selection_exercises_hint_tv"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView7"
-            tools:listitem="@layout/preset_item_layout">
-
-        </androidx.recyclerview.widget.RecyclerView>
-
-    <TextView
-        android:id="@+id/textView5"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="15dp"
-        android:text="Упражнения"
-        android:textColor="@color/white"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/presetRecycler">
-
-    </TextView>
-
-    <Button
-        android:id="@+id/ExerciseBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="36dp"
-        android:layout_marginTop="15dp"
-        android:layout_marginEnd="10dp"
-        android:background="@drawable/btn_1"
-        android:drawableStart="@drawable/ic_plus"
-        android:drawablePadding="4dp"
-        android:elegantTextHeight="true"
-        android:gravity="start|center_vertical"
-        android:paddingStart="4dp"
-        android:paddingEnd="6dp"
-        android:text="Добавить упражнение"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textSize="13sp"
-        android:textStyle="normal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/presetRecycler">
-
-    </Button>
-
-    <TextView
-        android:id="@+id/textView8"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginTop="10dp"
-        android:text="Жми '+ Добавить упражнение', чтобы начать"
-        android:textColor="@color/white"
-        android:textAlignment="center"
-        android:gravity="center"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ExerciseBtn">
-
-    </TextView>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/ExercisePresets_RV"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView8"
-            tools:listitem="@layout/ex_item_layout">
-
-        </androidx.recyclerview.widget.RecyclerView>
+            tools:listitem="@layout/ex_item_layout" />
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-</ScrollView>
+</androidx.core.widget.NestedScrollView>

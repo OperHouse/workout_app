@@ -61,15 +61,15 @@ public class WorkoutFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_workout, container, false);
 
-        TextView dateTextWorkout = view.findViewById(R.id.dateTextWorkout);
-        Button addExBtn = view.findViewById(R.id.addExBtn);
-        Button finalWorkBtn = view.findViewById(R.id.finalWorkBtn);
+        TextView dateTextWorkout = view.findViewById(R.id.workout_date_TV);
+        Button addExBtn = view.findViewById(R.id.workout_add_ex_BTN);
+        Button finalWorkBtn = view.findViewById(R.id.workout_finish_BTN);
 
 
 
 
         // Инициализируем recyclerView
-        workoutRecyclerView = view.findViewById(R.id.WorkoutRecyclerView);
+        workoutRecyclerView = view.findViewById(R.id.workout_list_RV);
         workoutRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         workoutRecyclerView.setItemAnimator(null);
 
@@ -176,10 +176,10 @@ public class WorkoutFragment extends Fragment {
     }
 
     private void updateUI(View rootView, List<ExerciseModel> list) {
-        TextView textView1 = rootView.findViewById(R.id.textView1);
-        TextView textView2 = rootView.findViewById(R.id.textView2);
-        ImageView image = rootView.findViewById(R.id.imageView);
-        Button finalWorkBtn = rootView.findViewById(R.id.finalWorkBtn);
+        TextView textView1 = rootView.findViewById(R.id.workout_title_D_TV);
+        TextView textView2 = rootView.findViewById(R.id.workout_hint_D_TV);
+        ImageView image = rootView.findViewById(R.id.workout_image_D_IV);
+        Button finalWorkBtn = rootView.findViewById(R.id.workout_finish_BTN);
 
         if (list == null || list.isEmpty()) {
             textView1.setVisibility(View.VISIBLE);

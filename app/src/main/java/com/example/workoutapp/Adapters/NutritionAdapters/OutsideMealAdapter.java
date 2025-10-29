@@ -21,20 +21,21 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
-import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.Tools.OnMealUpdatedListener;
 import com.example.workoutapp.Fragments.NutritionFragments.CreateMealPresetFragment;
 import com.example.workoutapp.Fragments.NutritionFragments.NutritionFragment;
-import com.example.workoutapp.Tools.NutritionMode;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.R;
+import com.example.workoutapp.Tools.NutritionMode;
+import com.example.workoutapp.Tools.OnMealUpdatedListener;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.MyViewHolder>{
+public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.MyViewHolder> {
 
     private RecyclerView outsideRecyclerView;
     private List<MealModel> allMealList;
@@ -69,13 +70,25 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
         int meal_id = mealElm.getMeal_name_id();
 
 
+        // 1. Получаем список и делаем его Null-безопасным
+        List<FoodModel> foodList = mealElm.getMeal_food_list();
+
+        // ГАРАНТИРУЕМ, ЧТО СПИСОК НЕ NULL
+        if (foodList == null) {
+            foodList = new ArrayList<>();
+        }
+
+        // 2. Используем Null-безопасный список
         InnerFoodAdapter innerFoodAdapter = allInnerFoodAdapters.get(meal_id);
         if (innerFoodAdapter == null) {
-            innerFoodAdapter = new InnerFoodAdapter(context, fragment, mealElm.getMeal_food_list(), meal_id);
+            // Передаем гарантированно не-null список
+            innerFoodAdapter = new InnerFoodAdapter(context, fragment, foodList, meal_id);
             allInnerFoodAdapters.put(meal_id, innerFoodAdapter);
         } else {
-            innerFoodAdapter.updateData(mealElm.getMeal_food_list(), meal_id);
+            // Передаем гарантированно не-null список
+            innerFoodAdapter.updateData(foodList, meal_id);
         }
+
         holder.innerFoodRecycler.setLayoutManager(new LinearLayoutManager(context));
         holder.innerFoodRecycler.setAdapter(innerFoodAdapter);
         innerFoodAdapter.attachSwipeToDelete(holder.innerFoodRecycler, meal_id);
@@ -85,11 +98,18 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
             @Override
             public void onClick(View v) {
                 // Переход к новому фрагменту
-                FragmentManager fragmentManager = fragment.getParentFragmentManager(); // Use the fragment reference to get FragmentManager
+                FragmentManager fragmentManager = fragment.getParentFragmentManager();
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                fragmentTransaction.replace(R.id.frameLayout, new CreateMealPresetFragment(meal_id, NutritionMode.ADD_MEAL)); // Replace with the new fragment
-                fragmentTransaction.addToBackStack(null); // Add to back stack if you want to navigate back
-                fragmentTransaction.commit();
+
+                // 2. Создаем новый фрагмент
+                Fragment newPresetFragment = new CreateMealPresetFragment(meal_id, NutritionMode.ADD_MEAL);
+
+                // 🔥 ИСПРАВЛЕНИЕ: Используем HIDE и ADD
+                fragmentTransaction
+                        .hide(fragment) // Скрываем ТЕКУЩИЙ фрагмент, чтобы сохранить его состояние
+                        .add(R.id.frameLayout, newPresetFragment, "create_meal_preset_add_food") // Добавляем новый фрагмент
+                        .addToBackStack(null)  // Оставляем в стеке для возврата назад
+                        .commit();
             }
         });
 
@@ -134,14 +154,14 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
         dialogDeleteMeal.setCancelable(true);
         dialogDeleteMeal.setCanceledOnTouchOutside(true);
 
-        Button deleteBtn = dialogDeleteMeal.findViewById(R.id.btnDelete);
-        Button chanelBtn = dialogDeleteMeal.findViewById(R.id.btnChanel);
-        TextView text1 = dialogDeleteMeal.findViewById(R.id.text1);
-        TextView text2 = dialogDeleteMeal.findViewById(R.id.text2);
+        Button deleteBtn = dialogDeleteMeal.findViewById(R.id.delete_confirm_D_BTN);
+        Button chanelBtn = dialogDeleteMeal.findViewById(R.id.delete_cancel_D_BTN);
+        TextView text1 = dialogDeleteMeal.findViewById(R.id.delete_title_D_TV);
+        TextView text2 = dialogDeleteMeal.findViewById(R.id.delete_message_D_TV);
 
         deleteBtn.setText("Удалить");
         text1.setText("Удаление приема пищи");
-        text2.setText("Вы действительно хотите удалить прием пищи?" + "\"" + elm.getMeal_name() +"\"");
+        text2.setText("Вы действительно хотите удалить прием пищи: " + "\"" + elm.getMeal_name() + "\" ?");
 
         if (dialogDeleteMeal.getWindow() != null) {
             dialogDeleteMeal.getWindow().setBackgroundDrawable(new ColorDrawable(0));
@@ -182,11 +202,17 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
         dialogDeleteMeal.show();
     }
 
-    public void setMacros(MealModel mealElm, MyViewHolder holder){
+    public void setMacros(MealModel mealElm, MyViewHolder holder) {
         double totalProtein = 0;
         double totalFat = 0;
         double totalCarb = 0;
         double totalCalories = 0;
+
+        if (mealElm.getMeal_food_list() == null || mealElm.getMeal_food_list().isEmpty()) {
+            // Опционально: сбросить макросы в 0 или скрыть представление, если это необходимо
+            // holder.tvProtein.setText("0g");
+            return;
+        }
 
         for (FoodModel eat : mealElm.getMeal_food_list()) {
             totalProtein += eat.getProtein();
@@ -203,7 +229,9 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
 
         holder.KKAL_TV.setText("Калории: " + calories);
         holder.PFC_TV.setText("Б: " + protein + " / Ж: " + fat + " / У: " + carb);
-    };
+    }
+
+    ;
 
     public void updateFoodInMeal(int mealId, FoodModel updatedFood) {
         for (int i = 0; i < allMealList.size(); i++) {
@@ -225,14 +253,15 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
         Button deleteMeal_BTN;
 
         RecyclerView innerFoodRecycler;
+
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
-            mealName_TV = itemView.findViewById(R.id.mealName_TV);
-            KKAL_TV = itemView.findViewById(R.id.kkal_TV);
-            PFC_TV = itemView.findViewById(R.id.PFC);
-            addFood_BTN = itemView.findViewById(R.id.addFoodBtn);
-            deleteMeal_BTN = itemView.findViewById(R.id.deleteMeal);
-            innerFoodRecycler = itemView.findViewById(R.id.innerFoodRecycle);
+            mealName_TV = itemView.findViewById(R.id.outside_card_meal_name_TV);
+            KKAL_TV = itemView.findViewById(R.id.outside_card_calories_TV);
+            PFC_TV = itemView.findViewById(R.id.outside_card_protein_fat_carbs_TV);
+            addFood_BTN = itemView.findViewById(R.id.outside_card_add_food_Btn);
+            deleteMeal_BTN = itemView.findViewById(R.id.outside_card_delete_meal_Btn);
+            innerFoodRecycler = itemView.findViewById(R.id.outside_card_inner_RV);
         }
     }
 

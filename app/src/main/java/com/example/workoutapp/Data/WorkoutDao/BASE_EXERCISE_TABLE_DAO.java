@@ -98,20 +98,21 @@ public class BASE_EXERCISE_TABLE_DAO {
         return exercises;
     }
 
-    public void deleteExercise(String exName) {
-        String whereClause = AppDataBase.BASE_EXERCISE_NAME + " = ?";
-        String[] whereArgs = {exName};
+    public void deleteExercise(long id) {
+        String whereClause = AppDataBase.BASE_EXERCISE_ID + " = ?";
+        String[] whereArgs = { String.valueOf(id) };
         database.delete(AppDataBase.BASE_EXERCISE_TABLE, whereClause, whereArgs);
     }
 
-    public void updateExercise(String oldName, BaseExModel newExercise) {
+    public void updateExercise(BaseExModel newExercise) {
         ContentValues values = new ContentValues();
         values.put(AppDataBase.BASE_EXERCISE_NAME, newExercise.getExName());
         values.put(AppDataBase.BASE_EXERCISE_TYPE, newExercise.getExType());
         values.put(AppDataBase.BASE_EXERCISE_BODY_TYPE, newExercise.getBodyType());
 
-        String whereClause = AppDataBase.BASE_EXERCISE_NAME + " = ?";
-        String[] whereArgs = {oldName};
+        String whereClause = AppDataBase.BASE_EXERCISE_ID + " = ?";
+        String[] whereArgs = {String.valueOf(newExercise.getBase_ex_id())};
+
         database.update(AppDataBase.BASE_EXERCISE_TABLE, values, whereClause, whereArgs);
     }
 }

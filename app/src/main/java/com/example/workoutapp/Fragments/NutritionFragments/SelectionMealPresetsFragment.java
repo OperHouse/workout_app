@@ -1,20 +1,31 @@
 package com.example.workoutapp.Fragments.NutritionFragments;
 
+import static com.google.android.material.internal.ViewUtils.hideKeyboard;
+
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.SearchView;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -47,7 +58,7 @@ public class SelectionMealPresetsFragment extends Fragment implements OnPresetMe
     private PresetEatDao presetEatDao;
     private ConnectingMealPresetDao connectingMealPresetDao;
     private PresetMealAdapter presetMealAdapter;
-    private SearchView searchPreset;
+    private EditText edtSearchText;
     private String searchText = "";
 
     TextView textPressedBtn;
@@ -73,16 +84,126 @@ public class SelectionMealPresetsFragment extends Fragment implements OnPresetMe
         this.connectingMealPresetDao = new ConnectingMealPresetDao(MainActivity.getAppDataBase());
     }
 
+    @SuppressLint({"ClickableViewAccessibility", "RestrictedApi"})
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View AddMealFragmentView = inflater.inflate(R.layout.fragment_selection_meal_presets, container, false);
 
         ImageButton backBtn = AddMealFragmentView.findViewById(R.id.imageButtonBack);
-        Button createPresetBtn = AddMealFragmentView.findViewById(R.id.createPresetBtn);
-        searchPreset = AddMealFragmentView.findViewById(R.id.searchPresets);
-        presetRecycler = AddMealFragmentView.findViewById(R.id.presetsRecycler);
-        textPressedBtn = AddMealFragmentView.findViewById(R.id.textView7);
+        Button createPresetBtn = AddMealFragmentView.findViewById(R.id.select_meal_preset_create_preset_Btn);
+        presetRecycler = AddMealFragmentView.findViewById(R.id.select_meal_preset_RV);
+        textPressedBtn = AddMealFragmentView.findViewById(R.id.select_meal_preset_title_TV);
+
+        View customSearchViewContainer = AddMealFragmentView.findViewById(R.id.select_meal_preset_search_include);
+        CardView cardContainer = (CardView) customSearchViewContainer; // <-- Скорректировано: приводим тип к CardView
+
+        // Находим внутренний ConstraintLayout, который имеет ID CARD_search_CL и где меняется фон.
+        ConstraintLayout layoutSearch = cardContainer.findViewById(R.id.CARD_search_CL);
+
+        // Остальные дочерние элементы ищутся внутри layoutSearch (CARD_search_CL)
+        edtSearchText = layoutSearch.findViewById(R.id.edt_search_text);
+        ImageView ivSearchIcon = layoutSearch.findViewById(R.id.iv_search_icon);
+        ImageView ivClearText = layoutSearch.findViewById(R.id.iv_clear_text);
+
+        edtSearchText.setHint(getString(R.string.hint_searchView_food_presets));
+
+        edtSearchText.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                layoutSearch.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.search_back_active));
+                ivSearchIcon.setColorFilter(ContextCompat.getColor(requireContext(), R.color.white));
+                ivClearText.setColorFilter(ContextCompat.getColor(requireContext(), R.color.white));
+                edtSearchText.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
+                edtSearchText.setHintTextColor(ContextCompat.getColor(requireContext(), R.color.white));
+            } else {
+                layoutSearch.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.search_back_normal));
+                ivSearchIcon.setColorFilter(ContextCompat.getColor(requireContext(), R.color.light_gray2));
+                ivClearText.setColorFilter(ContextCompat.getColor(requireContext(), R.color.light_gray2));
+                edtSearchText.setTextColor(ContextCompat.getColor(requireContext(), R.color.light_gray2));
+                edtSearchText.setHintTextColor(ContextCompat.getColor(requireContext(), R.color.light_gray2));
+            }
+        });
+        // Поведение "как SearchView" при нажатии "Поиск" на клавиатуре
+        edtSearchText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                v.clearFocus();
+                presetRecycler.requestFocus(); // как в старом onQueryTextSubmit
+                return true;
+            }
+            return false;
+        });
+
+        // Слушатель изменений текста (аналог onQueryTextChange)
+        edtSearchText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                searchText = s.toString();
+                if(Objects.equals(searchText, "")){
+                    presetMealAdapter.filteredList.clear();
+                    presetMealAdapter.changeFilterText(searchText);
+                    presetMealAdapter.notifyDataSetChanged();
+                }else{
+                    presetMealAdapter.setFilteredList(searchText);
+                }
+
+                // Показать/спрятать кнопку очистки
+                ivClearText.setVisibility(searchText.trim().isEmpty() ? View.GONE : View.VISIBLE);
+            }
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        // Кнопка очистки текста
+        ivClearText.setOnClickListener(v -> {
+            edtSearchText.setText("");
+            edtSearchText.clearFocus();
+        });
+        AddMealFragmentView.setOnTouchListener((v, event) -> {
+            // Проверяем, если поле ввода активно
+            if (edtSearchText.hasFocus()) {
+                // 1. Снимаем фокус с поля ввода
+                edtSearchText.clearFocus();
+
+                // 2. Скрываем клавиатуру с помощью InputMethodManager
+                InputMethodManager imm = (InputMethodManager) requireActivity()
+                        .getSystemService(Context.INPUT_METHOD_SERVICE);
+
+                if (imm != null) {
+                    // v.getWindowToken() получает токен от корневого View
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                }
+
+                // Сообщаем, что касание было обработано, чтобы оно не попало к дочерним View
+                return true;
+            }
+            // Если поле не было в фокусе, позволяем событию двигаться дальше
+            return false;
+        });
+
+        edtSearchText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+
+                // 1. Убираем фокус с поля ввода
+                v.clearFocus();
+
+                // 2. Скрываем клавиатуру
+                hideKeyboard(v);
+
+
+
+                return true; // Сообщаем, что событие обработано
+            }
+            return false;
+        });
+
+        // очистка текста
+        ivClearText.setOnClickListener(v -> edtSearchText.setText(""));
 
         List<MealModel> presets = presetMealNameDao.getAllPresetMealModels(
                 connectingMealPresetDao,
@@ -113,6 +234,7 @@ public class SelectionMealPresetsFragment extends Fragment implements OnPresetMe
         createPresetBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                hideKeyboard(edtSearchText);
                 Fragment selectionFragment = new CreateMealPresetFragment();
                 FragmentManager fragmentManager = getParentFragmentManager(); // или getFragmentManager()
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -127,29 +249,6 @@ public class SelectionMealPresetsFragment extends Fragment implements OnPresetMe
 
         setupSwipeLeftForRecycler(presetRecycler, presets);
 
-        searchPreset.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                // Убираем фокус после отправки
-                searchPreset.clearFocus();
-                presetRecycler.requestFocus();
-                return true;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newTextInp) {
-                searchText = newTextInp;
-                if(Objects.equals(searchText, "")){
-                    presetMealAdapter.filteredList.clear();
-                    presetMealAdapter.changeFilterText(searchText);
-                    presetMealAdapter.notifyDataSetChanged();
-                }else{
-                    presetMealAdapter.setFilteredList(newTextInp);
-                }
-
-                return true;
-            }
-        });
 
         getParentFragmentManager().setFragmentResultListener(
                 "preset_created",
@@ -165,16 +264,18 @@ public class SelectionMealPresetsFragment extends Fragment implements OnPresetMe
         return AddMealFragmentView;
     }
 
+    @SuppressLint("RestrictedApi")
     private void showPresetDetailDialog(MealModel preset) {
         Dialog dialog = new Dialog(requireContext());
+        edtSearchText.clearFocus();
         dialog.setContentView(R.layout.dialog_preset_detail);
         Objects.requireNonNull(dialog.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
 
-        TextView title = dialog.findViewById(R.id.textView1);
-        ImageButton closeBtn = dialog.findViewById(R.id.imageButtonBack1);
-        Button changePresetBtn = dialog.findViewById(R.id.changePresetBtn);
-        RecyclerView eatRecycler = dialog.findViewById(R.id.recyclerView);
+        TextView title = dialog.findViewById(R.id.dialog_preset_detail_title_D_TV);
+        ImageView closeBtn = dialog.findViewById(R.id.preset_close_D_BTN);
+        Button changePresetBtn = dialog.findViewById(R.id.dialog_preset_detail_change_Btn);
+        RecyclerView eatRecycler = dialog.findViewById(R.id.dialog_preset_detail_RV);
 
         if (preset.getMeal_food_list().size() > 5) {
             ViewGroup.LayoutParams params = eatRecycler.getLayoutParams();
@@ -227,7 +328,7 @@ public class SelectionMealPresetsFragment extends Fragment implements OnPresetMe
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                searchPreset.clearFocus();
+                edtSearchText.clearFocus();
                 int position = viewHolder.getAdapterPosition();
                 MealModel item = (MealModel) presetMealAdapter.getList().get(position);
                 showDeleteConfirmationDialog(item, position, recyclerView);
@@ -264,10 +365,10 @@ public class SelectionMealPresetsFragment extends Fragment implements OnPresetMe
         dialogDeleteEat.setCanceledOnTouchOutside(true); // Закрыть при клике вне диалога
 
 
-        TextView text1 = dialogDeleteEat.findViewById(R.id.text1);
-        TextView text2 = dialogDeleteEat.findViewById(R.id.text2);
-        Button deleteBtn = dialogDeleteEat.findViewById(R.id.btnDelete);
-        Button chanelBtn = dialogDeleteEat.findViewById(R.id.btnChanel);
+        TextView text1 = dialogDeleteEat.findViewById(R.id.delete_title_D_TV);
+        TextView text2 = dialogDeleteEat.findViewById(R.id.delete_message_D_TV);
+        Button deleteBtn = dialogDeleteEat.findViewById(R.id.delete_confirm_D_BTN);
+        Button chanelBtn = dialogDeleteEat.findViewById(R.id.delete_cancel_D_BTN);
 
         text1.setText("Удаление пресета");
         text2.setText("Вы действивтельно хотите удалить пресет \"" + presetToDelete.getMeal_name() + "\"");
