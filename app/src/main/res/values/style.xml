@@ -112,15 +112,19 @@
         <item name="android:textStyle">normal</item>
     </style>
 
-    <style name="TextStyle.Big.Bold">
-        <item name="android:textStyle">bold</item>
-    </style>
-
     <style name="TextStyle.Small" parent="Widget.AppCompat.TextView">
         <item name="android:textColor">@color/white</item>
         <item name="android:textSize">16sp</item>
         <item name="android:fontFamily">sans-serif</item>
         <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="TextStyle.Big.Bold">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextStyle.Small.Bold">
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="TextStyle.Button.Big" parent="Widget.AppCompat.TextView">

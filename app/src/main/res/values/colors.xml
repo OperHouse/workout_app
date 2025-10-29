@@ -17,8 +17,11 @@
     <color name="red">#F44336</color>
     <color name="lime">#00FF00</color>
     <color name="protein_red">#D32F2F</color>
+    <color name="error_red">#AE2F4F</color>
     <color name="fat_yellow">#FFEB3B</color>
     <color name="carb_green">#81C784</color>
     <color name="mtrl_textinput_default_box_stroke_color" tools:override="true">#43516C</color>
+
+
 
 </resources>

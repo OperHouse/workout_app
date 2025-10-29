@@ -134,6 +134,31 @@
         <item>Цель тренировок (в неделю): </item>
         <item>Последняя тренировка: </item>
     </string-array>
+
+
+    <string-array name="exercise_types">
+        <item>Гантели</item>
+        <item>Гриф</item>
+        <item>Вес тела</item>
+        <item>Кроссовер</item>
+        <item>Тренажер</item>
+        <item>Время</item>
+        <item>Кардио</item>
+        <item>Другое</item>
+    </string-array>
+
+    <string-array name="body_parts">
+        <item>Грудь</item>
+        <item>Плечи</item>
+        <item>Ноги</item>
+        <item>Руки</item>
+        <item>Тренажер</item>
+        <item>Спина</item>
+        <item>Пресс</item>
+        <item>Другое</item>
+    </string-array>
+
+
     <string name="profile_settings">Настройки профиля</string>
     <string name="back_button">Назад</string>
     <string name="profile_picture">Фотография профиля</string>
@@ -155,14 +180,96 @@
     <string name="add_exercise">Добавить упражнение</string>
     <string name="finish_workout">Закончить Тренировку</string>
     <string name="add_set">Добавить подход</string>
+    <string name="set">Подход</string>
+    <string name="reps">Повторения</string>
+    <string name="weight">Вес</string>
     <string name="delete_exercise">Удалить упражнение</string>
     <string name="create_exercise">Создать упражнение</string>
+    <string name="create_exercise_title">Создание упражнения</string>
+    <string name="delete_exercise_title">Удаление упражнения</string>
+    <string name="delete_preset_title">Удаление пресета</string>
+    <string name="change_preset_title">Изменение пресета</string>
+    <string name="change_exercise_title">Изменение упражнения</string>
+    <string name="change_exercise_hint">Изменить упражнение</string>
+    <string name="change_preset_hint">Измененить пресет</string>
+    <string name="delete_exercise_confirmation">Вы действительно хотите удалить упражнение?</string>
+    <string name="delete_preset_confirmation">Вы действительно хотите удалить пресет?</string>
+    <string name="preset_name_title">Название пресета</string>
+    <string name="exercise_name_title">Название упражнения</string>
+    <string name="preset_name_hint">Введите название пресета</string>
+    <string name="exercise_type_hint">Тип упражнения</string>
+    <string name="exercise_body_type_hint">Часть тела</string>
+    <string name="body_type_hint">Часть тела</string>
+    <string name="exercise_type_plug">(Тип упражнения)</string>
+    <string name="title_add_exercise">Добавление упражнений</string>
+    <string name="label_workouts">Тренировки</string>
+    <string name="label_exercises">Упражнения</string>
+    <string name="void_name_exercise_error">Пожалуйста, введите название упражнения</string>
+    <string name="void_type_exercise_error">Выберите тип упражнения</string>
+    <string name="void_body_part_error">Выберите часть тела</string>
+
+    <string name="dialog_enter_preset_name_error">Пожалуйста, введите название пресета</string>
+    <string name="dialog_select_exercise_error">Выберите хотя бы одно упражнение</string>
+    <string name="dialog_create_preset">Создать</string>
+    <string name="dialog_edit_preset">Сохранить</string>
+    <string name="create_preset_hint">Создание пресета</string>
+    <string name="change_preset_hint2">Изменение пресета</string>
+    <string name="create_preset_title">Выберите уражненя для пресета</string>
+    <string name="create_preset_title2"> Кажется, такого упражнения не существует</string>
+
+    <string name="btn_add_workout">Добавить тренировку</string>
+    <string name="btn_add_exercise">Добавить упражнение</string>
+
+    <string name="hint_add_workout">Жми \'+ Добавить тренировку\', чтобы начать</string>
+    <string name="hint_add_exercise">Жми \'+ Добавить упражнение\', чтобы начать</string>
+
+    <string name="hint_no_exercise_found">Упражнения с таким названием нет.\nЖми \'&#43; Добавить упражнение\', чтобы создать его!</string>
+    <string name="hint_no_preset_found">Тренировки с таким упражнением нет.\nЖми \'&#43; Добавить тренировку\', чтобы создать её!</string>
+
+    <string name="desc_back_button">Кнопка назад</string>
+    <string name="search_exercise">Поиск упражнений</string>
 
 
     <!--Кнопки еды-->
     <string name="preset">Пресеты</string>
     <string name="create_nutrition">Создать прием пищи</string>
     <string name="add_food">Добавить еду</string>
+    <string name="nutrition_name_hint">Название приема пищи</string>
+    <string name="dialog_nutrition_title">Создание приёма пищи</string>
+    <string name="dialog_add_title">Добавление пищи</string>
+    <string name="protein">Белки:</string>
+    <string name="fat">Жиры:</string>
+    <string name="carb">Углеводы:</string>
+    <string name="calories">Калории:</string>
+    <string name="amount_label">Количество пищи</string>
+    <string name="amount">Количество</string>
+    <string name="amount_hint">Введите количество</string>
+    <string name="food_name">Название еды</string>
+    <string name="food_amount_plug">(124-шт)</string>
+    <string name="food_calories_plug">100 ккал</string>
+    <string name="default_meal_name">Имя приема пищи</string>
+    <string name="food_pfc_plug">БЖУ</string>
+    <string name="calories_label">Калории: </string>
+    <string name="delete_meal">Удалить прием пищи</string>
+    <string name="nutrition_date_placeholder">Date</string>
+
+    <string name="nutrition_hint_title">Питание</string>
+    <string name="nutrition_meals_title">Приемы пищи</string>
+    <string name="add_meal_button">Добавить прием пищи</string>
+    <string name="nutrition_tracking_title">Начни отслеживать свое питание!</string>
+    <string name="nutrition_tracking_hint">Жми \'+ Добавить прием пищи\', чтобы начать</string>
+
+    <string name="btn_create_meal_preset">Создать пресет</string>
+    <string name="subtitle_meal_presets">Ваши пресеты</string>
+    <string name="hint_add_meal_preset">Жми \'+ Создать пресет\', чтобы начать</string>
+
+    <string name="title_create_meal_preset">Создать пресет</string>
+    <string name="you_re_food">Ваша Еда</string>
+    <string name="hint_search_food">Поиск еды</string>
+    <string name="hint_searchView_food">Поиск еды</string>
+    <string name="hint_searchView_food_presets">Поиск пресетов</string>
+    <string name="btn_create_food">Создать еду</string>
+    <string name="hint_add_food_preset">Жми \'+ Создать еду\', чтобы начать</string>
 
 
     <!--Общие кнопки-->
@@ -170,6 +277,21 @@
     <string name="date">Date</string>
     <string name="cancellation">Отмена</string>
     <string name="add">Добавить</string>
+    <string name="next">Далее</string>
     <string name="change_preset">Изменить пресет</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="time">Время</string>
+    <string name="distance">Дистанция</string>
+    <string name="temp">Темп</string>
+    <string name="title">Заголовок</string>
+    <string name="plug">Текст</string>
+    <string name="continue_text">Продолжить</string>
+    <string name="save_change">Сохранить изменения</string>
+    <string name="error_name_nutrition">Пожалуйста, введите название приема пищи!</string>
+    <string name="error_name_workout_preset">Пожалуйста, введите название пресета!</string>
+    <string name="error_name_exercise">Пожалуйста, введите название упражнения!</string>
+    <string name="error_amount_food">Пожалуйста, введите количество пищи!</string>
+    <string name="error_amount_drop_down_food">Пожалуйста, выберите количество пищи!</string>
 
 </resources>

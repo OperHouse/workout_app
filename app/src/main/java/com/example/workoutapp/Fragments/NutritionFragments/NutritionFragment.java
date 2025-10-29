@@ -1,5 +1,7 @@
 package com.example.workoutapp.Fragments.NutritionFragments;
 
+import static com.google.android.material.internal.ViewUtils.hideKeyboard;
+
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.graphics.drawable.ColorDrawable;
@@ -8,13 +10,14 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -60,11 +63,11 @@ public class NutritionFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View NutritionFragmentView = inflater.inflate(R.layout.fragment_nutrition, container, false);
-        Button addMealBtn = NutritionFragmentView.findViewById(R.id.addMealBtn);
-        outer_RV = NutritionFragmentView.findViewById(R.id.MealRecyclerView);
-        imageView = NutritionFragmentView.findViewById(R.id.imageView);
-        text1 = NutritionFragmentView.findViewById(R.id.textView1);
-        text2 = NutritionFragmentView.findViewById(R.id.textView2);
+        Button addMealBtn = NutritionFragmentView.findViewById(R.id.nutrition_fragment_add_meal_Btn);
+        outer_RV = NutritionFragmentView.findViewById(R.id.nutrition_fragment_meal_RV);
+        imageView = NutritionFragmentView.findViewById(R.id.nutrition_fragment_image_IV);
+        text1 = NutritionFragmentView.findViewById(R.id.nutrition_fragment_title2_TV);
+        text2 = NutritionFragmentView.findViewById(R.id.nutrition_fragment_hint2_TV);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             LocalDate currentDate = LocalDate.now();
@@ -86,7 +89,7 @@ public class NutritionFragment extends Fragment {
         addMealBtn.setOnClickListener(v -> ShowDialogAddMeal(currentFormattedDate));
 
         // Настройка отображения даты
-        TextView dateTextView = NutritionFragmentView.findViewById(R.id.dateTextNutrition);
+        TextView dateTextView = NutritionFragmentView.findViewById(R.id.nutrition_fragment_date_TV);
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, d MMMM", new Locale("ru", "RU"));
         String formattedDate = dateFormat.format(calendar.getTime());
@@ -108,6 +111,7 @@ public class NutritionFragment extends Fragment {
         super.onResume();
         refreshMealData(); // Это вызовет updateMealList и обновит UI
     }
+    @SuppressLint({"RestrictedApi", "ClickableViewAccessibility"})
     private void ShowDialogAddMeal(String data) {
         Dialog dialogAddMeal = new Dialog(requireContext());
         dialogAddMeal.setContentView(R.layout.add_meal_dialog);
@@ -115,10 +119,12 @@ public class NutritionFragment extends Fragment {
         dialogAddMeal.getWindow().setBackgroundDrawable(new ColorDrawable(0));
         dialogAddMeal.show();
 
-        ImageButton backBtn = dialogAddMeal.findViewById(R.id.imageButtonBack1);
-        EditText nameMeal_ET = dialogAddMeal.findViewById(R.id.editText);
-        Button createMealBtn = dialogAddMeal.findViewById(R.id.addFoodBtn_Dialog);
-        Button goToPresetsBtn = dialogAddMeal.findViewById(R.id.presetsMealBtn);
+        ImageButton backBtn = dialogAddMeal.findViewById(R.id.nutrition_close_D_BTN);
+        EditText nameMeal_ET = dialogAddMeal.findViewById(R.id.nutrition_name_D_ET);
+        Button createMealBtn = dialogAddMeal.findViewById(R.id.nutrition_create_D_BTN);
+        Button goToPresetsBtn = dialogAddMeal.findViewById(R.id.nutrition_presets_D_BTN);
+        ConstraintLayout rootLayout = dialogAddMeal.findViewById(R.id.add_meal_dialog_CL);
+        TextView tvErrorName = dialogAddMeal.findViewById(R.id.tv_error_name);
 
         // Обработчик кнопки "Назад"
         backBtn.setOnClickListener(new View.OnClickListener() {
@@ -144,20 +150,38 @@ public class NutritionFragment extends Fragment {
             }
         });
 
+        rootLayout.setOnTouchListener((v, event) -> {
+            nameMeal_ET.clearFocus();
+            hideKeyboard(nameMeal_ET);
+            return false;
+        });
+
+        nameMeal_ET.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT) {
+                hideKeyboard(v);
+                v.clearFocus();
+                return true;
+            }
+            return false;
+        });
+
         createMealBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String mealName = nameMeal_ET.getText().toString().trim();
 
                 if (mealName.isEmpty()) {
-                    Toast.makeText(requireContext(), "Пожалуйста, введите название приема пищи", Toast.LENGTH_SHORT).show();
+                    tvErrorName.setText("Пожалуйста, введите название приема пищи");
+                    tvErrorName.setVisibility(View.VISIBLE);
+
                 } else {
+                    tvErrorName.setVisibility(View.GONE);
                     mealNameDao.insertMealName(mealName, data);
                     updateMealList(data);
-                    mealNameDao.logAllMealNames();
+                    dialogAddMeal.dismiss();
                 }
 
-                dialogAddMeal.dismiss();
+
             }
         });
     }
@@ -219,7 +243,7 @@ public class NutritionFragment extends Fragment {
     public void updateFoodInMeal(int mealId, FoodModel updatedFood) {
         for (MealModel meal : mealList) {
             if (meal.getMeal_name_id() == mealId) {
-                meal.updateFood(updatedFood); // ты должен реализовать этот метод в MealModel
+                meal.updateFood(updatedFood);
                 break;
             }
         }

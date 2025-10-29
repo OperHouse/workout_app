@@ -36,18 +36,6 @@ public class FoodModel {
         this.isSelected = isSelected;
     }
 
-    public void copyFrom(FoodModel other) {
-        this.food_id = other.food_id;
-        this.food_name = other.food_name;
-        this.protein = other.protein;
-        this.fat = other.fat;
-        this.carb = other.carb;
-        this.calories = other.calories;
-        this.amount = other.amount;
-        this.measurement_type = other.measurement_type;
-        this.isSelected = other.isSelected;
-    }
-
     public FoodModel(FoodModel other) {
         this.food_id = other.food_id;
         this.food_name = other.food_name;

@@ -11,7 +11,7 @@
 
 
             <TextView
-                android:id="@+id/nameEat"
+                android:id="@+id/foodName_D_TV"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="left|center"
@@ -26,7 +26,7 @@
             </TextView>
 
             <TextView
-                android:id="@+id/amountEat"
+                android:id="@+id/foodAmount_D_TV"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="left|center"
@@ -35,13 +35,13 @@
                 android:layout_marginTop="5dp"
                 android:layout_marginLeft="5dp"
                 android:text="(количество-шт)"
-                app:layout_constraintStart_toEndOf="@+id/nameEat"
+                app:layout_constraintStart_toEndOf="@+id/foodName_D_TV"
                 app:layout_constraintTop_toTopOf="parent">
 
             </TextView>
 
             <LinearLayout
-                android:id="@+id/linearLayout"
+                android:id="@+id/foodCaloriesContainer_D_LL"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/card_border2"

@@ -5,12 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_marginRight="10dp"
-    android:layout_marginLeft="10dp"
     android:layout_marginBottom="10dp">
 
     <LinearLayout
-        android:id="@+id/linearLayout"
+        android:id="@+id/foodCaloriesContainer_D_LL"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/card_border2">

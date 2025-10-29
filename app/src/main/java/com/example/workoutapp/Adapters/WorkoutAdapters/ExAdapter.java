@@ -5,10 +5,10 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,6 +18,7 @@ import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutFragment;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.R;
+import com.example.workoutapp.Tools.OnExItemClickListener;
 import com.example.workoutapp.Tools.WorkoutMode;
 
 import java.util.ArrayList;
@@ -28,12 +29,20 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
 
     private final Context context;
     private List<BaseExModel> exListAll = new ArrayList<>();
-    private List<BaseExModel> exListFiltered = new ArrayList<>();;
+    public List<BaseExModel> exListFiltered = new ArrayList<>();;
     private WorkoutMode currentMode;
     private Fragment fragment;
+    private OnExItemClickListener  listener;
     private String currentFilter = "";
 
-    public ExAdapter(Fragment fragment, Context context, WorkoutMode mode) {
+    public ExAdapter(Fragment fragment, Context context,@NonNull OnExItemClickListener listener,  WorkoutMode mode) {
+        this.context = context;
+        this.currentMode = mode;
+        this.fragment = fragment;
+        this.listener = listener;
+    }
+
+    public ExAdapter(Fragment fragment, Context context,  WorkoutMode mode) {
         this.context = context;
         this.currentMode = mode;
         this.fragment = fragment;
@@ -57,30 +66,21 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
             }else{
                 exercise = exListAll.get(position);
             }
-            holder.name.setText(exercise.getExName());
-            holder.type.setText("(" + exercise.getExType() + ")");
+            holder.name.setText(exercise.getExName() + "\u00A0" + "(" + exercise.getExType() + ")");
             holder.bodyPart.setText(exercise.getBodyType());
 
 
             if (exercise.getIsPressed()) {
-                holder.linearLayout.setBackground(ContextCompat.getDrawable(context, R.drawable.card_border2));
+                holder.Cl.setBackground(ContextCompat.getDrawable(context, R.drawable.card_border2));
             } else {
-                holder.linearLayout.setBackground(ContextCompat.getDrawable(context, R.drawable.card_border));
+                holder.Cl.setBackground(ContextCompat.getDrawable(context, R.drawable.card_border));
             }
 
             // Обрабатываем нажатие, меняя состояние в модели и обновляя элемент
             holder.itemView.setOnClickListener(v -> {
                 if (currentMode == WorkoutMode.SELECTED) {
-                    if(!exercise.getIsPressed()){
-                        exercisePressedSort(new BaseExModel(exercise));
-                        exListAll.get(0).setIsPressed(true);
-                        removeExercise(exercise);
-                    }else{
-                        unPressedSort(new BaseExModel(exercise, false));
-                        exListAll.remove(exercise);
-                    }
+                    listener.onExItemClick(exercise);
 
-                    notifyDataSetChanged();
                 } else if (currentMode == WorkoutMode.NOT_SELECTED) {
                     WORKOUT_EXERCISE_TABLE_DAO workoutExerciseDao =
                             new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
@@ -199,16 +199,50 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
         notifyDataSetChanged();
     }
 
-    public static class MyViewHolder extends RecyclerView.ViewHolder {
-        TextView name, type, bodyPart;
-        LinearLayout linearLayout;
+    public void updateExerciseById(BaseExModel updatedExercise) {
+        for (int i = 0; i < exListAll.size(); i++) {
+            if (exListAll.get(i).getBase_ex_id() == updatedExercise.getBase_ex_id()) {
+                exListAll.set(i, new BaseExModel(updatedExercise)); // глубокая копия
+                notifyItemChanged(i);
+                break;
+            }
+        }
+    }
 
+    public void addExercise(BaseExModel newExercise) {
+        BaseExModel copied = new BaseExModel(newExercise); // глубокая копия
+        int countElm = exListAll.size();
+        exListAll.add(copied);
+
+        if (!currentFilter.isEmpty()) {
+            // Подходит ли под фильтр?
+            if (copied.getExName().toLowerCase().contains(currentFilter.toLowerCase())) {
+                exListFiltered.add(copied);
+                notifyItemInserted(exListFiltered.size() - 1);
+            }
+            // Иначе ничего не делаем — элемент добавлен в общий список, но не попал в отображаемый
+        } else {
+            notifyItemInserted(exListAll.size() - 1);
+        }
+    }
+    public void deleteExerciseById(long id) {
+        for (int i = 0; i < exListAll.size(); i++) {
+            if (exListAll.get(i).getBase_ex_id() == id) {
+                exListAll.remove(i);
+                notifyItemRemoved(i);
+                break;
+            }
+        }
+    }
+
+    public static class MyViewHolder extends RecyclerView.ViewHolder {
+        TextView name, bodyPart;
+        ConstraintLayout Cl;
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
-            name = itemView.findViewById(R.id.nameEat);
-            type = itemView.findViewById(R.id.amountEat);
-            bodyPart = itemView.findViewById(R.id.bodyPart);
-            linearLayout = itemView.findViewById(R.id.linearLayout);
+            name = itemView.findViewById(R.id.exercise_name_CARD_TV);
+            bodyPart = itemView.findViewById(R.id.bodyPart_CARD_TV);
+            Cl = itemView.findViewById(R.id.exercise_CARD_CL);
         }
     }
 }

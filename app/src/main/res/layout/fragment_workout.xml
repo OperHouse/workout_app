@@ -2,7 +2,7 @@
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/fragment_root_layout"
+    android:id="@+id/workout_root_NSV"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:fillViewport="true"
@@ -13,35 +13,33 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toStartOf="@+id/dateTextWorkout"
-        app:layout_constraintStart_toStartOf="@+id/dateTextWorkout">
+        app:layout_constraintEnd_toStartOf="@+id/workout_date_TV"
+        app:layout_constraintStart_toStartOf="@+id/workout_date_TV">
 
         <TextView
-            android:id="@+id/dateTextWorkout"
+            android:id="@+id/workout_date_TV"
             style="@style/TextStyle.Small"
             android:layout_width="wrap_content"
-            android:layout_height="30dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
             android:gravity="start|center"
             android:text="@string/date"
-            android:visibility="visible"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/WorkoutTextView"
+            android:id="@+id/workout_title_TV"
             style="@style/TextStyle.Big.Bold"
             android:layout_width="150dp"
             android:layout_height="30dp"
             android:gravity="start|center"
             android:text="@string/title_workouts"
-            android:visibility="visible"
-            app:layout_constraintStart_toStartOf="@+id/dateTextWorkout"
-            app:layout_constraintTop_toBottomOf="@+id/dateTextWorkout" />
+            app:layout_constraintStart_toStartOf="@+id/workout_date_TV"
+            app:layout_constraintTop_toBottomOf="@+id/workout_date_TV" />
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/cardView"
+            android:id="@+id/workout_card_CV"
             android:layout_width="match_parent"
             android:layout_height="200dp"
             android:layout_marginStart="10dp"
@@ -53,107 +51,108 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/WorkoutTextView">
+            app:layout_constraintTop_toBottomOf="@+id/workout_title_TV">
 
         </androidx.cardview.widget.CardView>
 
         <TextView
-            android:id="@+id/textView3"
+            android:id="@+id/workout_ex_title_TV"
             style="@style/TextStyle.Big.Bold"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:layout_marginTop="30dp"
-            android:gravity="bottom"
             android:text="@string/title_exercises"
-            android:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="@+id/workout_add_ex_BTN"
+            app:layout_constraintEnd_toStartOf="@+id/workout_add_ex_BTN"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cardView">
+            app:layout_constraintTop_toTopOf="@+id/workout_add_ex_BTN">
 
         </TextView>
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/addExBtn"
+            android:id="@+id/workout_add_ex_BTN"
             style="@style/SmallButtonWithIc_Plus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="10dp"
+            android:layout_marginTop="10dp"
             android:text="@string/add_exercise"
-            app:layout_constraintBaseline_toBaselineOf="@+id/textView3"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cardView" />
+            app:layout_constraintTop_toBottomOf="@+id/workout_card_CV" />
 
 
         <ImageView
-            android:id="@+id/imageView"
+            android:id="@+id/workout_image_D_IV"
             android:layout_width="200dp"
             android:layout_height="200dp"
             android:layout_marginTop="52dp"
             android:background="@drawable/ic_workout_image"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView3">
+            app:layout_constraintTop_toBottomOf="@+id/workout_ex_title_TV">
 
         </ImageView>
 
         <TextView
-            android:id="@+id/textView1"
+            android:id="@+id/workout_title_D_TV"
             style="@style/TextStyle.Big.Bold"
             android:layout_width="wrap_content"
-            android:layout_height="30dp"
-            android:gravity="start|center"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
             android:text="@string/message_start_workout"
-            android:visibility="visible"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/imageView">
+            app:layout_constraintTop_toBottomOf="@+id/workout_image_D_IV">
 
         </TextView>
 
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/workout_hint_D_TV"
             style="@style/TextStyle.Small"
             android:layout_width="wrap_content"
-            android:layout_height="30dp"
-            android:gravity="start|center"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
             android:text="@string/message_add_exercise_prompt"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView1">
+            app:layout_constraintTop_toBottomOf="@+id/workout_title_D_TV">
 
         </TextView>
 
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/finalWorkBtn"
-            style="@style/BigButton"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/workout_list_RV"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             android:layout_marginStart="10dp"
-            android:layout_marginTop="20dp"
             android:layout_marginEnd="10dp"
-            android:layout_marginBottom="20dp"
-            android:text="@string/finish_workout"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/WorkoutRecyclerView">
-
-        </com.google.android.material.button.MaterialButton>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/WorkoutRecyclerView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
             android:scrollbars="none"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView2"
+            app:layout_constraintTop_toBottomOf="@+id/workout_hint_D_TV"
             tools:listitem="@layout/ex_item_workout_layout">
 
 
         </androidx.recyclerview.widget.RecyclerView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/workout_finish_BTN"
+            style="@style/BigButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="10dp"
+            android:text="@string/finish_workout"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/workout_list_RV">
+
+        </com.google.android.material.button.MaterialButton>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.core.widget.NestedScrollView>

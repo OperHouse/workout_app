@@ -110,13 +110,13 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
             this.cardioDao = cardioDao;
             this.ctx = ctx;
 
-            name = itemView.findViewById(R.id.name);
-            type = itemView.findViewById(R.id.type);
-            addSet = itemView.findViewById(R.id.addSetBtn);
-            delEx = itemView.findViewById(R.id.delExBtn);
-            strengthCL = itemView.findViewById(R.id.strength_CL);
-            cardioCL = itemView.findViewById(R.id.cardio_CL);
-            innerRecycler = itemView.findViewById(R.id.innerRecycle);
+            name = itemView.findViewById(R.id.exerciseName_OUTSIDE_CARD_TV);
+            type = itemView.findViewById(R.id.typeExercise_OUTSIDE_CARD_TV);
+            addSet = itemView.findViewById(R.id.addSet_OUTSIDE_CARD_Btn);
+            delEx = itemView.findViewById(R.id.deleteExercise_OUTSIDE_CARD_BTN);
+            strengthCL = itemView.findViewById(R.id.strength_OUTSIDE_CARD_CL);
+            cardioCL = itemView.findViewById(R.id.cardio_OUTSIDE_CARD_CL);
+            innerRecycler = itemView.findViewById(R.id.OUTSIDE_CARD_inner_RV);
             innerRecycler.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
             innerRecycler.setNestedScrollingEnabled(false);
         }
@@ -197,10 +197,10 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
                     .setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             dialogCreateEx.setCancelable(true);
 
-            Button deleteBtn = dialogCreateEx.findViewById(R.id.btnDelete);
-            Button chanelBtn = dialogCreateEx.findViewById(R.id.btnChanel);
-            TextView text1 = dialogCreateEx.findViewById(R.id.text1);
-            TextView text2 = dialogCreateEx.findViewById(R.id.text2);
+            Button deleteBtn = dialogCreateEx.findViewById(R.id.delete_confirm_D_BTN);
+            Button chanelBtn = dialogCreateEx.findViewById(R.id.delete_cancel_D_BTN);
+            TextView text1 = dialogCreateEx.findViewById(R.id.delete_title_D_TV);
+            TextView text2 = dialogCreateEx.findViewById(R.id.delete_message_D_TV);
 
             deleteBtn.setText("Удалить");
             text1.setText("Удаление упражнения");

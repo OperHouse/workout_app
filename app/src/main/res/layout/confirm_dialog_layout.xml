@@ -1,67 +1,59 @@
-<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/card_border"
-    android:layout_marginStart="10dp"
-    android:layout_marginEnd="10dp"
-    android:padding="10dp">
+    android:padding="16dp"
+    android:layout_marginHorizontal="10dp">
 
     <TextView
-        android:id="@+id/text1"
-        android:layout_width="0dp"
+        android:id="@+id/delete_title_D_TV"
+        style="@style/TextStyle.Big.Bold"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="25dp"
-        android:text="Удаление упражнения"
-        android:textColor="@color/white"
-        android:textSize="30sp"
+        android:text="Заголовок"
         android:gravity="center"
-        android:textAlignment="center"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
-        android:id="@+id/text2"
-        android:layout_width="0dp"
+        android:id="@+id/delete_message_D_TV"
+        style="@style/TextStyle.Small"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:text="Вы действительно хотите удалить упражнение?"
-        android:textColor="@color/white"
-        android:textSize="17sp"
+        android:layout_marginTop="10dp"
         android:gravity="center"
-        android:textAlignment="center"
-        app:layout_constraintTop_toBottomOf="@id/text1"
+        android:text="Текст подтверждения"
+        app:layout_constraintTop_toBottomOf="@id/delete_title_D_TV"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <Button
-        android:id="@+id/btnDelete"
-        android:layout_width="125dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:layout_marginBottom="20dp"
-        android:text="@string/delete"
+        android:id="@+id/delete_confirm_D_BTN"
         style="@style/SmallButton"
-        app:layout_constraintTop_toBottomOf="@id/text2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/yes"
+        app:layout_constraintTop_toBottomOf="@id/delete_message_D_TV"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/btnChanel"
+        app:layout_constraintEnd_toStartOf="@id/delete_cancel_D_BTN"
+        app:layout_constraintWidth_percent="0.45"
         app:layout_constraintBottom_toBottomOf="parent" />
 
     <Button
-        android:id="@+id/btnChanel"
-        android:layout_width="125dp"
-        android:layout_height="wrap_content"
-        android:text="@string/cancellation"
+        android:id="@+id/delete_cancel_D_BTN"
         style="@style/SmallButton"
-        android:layout_marginTop="30dp"
-        android:layout_marginBottom="20dp"
-        app:layout_constraintTop_toBottomOf="@id/text2"
-        app:layout_constraintStart_toEndOf="@id/btnDelete"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/no"
+        app:layout_constraintTop_toBottomOf="@id/delete_message_D_TV"
+        app:layout_constraintStart_toEndOf="@id/delete_confirm_D_BTN"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.45"
         app:layout_constraintBottom_toBottomOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
