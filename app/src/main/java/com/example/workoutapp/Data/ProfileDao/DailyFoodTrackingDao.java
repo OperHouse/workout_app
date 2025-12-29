@@ -1,5 +1,13 @@
 package com.example.workoutapp.Data.ProfileDao;
 
+import static com.example.workoutapp.Data.Tables.AppDataBase.DAILY_FOOD_TRACKING_DATE;
+import static com.example.workoutapp.Data.Tables.AppDataBase.DAILY_FOOD_TRACKING_TABLE;
+import static com.example.workoutapp.Data.Tables.AppDataBase.TRACKING_CALORIES;
+import static com.example.workoutapp.Data.Tables.AppDataBase.TRACKING_CARB;
+import static com.example.workoutapp.Data.Tables.AppDataBase.TRACKING_FAT;
+import static com.example.workoutapp.Data.Tables.AppDataBase.TRACKING_FOOD_ID;
+import static com.example.workoutapp.Data.Tables.AppDataBase.TRACKING_PROTEIN;
+
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -7,60 +15,57 @@ import android.database.sqlite.SQLiteDatabase;
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.ProfileModels.DailyFoodTrackingModel;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class DailyFoodTrackingDao {
+
     private final AppDataBase dbHelper;
 
     public DailyFoodTrackingDao(AppDataBase dbHelper) {
         this.dbHelper = dbHelper;
     }
 
-    // Добавление новой записи о питании
-    public long insertFoodTracking(DailyFoodTrackingModel foodEntry) {
+    // Добавление записи о питании за день
+    public void insertOrUpdate(DailyFoodTrackingModel entry) {
+        if (entry == null) return;
+
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(TRACKING_CALORIES, entry.getCalories());
+        values.put(TRACKING_PROTEIN, entry.getProtein());
+        values.put(TRACKING_FAT, entry.getFat());
+        values.put(TRACKING_CARB, entry.getCarb());
+        values.put(DAILY_FOOD_TRACKING_DATE, entry.getDate());
 
-        values.put(AppDataBase.DAILY_FOOD_TRACKING_DATE, foodEntry.getDailyFoodTrackingDate());
-        values.put(AppDataBase.TRACKING_CALORIES, foodEntry.getTrackingCalories());
-        values.put(AppDataBase.TRACKING_PROTEIN, foodEntry.getTrackingProtein());
-        values.put(AppDataBase.TRACKING_FAT, foodEntry.getTrackingFat());
-        values.put(AppDataBase.TRACKING_CARB, foodEntry.getTrackingCarb());
-
-        long id = db.insert(AppDataBase.DAILY_FOOD_TRACKING_TABLE, null, values);
-        db.close();
-        return id;
-    }
-
-    public void updateFoodTracking(DailyFoodTrackingModel foodEntry) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        ContentValues values = new ContentValues();
-
-        values.put(AppDataBase.DAILY_FOOD_TRACKING_DATE, foodEntry.getDailyFoodTrackingDate());
-        values.put(AppDataBase.TRACKING_CALORIES, foodEntry.getTrackingCalories());
-        values.put(AppDataBase.TRACKING_PROTEIN, foodEntry.getTrackingProtein());
-        values.put(AppDataBase.TRACKING_FAT, foodEntry.getTrackingFat());
-        values.put(AppDataBase.TRACKING_CARB, foodEntry.getTrackingCarb());
-
-        db.update(
-                AppDataBase.DAILY_FOOD_TRACKING_TABLE,
-                values,
-                AppDataBase.TRACKING_FOOD_ID + " = ?",
-                new String[]{String.valueOf(foodEntry.getTrackingFoodId())}
+        // Проверяем — есть ли запись на эту дату
+        Cursor cursor = db.query(
+                DAILY_FOOD_TRACKING_TABLE,
+                null,
+                DAILY_FOOD_TRACKING_DATE + "=?",
+                new String[]{entry.getDate()},
+                null, null, null
         );
 
-        db.close();
+        if (cursor != null && cursor.moveToFirst()) {
+            db.update(
+                    DAILY_FOOD_TRACKING_TABLE,
+                    values,
+                    DAILY_FOOD_TRACKING_DATE + "=?",
+                    new String[]{entry.getDate()}
+            );
+            cursor.close();
+        } else {
+            db.insert(DAILY_FOOD_TRACKING_TABLE, null, values);
+        }
     }
 
+    // Получить данные за конкретную дату
     public DailyFoodTrackingModel getFoodTrackingByDate(String date) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        DailyFoodTrackingModel foodEntry = null;
+        DailyFoodTrackingModel model = null;
 
         Cursor cursor = db.query(
-                AppDataBase.DAILY_FOOD_TRACKING_TABLE,
+                DAILY_FOOD_TRACKING_TABLE,
                 null,
-                AppDataBase.DAILY_FOOD_TRACKING_DATE + " = ?",
+                DAILY_FOOD_TRACKING_DATE + "=?",
                 new String[]{date},
                 null,
                 null,
@@ -68,18 +73,16 @@ public class DailyFoodTrackingDao {
         );
 
         if (cursor != null && cursor.moveToFirst()) {
-            foodEntry = new DailyFoodTrackingModel(
-                    cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.TRACKING_FOOD_ID)),
-                    cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.DAILY_FOOD_TRACKING_DATE)),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow(AppDataBase.TRACKING_CALORIES)),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow(AppDataBase.TRACKING_PROTEIN)),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow(AppDataBase.TRACKING_FAT)),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow(AppDataBase.TRACKING_CARB))
+            model = new DailyFoodTrackingModel(
+                    cursor.getInt(cursor.getColumnIndexOrThrow(TRACKING_FOOD_ID)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(TRACKING_CALORIES)),
+                    cursor.getFloat(cursor.getColumnIndexOrThrow(TRACKING_PROTEIN)),
+                    cursor.getFloat(cursor.getColumnIndexOrThrow(TRACKING_FAT)),
+                    cursor.getFloat(cursor.getColumnIndexOrThrow(TRACKING_CARB)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DAILY_FOOD_TRACKING_DATE))
             );
             cursor.close();
         }
-
-        db.close();
-        return foodEntry;
+        return model;
     }
 }

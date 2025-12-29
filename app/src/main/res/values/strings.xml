@@ -111,16 +111,20 @@
 
 
     <string name="group_profile">Профиль</string>
-    <string name="group_nutrition">Питание</string>
+    <string name="group_nutrition">Цель питания</string>
     <string name="group_activity">Активность</string>
     <string name="group_data">Данные</string>
+
+    <string name="group_general_goal">Общие цели</string>
+    <string name="group_activity_goal">Цели активности</string>
+    <string name="group_food_goal">Цели питания</string>
+    <string name="group_progress">Прогресс</string>
 
     <string-array name="children_profile">
         <item>Имя: </item>
         <item>Рост: </item>
         <item>Вес: </item>
         <item>Возраст: </item>
-        <item>Цель: </item>
     </string-array>
     <string-array name="children_nutrition">
         <item>Калории: </item>
@@ -160,6 +164,7 @@
 
 
     <string name="profile_settings">Настройки профиля</string>
+    <string name="general_goal_settings">Настройки общих целей</string>
     <string name="back_button">Назад</string>
     <string name="profile_picture">Фотография профиля</string>
     <string name="name_hint">Имя</string>
@@ -229,6 +234,37 @@
     <string name="desc_back_button">Кнопка назад</string>
     <string name="search_exercise">Поиск упражнений</string>
 
+
+    <string name="general_goal_hint_main">Общая цель</string>
+    <string name="general_goal_label_main">Введите вашу общую цель</string>
+
+    <string name="general_goal_workouts_hint">Тренировки в неделю</string>
+    <string name="general_goal_workouts_label">Сколько тренировок в неделю вы планируете?</string>
+
+    <string name="general_goal_nutrition_hint">Количество записей питания в неделю</string>
+    <string name="general_goal_nutrition_label">Как часто в неделю вы хотели бы записывать ваше питание?</string>
+
+    <string name="activity_goal_settings_title">Настройка целей активности</string>
+
+    <string name="activity_goal_calories_hint">Количество сжигаемых калорий в день</string>
+    <string name="activity_goal_calories_label">Сколько калорий в день вы бы хотели сжигать?</string>
+
+    <string name="activity_goal_steps_hint">Количество шагов в день</string>
+    <string name="activity_goal_steps_label">Сколько шагов в день вы бы хотели преодолевать?</string>
+
+    <string name="food_goal_settings_title">Настройка целей питания</string>
+
+    <string name="food_goal_calories_hint">Суточная норма калорий (ккал)</string>
+    <string name="food_goal_calories_label">Укажите, сколько калорий в день вы планируете потреблять.</string>
+
+    <string name="food_goal_protein_hint">Норма белков (г)</string>
+    <string name="food_goal_protein_label">Укажите вашу целевую норму белка в граммах</string>
+
+    <string name="food_goal_fat_hint">Норма жиров (г)</string>
+    <string name="food_goal_fat_label">Укажите вашу целевую норму жиров в граммах</string>
+
+    <string name="food_goal_carb_hint">Норма углеводов (г)</string>
+    <string name="food_goal_carb_label">Укажите вашу целевую норму углеводов в граммах</string>
 
     <!--Кнопки еды-->
     <string name="preset">Пресеты</string>

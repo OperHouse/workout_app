@@ -7,7 +7,6 @@ import static com.example.workoutapp.Data.Tables.AppDataBase.CONNECTING_MEAL_PRE
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 
@@ -72,33 +71,6 @@ public class ConnectingMealPresetDao {
         db.close();
 
         return exists;
-    }
-    public void logAllMealPresetConnections() {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-
-        Cursor cursor = db.query(
-                CONNECTING_MEAL_PRESET_TABLE,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                int mealNameId = cursor.getInt(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_PRESET_NAME_ID));
-                int eatId = cursor.getInt(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_PRESET_FOOD_ID));
-
-                Log.d("MealPresetConnection", "Meal Name ID: " + mealNameId + ", Eat ID: " + eatId);
-            } while (cursor.moveToNext());
-            cursor.close();
-        } else {
-            Log.d("MealPresetConnection", "No connections found.");
-        }
-
-        db.close();
     }
 
 

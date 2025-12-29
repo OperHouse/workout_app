@@ -98,6 +98,7 @@
                     style="@style/CustomTextInputEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:imeOptions="actionDone"
                     android:inputType="textPersonName" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -115,6 +116,7 @@
                     style="@style/CustomTextInputEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:imeOptions="actionDone"
                     android:inputType="number">
 
                 </com.google.android.material.textfield.TextInputEditText>
@@ -134,6 +136,7 @@
                     style="@style/CustomTextInputEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:imeOptions="actionDone"
                     android:inputType="numberDecimal" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -148,39 +151,11 @@
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editTextAge"
-                    style="@style/CustomTextInputLayout"
+                    style="@style/CustomTextInputEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:imeOptions="actionDone"
                     android:inputType="number" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- 5. Цель (Exposed Dropdown Menu) -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/textInputLayoutGoal"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/goal_hint"
-                android:textColorHint="@color/light_gray2"
-                app:boxBackgroundColor="@color/background_1"
-                app:boxBackgroundMode="outline"
-                app:boxStrokeColor="@color/white"
-                app:hintTextColor="@color/white">
-
-                <AutoCompleteTextView
-                    android:id="@+id/autoCompleteTextViewGoal"
-                    style="ExposedDropdownMenu"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:clickable="true"
-                    android:cursorVisible="false"
-                    android:dropDownHeight="150dp"
-                    android:focusable="true"
-                    android:focusableInTouchMode="true"
-                    android:inputType="none"
-                    android:paddingStart="10dp"
-                    android:popupBackground="@color/light_gray2"
-                    android:textColor="@color/white" />
             </com.google.android.material.textfield.TextInputLayout>
 
         </LinearLayout>
@@ -192,13 +167,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
-            android:layout_marginTop="32dp"
             android:layout_marginEnd="24dp"
-            android:layout_marginBottom="16dp"
             android:text="@string/save_button_text"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/linearLayoutFields" />
+            app:layout_constraintStart_toStartOf="parent" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

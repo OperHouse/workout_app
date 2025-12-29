@@ -73,89 +73,52 @@ public class ProfileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ProfileItemModel item = dataList.get(position);
 
-        // --- 1. Логика скрытия/отображения ---
-
-        // Управляем видимостью элемента. Эта логика необходима для корректной работы
-        // ItemAnimator при появлении/исчезновении элементов.
+        // --- Логика скрытия/отображения ---
         holder.itemView.setVisibility(item.isVisible ? View.VISIBLE : View.GONE);
         holder.itemView.setLayoutParams(new RecyclerView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 item.isVisible ? ViewGroup.LayoutParams.WRAP_CONTENT : 0
         ));
 
-        // Получаем плотность экрана для перевода dp в px
         float density = res.getDisplayMetrics().density;
 
-        // --- 2. Логика границ, тени и маргинов ---
-
+        // --- Логика для отображения группы или дочернего элемента ---
         if (getItemViewType(position) == ProfileItemModel.TYPE_GROUP) {
-            // A. Настройка группы (CardView)
+            // Настроим CardView для группы
             GroupViewHolder groupHolder = (GroupViewHolder) holder;
-            CardView cardView = groupHolder.cardView;
-
             groupHolder.groupNameTextView.setText(item.title);
 
-            // Получаем LayoutParams для динамического изменения нижнего маргина
-            ViewGroup.MarginLayoutParams layoutParams =
-                    (ViewGroup.MarginLayoutParams) cardView.getLayoutParams();
-
-            // Проверяем, есть ли дети для правильного применения фона/скругления
+            // Получаем LayoutParams для динамического изменения маргинов
+            ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) groupHolder.cardView.getLayoutParams();
             boolean hasChildren = (position + 1 < dataList.size() &&
                     dataList.get(position + 1).groupIndex == position);
 
             if (item.isExpanded) {
-                // СОСТОЯНИЕ: РАСКРЫТО (Прилипание)
-
-                // Убираем тень и скругление CardView (для прилипания сверху)
-                //cardView.setCardElevation(0f);
-                cardView.setRadius(0f);
-
-                // Убираем нижний маргин (чтобы прилипнуть к первому дочернему элементу)
+                // Состояние раскрытой группы
+                groupHolder.cardView.setRadius(0f);
                 layoutParams.bottomMargin = 0;
-
-                // Применяем фон для верхней части (обводка только сверху/по бокам)
-                if (hasChildren) {
-                    groupHolder.linearLayout.setBackgroundResource(R.drawable.group_bg_top);
-                } else {
-                    // Группа раскрыта, но детей нет -> возвращаем CardView в одиночное состояние
-                    cardView.setCardElevation(DEFAULT_ELEVATION_DP * density);
-                    cardView.setRadius(DEFAULT_RADIUS_DP * density);
-                    layoutParams.bottomMargin = (int) (DEFAULT_BOTTOM_MARGIN_DP * density);
-                    groupHolder.linearLayout.setBackgroundResource(R.drawable.card_border);
-                }
-
-                groupHolder.expandIndicator.setImageResource(R.drawable.ic_spinner_arrow_down); // Используйте вашу иконку
-                cardView.setLayoutParams(layoutParams);
-
+                groupHolder.linearLayout.setBackgroundResource(hasChildren ? R.drawable.group_bg_top : R.drawable.card_border);
+                groupHolder.expandIndicator.setImageResource(R.drawable.ic_spinner_arrow_down);
             } else {
-                // СОСТОЯНИЕ: СВЕРНУТО (Левитация)
-
-                // Возвращаем тень и скругление из XML (или констант)
-                cardView.setCardElevation(DEFAULT_ELEVATION_DP * density);
-                cardView.setRadius(DEFAULT_RADIUS_DP * density);
-
-                // Возвращаем нижний маргин (для расстояния между группами)
+                // Состояние свернутой группы
+                groupHolder.cardView.setCardElevation(DEFAULT_ELEVATION_DP * density);
+                groupHolder.cardView.setRadius(DEFAULT_RADIUS_DP * density);
                 layoutParams.bottomMargin = (int) (DEFAULT_BOTTOM_MARGIN_DP * density);
-
-                // Возвращаем фон (ваш стандартный card_border)
                 groupHolder.linearLayout.setBackgroundResource(R.drawable.card_border);
-
-                groupHolder.expandIndicator.setImageResource(R.drawable.ic_spinner_arrow_down); // Используйте вашу иконку
-                cardView.setLayoutParams(layoutParams);
+                groupHolder.expandIndicator.setImageResource(R.drawable.ic_spinner_arrow_down);
             }
 
-
+            groupHolder.cardView.setLayoutParams(layoutParams);
         } else {
-            // B. Настройка дочернего элемента (LinearLayout)
+            // Настройка дочернего элемента
             ChildViewHolder childHolder = (ChildViewHolder) holder;
             childHolder.childTextView.setText(item.title);
 
-            // Убираем тень и скругление (дети всегда плоские)
+            // Убираем тень для дочернего элемента
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
                 holder.itemView.setElevation(0f);
             }
 
-            // Проверяем, является ли текущий элемент последним ребенком в этой группе
             int groupIndex = item.groupIndex;
             boolean isLastChildInGroup = (position + 1 >= dataList.size() ||
                     dataList.get(position + 1).type == ProfileItemModel.TYPE_GROUP ||
@@ -164,25 +127,21 @@ public class ProfileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             ViewGroup.MarginLayoutParams childLayoutParams =
                     (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();
 
-            // *** ИЗМЕНЕНИЕ ДЛЯ ПРИЛИПАНИЯ СВЕРХУ ***
-            // Устанавливаем верхний маргин в 0, чтобы прилипнуть к предыдущему элементу (группе или другому ребенку)
             childLayoutParams.topMargin = 0;
-            // ***************************************
 
             if (isLastChildInGroup) {
-                // Последний ребенок: обводка по бокам и снизу, скругление снизу
                 holder.itemView.setBackgroundResource(R.drawable.group_bg_bottom);
-                // Добавляем маргин, чтобы создать расстояние до следующей группы
                 childLayoutParams.bottomMargin = (int) (DEFAULT_BOTTOM_MARGIN_DP * density);
             } else {
-                // Средний ребенок: обводка только по бокам
                 holder.itemView.setBackgroundResource(R.drawable.group_bg_mid);
-                // Убираем маргин для прилипания
                 childLayoutParams.bottomMargin = 0;
             }
             holder.itemView.setLayoutParams(childLayoutParams);
         }
     }
+
+
+
 
     @Override
     public int getItemCount() {
@@ -194,37 +153,37 @@ public class ProfileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         ProfileItemModel group = dataList.get(position);
         if (group.type != ProfileItemModel.TYPE_GROUP) return;
 
-        group.isExpanded = !group.isExpanded;
-        boolean expanding = group.isExpanded;
+        group.isExpanded = !group.isExpanded;  // Переключаем флаг раскрытия/сворачивания группы
+
+        boolean expanding = group.isExpanded;  // Состояние раскрытия
 
         int childItemIndexStart = -1;
         int count = 0;
 
-        // 1. Перебираем список, чтобы обновить флаг isVisible и найти диапазон детей
+        // Перебираем элементы после группы, чтобы обновить состояние видимости дочерних элементов
         for (int i = position + 1; i < dataList.size(); i++) {
             ProfileItemModel item = dataList.get(i);
 
             if (item.type == ProfileItemModel.TYPE_CHILD && item.groupIndex == position) {
-                item.isVisible = expanding; // Обновляем состояние видимости элемента
+                item.isVisible = expanding;  // Устанавливаем видимость для дочернего элемента
                 if (childItemIndexStart == -1) {
-                    childItemIndexStart = i;
+                    childItemIndexStart = i;  // Сохраняем индекс первого дочернего элемента
                 }
                 count++;
             } else if (item.type == ProfileItemModel.TYPE_GROUP) {
-                break; // Достигли следующей группы
+                break;  // Достигли следующей группы
             }
         }
 
-        // 2. Запускаем анимацию на дочерних элементах
+        // Если найдены дочерние элементы, обновляем их
         if (count > 0 && childItemIndexStart != -1) {
-            // Используем notifyItemRangeChanged() для запуска ItemAnimator на элементах,
-            // которые меняют видимость (VISIBLE <-> GONE). Это дает плавную анимацию.
-            notifyItemRangeChanged(childItemIndexStart, count);
+            notifyItemRangeChanged(childItemIndexStart, count);  // Обновляем диапазон дочерних элементов
         }
 
-        // 3. Обновляем саму группу (для смены фона, радиуса и стрелки)
-        notifyItemChanged(position);
+        // Обновляем саму группу
+        notifyItemChanged(position);  // Обновляем состояние самой группы (иконка, цвет фона)
     }
+
 
     // --- ViewHolders ---
 

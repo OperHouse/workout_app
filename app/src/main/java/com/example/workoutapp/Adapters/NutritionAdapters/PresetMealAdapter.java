@@ -133,10 +133,6 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
                         // Связываем mealId с этими eatId
                         connectingMealDao.connecting(meal_Id, insertedEatIds);
 
-                        mealNameDao.logAllMealNames();
-                        mealFoodDao.logAllMealFoods();
-                        connectingMealDao.logAllConnections();
-
                         selectionListener.onPresetMealSelected();
                         fragment.getParentFragmentManager().popBackStack();
                     } else {

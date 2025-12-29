@@ -1,70 +1,72 @@
 package com.example.workoutapp.Models.ProfileModels;
 
 public class DailyFoodTrackingModel {
-    private long trackingFoodId;
-    private String dailyFoodTrackingDate;
-    private double trackingCalories;
-    private double trackingProtein;
-    private double trackingFat;
-    private double trackingCarb;
+    private int id;
+    private int calories;   // tracking_calories
+    private float protein;  // tracking_protein
+    private float fat;      // tracking_fat
+    private float carb;     // tracking_carb
+    private String date;    // tracking_activity_date (твоё поле, хотя логичнее tracking_food_date)
 
-    // Конструктор
-    public DailyFoodTrackingModel(long trackingFoodId, String dailyFoodTrackingDate, double trackingCalories, double trackingProtein, double trackingFat, double trackingCarb) {
-        this.trackingFoodId = trackingFoodId;
-        this.dailyFoodTrackingDate = dailyFoodTrackingDate;
-        this.trackingCalories = trackingCalories;
-        this.trackingProtein = trackingProtein;
-        this.trackingFat = trackingFat;
-        this.trackingCarb = trackingCarb;
-
+    public DailyFoodTrackingModel(int id, int calories, float protein, float fat, float carb, String date) {
+        this.id = id;
+        this.calories = calories;
+        this.protein = protein;
+        this.fat = fat;
+        this.carb = carb;
+        this.date = date;
     }
 
-    public double getTrackingProtein() {
-        return trackingProtein;
+    public DailyFoodTrackingModel() {
     }
 
-    public void setTrackingProtein(double trackingProtein) {
-        this.trackingProtein = trackingProtein;
+    // Getters
+    public int getId() {
+        return id;
     }
 
-    public long getTrackingFoodId() {
-        return trackingFoodId;
+    public int getCalories() {
+        return calories;
     }
 
-    public void setTrackingFoodId(long trackingFoodId) {
-        this.trackingFoodId = trackingFoodId;
+    public float getProtein() {
+        return protein;
     }
 
-    public String getDailyFoodTrackingDate() {
-        return dailyFoodTrackingDate;
+    public float getFat() {
+        return fat;
     }
 
-    public void setDailyFoodTrackingDate(String dailyFoodTrackingDate) {
-        this.dailyFoodTrackingDate = dailyFoodTrackingDate;
+    public float getCarb() {
+        return carb;
     }
 
-    public double getTrackingCalories() {
-        return trackingCalories;
+    public String getDate() {
+        return date;
     }
 
-    public void setTrackingCalories(double trackingCalories) {
-        this.trackingCalories = trackingCalories;
+    // Setters
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public double getTrackingFat() {
-        return trackingFat;
+    public void setCalories(int calories) {
+        this.calories = calories;
     }
 
-    public void setTrackingFat(double trackingFat) {
-        this.trackingFat = trackingFat;
+    public void setProtein(float protein) {
+        this.protein = protein;
     }
 
-    public double getTrackingCarb() {
-        return trackingCarb;
+    public void setFat(float fat) {
+        this.fat = fat;
     }
 
-    public void setTrackingCarb(double trackingCarb) {
-        this.trackingCarb = trackingCarb;
+    public void setCarb(float carb) {
+        this.carb = carb;
     }
 
+    public void setDate(String date) {
+        this.date = date;
+    }
 }

@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class AppDataBase extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "WorkoutApp.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 3;
 
     private static AppDataBase instance;
 
@@ -114,6 +114,9 @@ public class AppDataBase extends SQLiteOpenHelper {
 
 
     // =========================USER_PROFILE_TABLE============================//
+    //Общие пользовательские данные
+    //(Имя, рост, возраст)
+    //(Обновляется не каждый день, а только тогда, когда пользователь обновляет один из параметров)
     public static final String USER_PROFILE_TABLE = "user_profile_table";
     public static final String USER_ID = "user_id";
     public static final String USER_NAME = "user_name";
@@ -121,33 +124,60 @@ public class AppDataBase extends SQLiteOpenHelper {
     public static final String USER_AGE = "user_age";
 
     // =========================WEIGHT_HISTORY_TABLE============================//
+    //Данные веса пользователя
+    //(Обновляется не каждый день, а тогда, когда пользователь обновляет вес или параметр веса берется с сторонних приборов(весы))
     public static final String WEIGHT_HISTORY_TABLE = "weight_history_table";
     public static final String WEIGHT_ID = "weight_id";
     public static final String WEIGHT_MEASUREMENT_DATE = "weight_measurement_date";
     public static final String WEIGHT_VALUE = "weight_value";
 
     // =========================DAILY_ACTIVITY_TRACKING_TABLE============================//
+    //Какая у пользователя была активность за день(шаги, километраж, количество сожженных калорий)
+    //(Обновляется каждый день)
     public static final String DAILY_ACTIVITY_TRACKING_TABLE = "daily_activity_tracking_table";
-    public static final String TRACKING_ACTIVITY_ID = "tracking_activity_id";
-    public static final String TRACKING_ACTIVITY_DATE = "tracking_activity_date";
-    public static final String TRACKING_ACTIVITY_STEPS = "tracking_activity_steps";
-    public static final String DAILY_ACTIVITY_TRACKING_CALORIES = "daily_activity_tracking_calories";
+    public static final String DAILY_ACTIVITY_TRACKING_ACTIVITY_ID = "daily_activity_tracking_id";
+    public static final String DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE = "daily_activity_tracking_date";
+    public static final String DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS = "daily_activity_tracking_steps";
+    public static final String DAILY_ACTIVITY_RACKING_ACTIVITY_DISTANCE = "daily_activity_tracking_distance";
+    public static final String DAILY_ACTIVITY_TRACKING_CALORIES_BURN = "daily_activity_tracking_calories_burn";
 
+    // =========================GENERAL_GOAL_TABLE============================//
+    //Общие цели пользователя
+    //(текст глобальной цели, количество тренировок в неделю, количество отслеживания питания в неделю)
+    //(Обновляется не каждый день, а только тогда, когда пользователь обновляет один из параметров)
+    public static final String GENERAL_GOAL_TABLE = "general_goal_table";
+    public static final String GENERAL_GOAL_ID = "general_goal_id";
+    public static final String GENERAL_GLOBAL_GOAL_TEXT = "general_global_goal_text";
+    public static final String GENERAL_GOAL_WORKOUTS_WEEKLY = "general_goal_workouts_weekly";
+    public static final String GENERAL_GOAL_FOOD_TRACKING_WEEKLY = "general_goal_food_tracking_weekly";
+    public static final String GENERAL_GOAL_DATE = "general_goal_date";
 
-    // =========================GOAL_TABLE============================//
-    public static final String GOAL_TABLE = "goal_table";
-    public static final String GOAL_ID = "goal_id";
-    public static final String USER_GOAL_TEXT = "user_goal_text";
-    public static final String GOAL_CALORIES_GAIN = "goal_calories_gain";
-    public static final String GOAL_PROTEIN = "goal_protein";
-    public static final String GOAL_FAT = "goal_fat";
-    public static final String GOAL_CARB = "goal_carb";
-    public static final String GOAL_TO_BURN_CALORIES = "goal_to_burn_calories";
-    public static final String GOAL_STEPS = "goal_steps";
-    public static final String GOAL_WORKOUTS_WEEKLY = "goal_workouts_weekly";
-    public static final String GOAL_START_DATE = "goal_start_date";
+    // =========================GENERAL_ACTIVITY_TRACKING_GOAL_TABLE============================//
+    //Цели активности пользователя
+    //(количество калорий которые пользователь хотел бы сжигать в день, количество цагов которые пользователь хотел бы пройти за день)
+    //(Обновляется не каждый день, а только тогда, когда пользователь обновляет один из параметров)
+    public static final String ACTIVITY_GOAL_TABLE = "activity_goal_table";
+    public static final String ACTIVITY_GOAL_ID = "activity_goal_id";
+    public static final String ACTIVITY_GOAL_DATE = "activity_goal_date";
+    public static final String ACTIVITY_GOAL_STEPS = "activity_goal_steps";
+    public static final String ACTIVITY_CALORIES_TO_BURN = "activity_goal_calories_to_burn";
+
+    // =========================FOOD_GAIN_GOAL_TABLE============================//
+    //Сколько пользователь хотел бы принимать пищи
+    //(Количество калорий, белков, жиров, углеводов)
+    //(Обновляется не каждый день, а только тогда, когда пользователь обновляет один из параметров)
+    public static final String FOOD_GAIN_GOAL_TABLE = "food_gain_goal_table";
+    public static final String FOOD_GAIN_GOAL_ID = "food_gain_goal_id";
+    public static final String FOOD_GAIN_GOAL_CALORIES = "food_gain_goal_calories";
+    public static final String FOOD_GAIN_GOAL_PROTEIN = "food_gain_goal_protein";
+    public static final String FOOD_GAIN_GOAL_FAT = "food_gain_goal_fat";
+    public static final String FOOD_GAIN_GOAL_CARB = "food_gain_goal_carb";
+    public static final String FOOD_GAIN_GOAL_DATE = "food_gain_goal_date";
+
 
     // =========================DAILY_FOOD_TRACKING_TABLE============================//
+    //Сколько калорий и бжу съел пользователь за день
+    //(Обновляется каждый день)
     public static final String DAILY_FOOD_TRACKING_TABLE = "daily_food_tracking_table";
     public static final String TRACKING_FOOD_ID = "tracking_food_id";
     public static final String TRACKING_CALORIES = "tracking_calories";
@@ -287,10 +317,10 @@ public class AppDataBase extends SQLiteOpenHelper {
                 "FOREIGN KEY(" + CONNECTING_MEAL_FOOD_ID + ") REFERENCES " + MEAL_FOOD_TABLE + "(" + MEAL_FOOD_ID + ") ON DELETE CASCADE);";
 
         String createUserProfileTableQuery = "CREATE TABLE IF NOT EXISTS " + USER_PROFILE_TABLE + " ("
-                + USER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + USER_ID + " INTEGER PRIMARY KEY, "
                 + USER_NAME + " TEXT NOT NULL, "
                 + USER_HEIGHT + " REAL, "
-                + USER_AGE + " TEXT);";
+                + USER_AGE + " INTEGER);";
 
         String createWeightHistoryTableQuery = "CREATE TABLE IF NOT EXISTS " + WEIGHT_HISTORY_TABLE + " ("
                 + WEIGHT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " // Вся декларация в одной строке
@@ -298,22 +328,36 @@ public class AppDataBase extends SQLiteOpenHelper {
                 + WEIGHT_VALUE + " REAL NOT NULL);";
 
         String createDailyActivityTrackingTableQuery = "CREATE TABLE IF NOT EXISTS " + DAILY_ACTIVITY_TRACKING_TABLE + " ("
-                + TRACKING_ACTIVITY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + TRACKING_ACTIVITY_DATE + " TEXT NOT NULL, "
-                + TRACKING_ACTIVITY_STEPS + " INTEGER, "
-                + DAILY_ACTIVITY_TRACKING_CALORIES + " REAL);";
+                + DAILY_ACTIVITY_TRACKING_ACTIVITY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE + " TEXT NOT NULL, "
+                + DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS + " INTEGER, "
+                + DAILY_ACTIVITY_RACKING_ACTIVITY_DISTANCE + " REAL, "
+                + DAILY_ACTIVITY_TRACKING_CALORIES_BURN + " REAL);";
 
-        String createGoalTableQuery = "CREATE TABLE IF NOT EXISTS " + GOAL_TABLE + " ("
-                + GOAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + GOAL_START_DATE + " TEXT NOT NULL, "
-                + USER_GOAL_TEXT + " TEXT, "
-                + GOAL_CALORIES_GAIN + " REAL, "
-                + GOAL_PROTEIN + " REAL, "
-                + GOAL_FAT + " REAL, "
-                + GOAL_CARB + " REAL, "
-                + GOAL_TO_BURN_CALORIES + " REAL, "
-                + GOAL_STEPS + " INTEGER, "
-                + GOAL_WORKOUTS_WEEKLY + " INTEGER);";
+
+        // Общие цели пользователя (текст, кол-во тренировок в неделю, питание)
+        String createGeneralGoalTableQuery = "CREATE TABLE IF NOT EXISTS " + GENERAL_GOAL_TABLE + " (" +
+                GENERAL_GOAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                GENERAL_GLOBAL_GOAL_TEXT + " TEXT, " +
+                GENERAL_GOAL_WORKOUTS_WEEKLY + " INTEGER, " +
+                GENERAL_GOAL_FOOD_TRACKING_WEEKLY + " INTEGER, " +
+                GENERAL_GOAL_DATE + " TEXT NOT NULL);";
+
+        // Цели по активности (кол-во шагов и калорий в день)
+        String createActivityGoalTableQuery = "CREATE TABLE IF NOT EXISTS " + ACTIVITY_GOAL_TABLE + " (" +
+                ACTIVITY_GOAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                ACTIVITY_GOAL_DATE + " TEXT NOT NULL, " +
+                ACTIVITY_GOAL_STEPS + " INTEGER, " +
+                ACTIVITY_CALORIES_TO_BURN + " REAL);";
+
+        // Цели по питанию (сколько калорий и БЖУ в день)
+        String createFoodGainGoalTableQuery = "CREATE TABLE IF NOT EXISTS " + FOOD_GAIN_GOAL_TABLE + " (" +
+                FOOD_GAIN_GOAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                FOOD_GAIN_GOAL_CALORIES + " REAL, " +
+                FOOD_GAIN_GOAL_PROTEIN + " REAL, " +
+                FOOD_GAIN_GOAL_FAT + " REAL, " +
+                FOOD_GAIN_GOAL_CARB + " REAL, " +
+                FOOD_GAIN_GOAL_DATE + " TEXT NOT NULL);";
 
         String createDailyFoodTrackingTableQuery = "CREATE TABLE IF NOT EXISTS " + DAILY_FOOD_TRACKING_TABLE + " ("
                 + TRACKING_FOOD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -349,8 +393,10 @@ public class AppDataBase extends SQLiteOpenHelper {
         db.execSQL(createUserProfileTableQuery);
         db.execSQL(createWeightHistoryTableQuery);
         db.execSQL(createDailyActivityTrackingTableQuery);
-        db.execSQL(createGoalTableQuery);
         db.execSQL(createDailyFoodTrackingTableQuery);
+        db.execSQL(createGeneralGoalTableQuery);
+        db.execSQL(createActivityGoalTableQuery);
+        db.execSQL(createFoodGainGoalTableQuery);
 
 
 
@@ -358,7 +404,7 @@ public class AppDataBase extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Удаляем существующие таблицы (в обратном порядке зависимостей, если возможно)
+        // Удаляем таблицы в правильном порядке (сначала зависимости)
         db.execSQL("DROP TABLE IF EXISTS " + CONNECTING_MEAL_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + MEAL_FOOD_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + MEAL_NAME_TABLE);
@@ -377,11 +423,11 @@ public class AppDataBase extends SQLiteOpenHelper {
 
         db.execSQL("DROP TABLE IF EXISTS " + USER_PROFILE_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + WEIGHT_HISTORY_TABLE);
-        db.execSQL("DROP TABLE IF EXISTS " + DAILY_ACTIVITY_TRACKING_CALORIES);
-        db.execSQL("DROP TABLE IF EXISTS " + GOAL_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + DAILY_ACTIVITY_TRACKING_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + GENERAL_GOAL_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + ACTIVITY_GOAL_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + FOOD_GAIN_GOAL_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + DAILY_FOOD_TRACKING_TABLE);
-
-
 
         // Пересоздаём таблицы
         onCreate(db);

@@ -49,6 +49,7 @@ import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.NutritionCircleView;
 import com.example.workoutapp.Tools.NutritionMode;
 import com.example.workoutapp.Tools.OnEatItemClickListener;
+import com.example.workoutapp.Tools.OnPresetMealSelectedListener;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -64,7 +65,7 @@ import java.util.stream.Collectors;
 import it.xabaras.android.recyclerview.swipedecorator.RecyclerViewSwipeDecorator;
 
 
-public class CreateMealPresetFragment extends Fragment implements OnEatItemClickListener {
+public class CreateMealPresetFragment extends Fragment implements OnEatItemClickListener, OnPresetMealSelectedListener {
     private RecyclerView eatRecycler;
     private BaseEatDao baseEatDao;
     private PresetMealNameDao presetMealNameDao;
@@ -368,13 +369,15 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                         return;
                     }
 
+
+
                     ConnectingMealDao connectingMealDao = new ConnectingMealDao(MainActivity.getAppDataBase());
                     MealFoodDao mealFoodDao = new MealFoodDao(MainActivity.getAppDataBase());
                     for (FoodModel food : selected) {
                         connectingMealDao.connectingSingleFood(mealId, mealFoodDao.addSingleFood(food));
                     }
-                    mealFoodDao.logAllMealFoods();
-                    connectingMealDao.logAllConnections();
+
+                    onPresetMealSelected();
                     requireActivity().getOnBackPressedDispatcher().onBackPressed();
 
                 }else {
@@ -956,11 +959,6 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                 }
 
 
-                    // Логи
-                    presetEatDao.logAllPresetFood();
-                    presetMealNameDao.logAllMealPresetNames();
-                    connectingMealPresetDao.logAllMealPresetConnections();
-
                     dialog.dismiss();
                 Bundle result = new Bundle();
                 result.putBoolean("created", true);
@@ -991,4 +989,10 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
     }
 
 
+    @Override
+    public void onPresetMealSelected() {
+        Bundle result = new Bundle();
+        result.putBoolean("meal_preset_added", true);
+        getParentFragmentManager().setFragmentResult("preset_added_result", result);
+    }
 }

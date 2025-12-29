@@ -1,35 +1,40 @@
 package com.example.workoutapp.Models.ProfileModels;
 
 public class DailyActivityTrackingModel {
-
-
-    private long trackingActivityId;
-    private String trackingActivityDate;
+    private int id;
+    private String date; // yyyy-MM-dd
     private int trackingActivitySteps;
-    private double dailyActivityTrackingCalories;
+    private float trackingCaloriesBurned;
 
-    // Конструктор
-    public DailyActivityTrackingModel(long trackingActivityId, String trackingActivityDate, int trackingActivitySteps, double dailyActivityTrackingCalories) {
-        this.trackingActivityId = trackingActivityId;
-        this.trackingActivityDate = trackingActivityDate;
+    public DailyActivityTrackingModel(int id, String date, int trackingActivitySteps, float trackingCaloriesBurned) {
+        this.id = id;
+        this.date = date;
         this.trackingActivitySteps = trackingActivitySteps;
-        this.dailyActivityTrackingCalories = dailyActivityTrackingCalories;
+        this.trackingCaloriesBurned = trackingCaloriesBurned;
     }
 
-    public long getTrackingActivityId() {
-        return trackingActivityId;
+    // Конструктор без id (для вставки новой записи)
+    public DailyActivityTrackingModel(String date, int trackingActivitySteps, float trackingCaloriesBurned) {
+        this.date = date;
+        this.trackingActivitySteps = trackingActivitySteps;
+        this.trackingCaloriesBurned = trackingCaloriesBurned;
     }
 
-    public void setTrackingActivityId(long trackingActivityId) {
-        this.trackingActivityId = trackingActivityId;
+    // Геттеры и сеттеры
+    public int getId() {
+        return id;
     }
 
-    public String getTrackingActivityDate() {
-        return trackingActivityDate;
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public void setTrackingActivityDate(String trackingActivityDate) {
-        this.trackingActivityDate = trackingActivityDate;
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
     }
 
     public int getTrackingActivitySteps() {
@@ -40,11 +45,11 @@ public class DailyActivityTrackingModel {
         this.trackingActivitySteps = trackingActivitySteps;
     }
 
-    public double getDailyActivityTrackingCalories() {
-        return dailyActivityTrackingCalories;
+    public float getTrackingCaloriesBurned() {
+        return trackingCaloriesBurned;
     }
 
-    public void setDailyActivityTrackingCalories(double dailyActivityTrackingCalories) {
-        this.dailyActivityTrackingCalories = dailyActivityTrackingCalories;
+    public void setTrackingCaloriesBurned(float trackingCaloriesBurned) {
+        this.trackingCaloriesBurned = trackingCaloriesBurned;
     }
 }
