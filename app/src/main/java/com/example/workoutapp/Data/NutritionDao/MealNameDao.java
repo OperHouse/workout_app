@@ -8,7 +8,6 @@ import static com.example.workoutapp.Data.Tables.AppDataBase.MEAL_NAME_TABLE;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.NutritionModels.MealNameModel;
@@ -193,14 +192,5 @@ public class MealNameDao {
 
         db.close();
         return mealModel;
-    }
-
-    //==============================Логирование======================================//
-
-    public void logAllMealNames() {
-        List<MealNameModel> all = getAllMealNames();
-        for (MealNameModel model : all) {
-            Log.d("MealNameDao", "Data: " + model.getMealData() + ", ID: " + model.getMeal_name_id() + ", Name: " + model.getMeal_name());
-        }
     }
 }

@@ -6,14 +6,17 @@ public class UserProfileModel {
     private long userId;
     private String userName;
     private float userHeight;
-    private String userAge;
+    private int userAge;
 
     // Конструктор
-    public UserProfileModel(long userId, String userName, float userHeight, String userAge) {
+    public UserProfileModel(long userId, String userName, float userHeight, int userAge) {
         this.userId = userId;
         this.userName = userName;
         this.userHeight = userHeight;
         this.userAge = userAge;
+    }
+
+    public UserProfileModel() {
     }
 
     public long getUserId() {
@@ -40,11 +43,11 @@ public class UserProfileModel {
         this.userHeight = userHeight;
     }
 
-    public String getUserAge() {
+    public int getUserAge() {
         return userAge;
     }
 
-    public void setUserAge(String userAge) {
+    public void setUserAge(int userAge) {
         this.userAge = userAge;
     }
 }

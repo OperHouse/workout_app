@@ -401,10 +401,6 @@ public class SelectionMealPresetsFragment extends Fragment implements OnPresetMe
                     }
                 }
 
-                connectingMealPresetDao.logAllMealPresetConnections();
-                presetMealNameDao.logAllMealPresetNames();
-                presetEatDao.logAllPresetFood();
-
                 if (!searchText.isEmpty()) {
                     presetMealAdapter.removePresetElm(presetToDelete);
                     presetMealAdapter.setFilteredList(searchText);

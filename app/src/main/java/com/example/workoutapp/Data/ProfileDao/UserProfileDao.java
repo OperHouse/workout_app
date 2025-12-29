@@ -1,104 +1,189 @@
 package com.example.workoutapp.Data.ProfileDao;
 
+import static com.example.workoutapp.Data.Tables.AppDataBase.USER_AGE;
+import static com.example.workoutapp.Data.Tables.AppDataBase.USER_HEIGHT;
+import static com.example.workoutapp.Data.Tables.AppDataBase.USER_ID;
+import static com.example.workoutapp.Data.Tables.AppDataBase.USER_NAME;
+import static com.example.workoutapp.Data.Tables.AppDataBase.USER_PROFILE_TABLE;
 
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 
 public class UserProfileDao {
+
     private final AppDataBase dbHelper;
 
     public UserProfileDao(AppDataBase dbHelper) {
         this.dbHelper = dbHelper;
     }
 
-    // Добавляет новую запись профиля (ID должен быть 1 для однопользовательского режима)
-    public long insertProfile(UserProfileModel profile) {
+    // ========================= INSERT / UPDATE ========================= //
+
+    /**
+     * Вставка или обновление профиля.
+     * Если поля пустые — не трогаем.
+     * Если значения совпадают с текущими — не трогаем.
+     * Если таблица пуста — создаём первую запись.
+     */
+    public void insertOrUpdateProfile(UserProfileModel newProfile) {
+
+
+        // Проверим, есть ли уже запись
+        UserProfileModel current = getProfile();
+
         SQLiteDatabase db = dbHelper.getWritableDatabase();
+
         ContentValues values = new ContentValues();
 
-        // ID не ставим, т.к. он AUTOINCREMENT
-        values.put(AppDataBase.USER_NAME, profile.getUserName());
-        values.put(AppDataBase.USER_HEIGHT, profile.getUserHeight());
-        values.put(AppDataBase.USER_AGE, profile.getUserAge()); // Поле, хранящее дату рождения или возраст
+        // Если таблица пуста — вставляем новую строку
+        if (current == null) {
+            if (newProfile.getUserId() != 0)
+                values.put(USER_ID, newProfile.getUserId());
+            if (isValidString(newProfile.getUserName()))
+                values.put(USER_NAME, newProfile.getUserName());
+            if (newProfile.getUserHeight() > 0)
+                values.put(USER_HEIGHT, newProfile.getUserHeight());
+            if (newProfile.getUserAge() > 0)
+                values.put(USER_AGE, newProfile.getUserAge());
 
-        long id = db.insert(AppDataBase.USER_PROFILE_TABLE, null, values);
+             db.insert(USER_PROFILE_TABLE, null, values);
+        } else {
+            // Если запись есть — обновляем только изменённые и непустые поля
+            if (isValidString(newProfile.getUserName()) &&
+                    !newProfile.getUserName().equals(current.getUserName())) {
+                values.put(USER_NAME, newProfile.getUserName());
+            }
+
+            if (newProfile.getUserHeight() > 0 &&
+                    newProfile.getUserHeight() != current.getUserHeight()) {
+                values.put(USER_HEIGHT, newProfile.getUserHeight());
+            }
+
+            if (newProfile.getUserAge() > 0 &&
+                    newProfile.getUserAge() != current.getUserAge()) {
+                values.put(USER_AGE, newProfile.getUserAge());
+            }
+
+            if (newProfile.getUserId() != 0 &&
+                    newProfile.getUserId() != current.getUserId()) {
+                values.put(USER_ID, newProfile.getUserId());
+            }
+
+            if (values.size() > 0) {
+                db.update(USER_PROFILE_TABLE, values, null, null);
+            } else {
+                Log.i("UserProfileDao", "Нет изменений для обновления профиля.");
+            }
+        }
+
         db.close();
-        return id;
     }
 
-    public void updateProfile(UserProfileModel profile) {
+    // ========================= SET USER ID ========================= //
+
+    /**
+     * Устанавливает внешний user_id (например, из Firebase).
+     * Если таблицы нет или она пуста — создаёт запись с этим ID.
+     */
+    public void setExternalUserId(long externalId) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
-        ContentValues values = new ContentValues();
 
-        values.put(AppDataBase.USER_NAME, profile.getUserName());
-        values.put(AppDataBase.USER_HEIGHT, profile.getUserHeight());
-        values.put(AppDataBase.USER_AGE, profile.getUserAge());
-
-        db.update(
-                AppDataBase.USER_PROFILE_TABLE,
-                values,
-                AppDataBase.USER_ID + " = ?",
-                new String[]{String.valueOf(profile.getUserId())}
+        Cursor cursor = db.query(
+                USER_PROFILE_TABLE,
+                new String[]{USER_ID},
+                null,
+                null,
+                null,
+                null,
+                null
         );
 
+        ContentValues values = new ContentValues();
+        values.put(USER_ID, externalId);
+
+        if (cursor.moveToFirst()) {
+            db.update(USER_PROFILE_TABLE, values, null, null);
+        } else {
+            db.insert(USER_PROFILE_TABLE, null, values);
+        }
+
+        cursor.close();
         db.close();
     }
 
-    // Получение текущего профиля (по ID)
-    public UserProfileModel getProfileById(long userId) {
-        // Получение базы данных для чтения
-        // ВНИМАНИЕ: Вызов getReadableDatabase() может запустить AppDataBase.onCreate()
+    // ========================= GET PROFILE ========================= //
+
+    /**
+     * Получает текущий профиль (всегда одну строку).
+     */
+    public UserProfileModel getProfile() {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         UserProfileModel profile = null;
         Cursor cursor = null;
 
         try {
-            // Здесь выполняется SQL-запрос SELECT.
-            // Если таблица еще не создана (из-за race condition), здесь возникнет ошибка.
             cursor = db.query(
-                    AppDataBase.USER_PROFILE_TABLE,
-                    null, // Все столбцы
-                    AppDataBase.USER_ID + " = ?",
-                    new String[]{String.valueOf(userId)},
+                    USER_PROFILE_TABLE,
+                    null,
+                    null,
+                    null,
                     null,
                     null,
                     null
             );
 
-            // --- Логика чтения данных из курсора (неизменна) ---
             if (cursor != null && cursor.moveToFirst()) {
                 profile = new UserProfileModel(
-                        cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.USER_ID)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.USER_NAME)),
-                        cursor.getFloat(cursor.getColumnIndexOrThrow(AppDataBase.USER_HEIGHT)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.USER_AGE))
+                        cursor.getLong(cursor.getColumnIndexOrThrow(USER_ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(USER_NAME)),
+                        cursor.getFloat(cursor.getColumnIndexOrThrow(USER_HEIGHT)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(USER_AGE))
                 );
-                cursor.close();
             }
-            // ---------------------------------------------------
 
         } catch (android.database.sqlite.SQLiteException e) {
-            // *** КЛЮЧЕВОЙ МОМЕНТ: ПЕРЕХВАТ ОШИБКИ "no such table" ***
             if (e.getMessage() != null && e.getMessage().contains("no such table")) {
-                // Эта ошибка означает, что таблица еще не успела создаться.
-                // Это ожидаемо при race condition на реальном устройстве.
-                android.util.Log.w("UserProfileDao", "Таблица user_profile_table временно отсутствует. Возвращаем NULL.");
-                return null; // Возвращаем null, чтобы предотвратить краш приложения
+                Log.w("UserProfileDao", "Таблица user_profile_table отсутствует, возвращаем null");
+                return null;
             }
-            // Если это другая, неожиданная ошибка SQLite, перебрасываем ее.
             throw e;
         } finally {
             if (cursor != null) cursor.close();
-            // ВНИМАНИЕ: Не закрывайте базу данных, если она используется в других потоках.
-            // Если dbHelper - Singleton, закрытие здесь может вызвать ошибки.
-            // Но так как у вас SQLiteOpenHelper, db.close() тут остается.
             db.close();
         }
 
         return profile;
+    }
+
+    // ========================= CLEAR PROFILE ========================= //
+
+    /**
+     * Полная очистка таблицы (удаление всех параметров профиля).
+     */
+    public void clearProfile() {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        db.delete(USER_PROFILE_TABLE, null, null);
+        db.close();
+    }
+
+    // ========================= EXPORT ========================= //
+
+    /**
+     * Подготовка данных для отправки во внешнюю базу данных.
+     */
+    public UserProfileModel exportProfileForExternalDb() {
+        // просто получаем профиль — отправка реализуется на уровне сервиса/репозитория
+        return getProfile();
+    }
+
+    // ========================= HELPERS ========================= //
+
+    private boolean isValidString(String s) {
+        return s != null && !s.trim().isEmpty();
     }
 }

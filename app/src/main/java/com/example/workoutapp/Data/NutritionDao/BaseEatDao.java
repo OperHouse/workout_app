@@ -13,7 +13,6 @@ import static com.example.workoutapp.Data.Tables.AppDataBase.BASE_FOOD_TABLE;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
@@ -158,17 +157,5 @@ public class BaseEatDao {
         return eat;
     }
 
-    public void logAllEat() {
-        List<FoodModel> allEats = getAllEat();
-        for (FoodModel eat : allEats) {
-            Log.d("BaseEatDao", "ID: " + eat.getFood_id()
-                    + ", Name: " + eat.getFood_name()
-                    + ", Protein: " + eat.getProtein()
-                    + ", Fat: " + eat.getFat()
-                    + ", Carb: " + eat.getCarb()
-                    + ", Calories: " + eat.getCalories()
-                    + ", Amount: " + eat.getAmount()
-                    + ", Measurement: " + eat.getMeasurement_type());
-        }
-    }
+
 }

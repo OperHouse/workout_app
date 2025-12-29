@@ -253,10 +253,6 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
                     }
 
                     ((NutritionFragment) fragment).removeFoodFromMeal();
-
-
-                    connectingMealDao.logAllConnections();
-                    mealFoodDao.logAllMealFoods();
                 }
             }
         });

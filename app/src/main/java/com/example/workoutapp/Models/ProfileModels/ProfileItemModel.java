@@ -1,4 +1,4 @@
-package com.example.workoutapp.Models.ProfileModels;// Файл: ProfileItem.java
+package com.example.workoutapp.Models.ProfileModels;
 
 public class ProfileItemModel {
     public static final int TYPE_GROUP = 1;

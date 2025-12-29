@@ -8,6 +8,7 @@
     android:scrollbars = "vertical"
     android:scrollbarStyle="insideInset"
     android:fillViewport="true"
+    android:background="#2E3042"
     tools:context=".Fragments.ProfileFragments.ProfileFragment">
 
     <!-- Вложенный ConstraintLayout для адаптивности -->
@@ -76,16 +77,6 @@
             app:layout_constraintStart_toStartOf="@+id/ageView"
             app:layout_constraintTop_toBottomOf="@+id/ageView" />
 
-        <TextView
-            android:id="@+id/weightView"
-            android:layout_width="wrap_content"
-            android:layout_height="30dp"
-            android:gravity="start|center"
-            android:text="Вес:"
-            android:layout_marginBottom="10dp"
-            android:textColor="@color/white"
-            app:layout_constraintBottom_toBottomOf="@+id/imageView2"
-            app:layout_constraintStart_toStartOf="@+id/heightView" />
 
         <!-- Горизонтальная линия -->
         <View
@@ -94,18 +85,25 @@
             android:layout_height="1dp"
             android:layout_marginTop="20dp"
             android:background="@android:color/darker_gray"
-            app:layout_constraintTop_toBottomOf="@+id/weightView"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageView2" />
+
+
+
 
         <androidx.recyclerview.widget.RecyclerView
-            android:layout_marginTop="10dp"
             android:id="@+id/group_RV"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
             android:clipToPadding="false"
-            android:paddingStart="30dp"
-            android:paddingEnd="30dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:layout_marginTop="10dp"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/divider">
 

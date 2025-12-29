@@ -7,12 +7,11 @@ import static com.example.workoutapp.Data.Tables.AppDataBase.MEAL_PRESET_NAME_TA
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
-import com.example.workoutapp.Models.NutritionModels.MealNameModel;
 import com.example.workoutapp.Models.NutritionModels.MealModel;
+import com.example.workoutapp.Models.NutritionModels.MealNameModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -134,11 +133,4 @@ public class PresetMealNameDao {
         return presetName;
     }
 
-    // Вывести в лог всё содержимое таблицы
-    public void logAllMealPresetNames() {
-        List<MealNameModel> all = getAllMealPresetNames();
-        for (MealNameModel model : all) {
-            Log.d("PresetMealNameDao", "ID: " + model.getMeal_name_id() + ", Name: " + model.getMeal_name());
-        }
-    }
 }
