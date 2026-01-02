@@ -58,15 +58,17 @@
         app:layout_constraintTop_toBottomOf="@+id/constraintLayoutHeader">
 
         <!-- Кнопка с фотографией профиля -->
-        <ImageButton
-            android:id="@+id/imageButtonProfilePhoto"
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/profile_settings_fragment_photo_IB"
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_marginTop="32dp"
-            android:background="@drawable/card_border"
-            android:contentDescription="@string/profile_picture"
+            android:padding="2dp"
             android:scaleType="centerCrop"
             android:src="@drawable/ic_user_profile"
+            app:strokeColor="@color/light_gray2"
+            app:strokeWidth="2dp"
+            app:shapeAppearanceOverlay="@style/CircleImage"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -82,7 +84,7 @@
             android:paddingEnd="24dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/imageButtonProfilePhoto">
+            app:layout_constraintTop_toBottomOf="@+id/profile_settings_fragment_photo_IB">
 
             <!-- 1. Имя -->
             <com.google.android.material.textfield.TextInputLayout

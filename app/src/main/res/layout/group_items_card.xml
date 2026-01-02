@@ -1,18 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="5dp"
-    app:cardElevation="8dp"
-    app:cardCornerRadius="12dp"
-    app:cardBackgroundColor="@android:color/transparent">
+    android:layout_marginHorizontal="10dp"
+    android:layout_marginTop="8dp"
+    android:clipToPadding="false"
+    app:cardBackgroundColor="@color/background_1"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:cardMaxElevation="6dp"
+    app:strokeWidth="2dp">
 
     <LinearLayout
         android:id="@+id/leaner_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/card_border"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
@@ -21,8 +23,7 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_marginStart="16dp"
-            android:src="@drawable/ic_user_profile"
-            android:visibility="visible" />
+            android:src="@drawable/ic_user_profile" />
 
         <TextView
             android:id="@+id/group_name"
@@ -30,7 +31,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:padding="16dp"
-            android:text="group_name"
+            android:text="Название группы"
             android:textColor="@color/white"
             android:textSize="22sp" />
 
@@ -39,8 +40,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
-            android:src="@drawable/ic_spinner_arrow_down" />
+            android:src="@drawable/ic_arrow_down_foreground" />
 
     </LinearLayout>
 
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

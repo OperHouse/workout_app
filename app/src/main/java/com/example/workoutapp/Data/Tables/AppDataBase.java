@@ -122,6 +122,7 @@ public class AppDataBase extends SQLiteOpenHelper {
     public static final String USER_NAME = "user_name";
     public static final String USER_HEIGHT = "user_height";
     public static final String USER_AGE = "user_age";
+    public static final String USER_IMAGE_PATH = "user_image_path";
 
     // =========================WEIGHT_HISTORY_TABLE============================//
     //Данные веса пользователя
@@ -320,7 +321,8 @@ public class AppDataBase extends SQLiteOpenHelper {
                 + USER_ID + " INTEGER PRIMARY KEY, "
                 + USER_NAME + " TEXT NOT NULL, "
                 + USER_HEIGHT + " REAL, "
-                + USER_AGE + " INTEGER);";
+                + USER_AGE + " INTEGER, "
+                + USER_IMAGE_PATH + " TEXT);";
 
         String createWeightHistoryTableQuery = "CREATE TABLE IF NOT EXISTS " + WEIGHT_HISTORY_TABLE + " ("
                 + WEIGHT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " // Вся декларация в одной строке

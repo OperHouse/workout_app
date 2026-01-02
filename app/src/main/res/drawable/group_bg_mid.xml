@@ -3,15 +3,28 @@
 
     <item>
         <shape>
-            <solid android:color="@color/light_gray2" /> </shape>
+            <solid android:color="@color/light_gray2" />
+        </shape>
     </item>
 
     <item
         android:left="2dp"
         android:right="2dp"
-        android:top="0dp"  android:bottom="0dp" >
+        android:top="0dp"
+        android:bottom="0dp">
         <shape>
-            <solid android:color="@color/background_1" />
+            <solid android:color="@color/light_gray3" />
         </shape>
     </item>
+
+    <item
+        android:gravity="bottom"
+        android:left="40dp"
+        android:right="40dp">
+        <shape>
+            <size android:height="1dp" />
+            <solid android:color="#33D3D3D3" />
+        </shape>
+    </item>
+
 </layer-list>
