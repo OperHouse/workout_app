@@ -1,10 +1,12 @@
 package com.example.workoutapp.Data.ProfileDao;
 
+// Статические импорты констант из вашего класса базы данных
 import static com.example.workoutapp.Data.Tables.AppDataBase.USER_AGE;
 import static com.example.workoutapp.Data.Tables.AppDataBase.USER_HEIGHT;
 import static com.example.workoutapp.Data.Tables.AppDataBase.USER_ID;
 import static com.example.workoutapp.Data.Tables.AppDataBase.USER_NAME;
 import static com.example.workoutapp.Data.Tables.AppDataBase.USER_PROFILE_TABLE;
+import static com.example.workoutapp.Data.Tables.AppDataBase.USER_IMAGE_PATH; // Убедитесь, что эта константа есть в AppDataBase
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -26,21 +28,15 @@ public class UserProfileDao {
 
     /**
      * Вставка или обновление профиля.
-     * Если поля пустые — не трогаем.
-     * Если значения совпадают с текущими — не трогаем.
-     * Если таблица пуста — создаём первую запись.
+     * Обрабатывает все поля, включая путь к фотографии профиля.
      */
     public void insertOrUpdateProfile(UserProfileModel newProfile) {
-
-
-        // Проверим, есть ли уже запись
+        // Получаем текущее состояние из БД для сравнения
         UserProfileModel current = getProfile();
-
         SQLiteDatabase db = dbHelper.getWritableDatabase();
-
         ContentValues values = new ContentValues();
 
-        // Если таблица пуста — вставляем новую строку
+        // Если профиля еще нет в базе — создаем новую запись
         if (current == null) {
             if (newProfile.getUserId() != 0)
                 values.put(USER_ID, newProfile.getUserId());
@@ -50,10 +46,13 @@ public class UserProfileDao {
                 values.put(USER_HEIGHT, newProfile.getUserHeight());
             if (newProfile.getUserAge() > 0)
                 values.put(USER_AGE, newProfile.getUserAge());
+            if (isValidString(newProfile.getUserImagePath()))
+                values.put(USER_IMAGE_PATH, newProfile.getUserImagePath());
 
-             db.insert(USER_PROFILE_TABLE, null, values);
+            db.insert(USER_PROFILE_TABLE, null, values);
+            Log.d("UserProfileDao", "Создана новая запись профиля");
         } else {
-            // Если запись есть — обновляем только изменённые и непустые поля
+            // Если запись существует — обновляем только те поля, которые изменились
             if (isValidString(newProfile.getUserName()) &&
                     !newProfile.getUserName().equals(current.getUserName())) {
                 values.put(USER_NAME, newProfile.getUserName());
@@ -74,52 +73,28 @@ public class UserProfileDao {
                 values.put(USER_ID, newProfile.getUserId());
             }
 
+            // Обновляем путь к фото, если он изменился или был добавлен
+            if (isValidString(newProfile.getUserImagePath()) &&
+                    !newProfile.getUserImagePath().equals(current.getUserImagePath())) {
+                values.put(USER_IMAGE_PATH, newProfile.getUserImagePath());
+            }
+
             if (values.size() > 0) {
+                // Обновляем единственную запись в таблице (whereClause null)
                 db.update(USER_PROFILE_TABLE, values, null, null);
+                Log.d("UserProfileDao", "Данные профиля обновлены");
             } else {
-                Log.i("UserProfileDao", "Нет изменений для обновления профиля.");
+                Log.i("UserProfileDao", "Изменений не обнаружено");
             }
         }
 
         db.close();
     }
 
-    // ========================= SET USER ID ========================= //
-
-    /**
-     * Устанавливает внешний user_id (например, из Firebase).
-     * Если таблицы нет или она пуста — создаёт запись с этим ID.
-     */
-    public void setExternalUserId(long externalId) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-
-        Cursor cursor = db.query(
-                USER_PROFILE_TABLE,
-                new String[]{USER_ID},
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-
-        ContentValues values = new ContentValues();
-        values.put(USER_ID, externalId);
-
-        if (cursor.moveToFirst()) {
-            db.update(USER_PROFILE_TABLE, values, null, null);
-        } else {
-            db.insert(USER_PROFILE_TABLE, null, values);
-        }
-
-        cursor.close();
-        db.close();
-    }
-
     // ========================= GET PROFILE ========================= //
 
     /**
-     * Получает текущий профиль (всегда одну строку).
+     * Извлекает данные профиля из БД.
      */
     public UserProfileModel getProfile() {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
@@ -129,7 +104,7 @@ public class UserProfileDao {
         try {
             cursor = db.query(
                     USER_PROFILE_TABLE,
-                    null,
+                    null, // Получаем все колонки
                     null,
                     null,
                     null,
@@ -138,17 +113,19 @@ public class UserProfileDao {
             );
 
             if (cursor != null && cursor.moveToFirst()) {
+                // Создаем модель, используя конструктор с 5 параметрами
                 profile = new UserProfileModel(
                         cursor.getLong(cursor.getColumnIndexOrThrow(USER_ID)),
                         cursor.getString(cursor.getColumnIndexOrThrow(USER_NAME)),
                         cursor.getFloat(cursor.getColumnIndexOrThrow(USER_HEIGHT)),
-                        cursor.getInt(cursor.getColumnIndexOrThrow(USER_AGE))
+                        cursor.getInt(cursor.getColumnIndexOrThrow(USER_AGE)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(USER_IMAGE_PATH)) // Читаем путь к фото
                 );
             }
 
         } catch (android.database.sqlite.SQLiteException e) {
             if (e.getMessage() != null && e.getMessage().contains("no such table")) {
-                Log.w("UserProfileDao", "Таблица user_profile_table отсутствует, возвращаем null");
+                Log.w("UserProfileDao", "Таблица отсутствует");
                 return null;
             }
             throw e;
@@ -160,25 +137,27 @@ public class UserProfileDao {
         return profile;
     }
 
-    // ========================= CLEAR PROFILE ========================= //
+    // ========================= ДРУГИЕ МЕТОДЫ ========================= //
 
-    /**
-     * Полная очистка таблицы (удаление всех параметров профиля).
-     */
+    public void setExternalUserId(long externalId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(USER_ID, externalId);
+
+        Cursor cursor = db.query(USER_PROFILE_TABLE, new String[]{USER_ID}, null, null, null, null, null);
+        if (cursor.moveToFirst()) {
+            db.update(USER_PROFILE_TABLE, values, null, null);
+        } else {
+            db.insert(USER_PROFILE_TABLE, null, values);
+        }
+        cursor.close();
+        db.close();
+    }
+
     public void clearProfile() {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         db.delete(USER_PROFILE_TABLE, null, null);
         db.close();
-    }
-
-    // ========================= EXPORT ========================= //
-
-    /**
-     * Подготовка данных для отправки во внешнюю базу данных.
-     */
-    public UserProfileModel exportProfileForExternalDb() {
-        // просто получаем профиль — отправка реализуется на уровне сервиса/репозитория
-        return getProfile();
     }
 
     // ========================= HELPERS ========================= //

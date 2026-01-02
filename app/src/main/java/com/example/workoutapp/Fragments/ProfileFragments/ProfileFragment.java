@@ -1,12 +1,16 @@
 package com.example.workoutapp.Fragments.ProfileFragments;
 
+import android.annotation.SuppressLint;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -19,6 +23,7 @@ import com.example.workoutapp.Data.ProfileDao.FoodGainGoalDao; // <-- НОВЫЙ
 import com.example.workoutapp.Data.ProfileDao.GeneralGoalDao;
 import com.example.workoutapp.Data.ProfileDao.UserProfileDao;
 import com.example.workoutapp.Data.ProfileDao.WeightHistoryDao;
+import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
@@ -28,8 +33,11 @@ import com.example.workoutapp.Models.ProfileModels.GeneralGoalModel;
 import com.example.workoutapp.Models.ProfileModels.ProfileItemModel;
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
+import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
+import com.google.android.material.imageview.ShapeableImageView;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -42,7 +50,7 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
 
     private RecyclerView groupRecyclerView;
     private ProfileAdapter profileAdapter;
-
+    private boolean isPhotoPicking = false;
     // Поля для DAO
     private UserProfileDao userProfileDAO;
     private WeightHistoryDao weightHistoryDAO;
@@ -50,7 +58,11 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
     private DailyActivityTrackingDao activityTrackingDAO;
     private GeneralGoalDao generalGoalDao;
     private ActivityGoalDao activityGoalDao;
-    private FoodGainGoalDao foodGainGoalDao; // <-- НОВОЕ ПОЛЕ DAO
+    private FoodGainGoalDao foodGainGoalDao;
+    private WORKOUT_EXERCISE_TABLE_DAO workoutDao;
+
+    private ActivityResultLauncher<String> mGetContent;
+    private String currentImagePath = null;
 
     // ===============================================
     // 1. ХОЛДЕР ДАННЫХ ДЛЯ ПРОФИЛЯ
@@ -61,6 +73,7 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
         public DailyFoodTrackingModel todayFood;
         public DailyActivityTrackingModel todayActivity;
         public GeneralGoalModel generalGoalModel;
+        public String latestWorkout;
 
         // Новые поля
         public ActivityGoalModel activityGoal;
@@ -77,6 +90,8 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
         data.user = userProfileDAO.getProfile();
         data.latestWeight = weightHistoryDAO.getLatestWeight();
 
+        data.latestWorkout = workoutDao.getLatestWorkoutDate();
+
         // 2. Цели
         data.generalGoalModel = generalGoalDao.getLatestGoal();
         data.activityGoal = activityGoalDao.getLatestGoal();
@@ -84,25 +99,48 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
 
         // 3. Ежедневные трекеры (для Активности)
         String todayDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().getTime());
-        data.todayFood = foodTrackingDAO.getFoodTrackingByDate(todayDate);
+        data.todayFood = foodTrackingDAO.getLatestEntry();
         data.todayActivity = activityTrackingDAO.getActivityByDate(todayDate);
 
         return data;
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View ProfileView = inflater.inflate(R.layout.fragment_profile, container, false);
+        ShapeableImageView profilePhotoIV = ProfileView.findViewById(R.id.profile_fragment_photo_IB);
         userProfileDAO = new UserProfileDao(MainActivity.getAppDataBase());
         weightHistoryDAO = new WeightHistoryDao(MainActivity.getAppDataBase());
         foodTrackingDAO = new DailyFoodTrackingDao(MainActivity.getAppDataBase());
         activityTrackingDAO = new DailyActivityTrackingDao(MainActivity.getAppDataBase());
         generalGoalDao = new GeneralGoalDao(MainActivity.getAppDataBase());
         activityGoalDao = new ActivityGoalDao(MainActivity.getAppDataBase());
-        foodGainGoalDao = new FoodGainGoalDao(MainActivity.getAppDataBase()); // <-- ИНИЦИАЛИЗАЦИЯ DAO
+        foodGainGoalDao = new FoodGainGoalDao(MainActivity.getAppDataBase());
+        workoutDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
 
         // -------------------------
+        profilePhotoIV.setOnClickListener(v -> {
+            isPhotoPicking = true;
+            mGetContent.launch("image/*");
+        });
+
+
+        mGetContent = registerForActivityResult(new ActivityResultContracts.GetContent(),
+                uri -> {
+                    // Мы вернулись, но флаг пока держим true, чтобы onResume пропустил обновление
+                    if (uri != null) {
+                        String newPath = saveImageToInternalStorage(uri);
+                        if (newPath != null) {
+                            updatePhotoInDatabase(newPath);
+                            profilePhotoIV.setImageURI(null);
+                            profilePhotoIV.setImageURI(Uri.fromFile(new File(newPath)));
+                        }
+                    }
+                    // Сбрасываем флаг чуть позже, чтобы onResume успел отработать
+                    profilePhotoIV.postDelayed(() -> isPhotoPicking = false, 500);
+                });
 
         // Настройка отображения даты
         TextView dateTextView = ProfileView.findViewById(R.id.dateTextProfile);
@@ -118,6 +156,45 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
 
         ProfileDataHolder profileData = fetchProfileData();
         List<ProfileItemModel> dataItems = prepareDataForRecyclerView(profileData);
+
+        TextView helloTV = ProfileView.findViewById(R.id.profile_fragment_name_TV);
+        TextView ageTV = ProfileView.findViewById(R.id.profile_fragment_age_TV);
+        TextView heightTV = ProfileView.findViewById(R.id.profile_fragment_height_TV);
+
+        //Установка имени, роста, возраста
+        if (profileData.user != null) {
+            // Имя
+            String userName = profileData.user.getUserName();
+            if (userName != null && !userName.isEmpty()) {
+                helloTV.setText("Приветствуем, " + userName + "!");
+            } else {
+                helloTV.setText("Приветствуем пользователь!");
+            }
+
+            // Возраст (используем склонение, если нужно, или просто текст)
+            int age = profileData.user.getUserAge();
+            ageTV.setText("Возраст:  " + age + " " + getYearDeclension(age));
+
+            // Рост
+            double height = profileData.user.getUserHeight();
+            heightTV.setText("Рост: " + String.format(Locale.getDefault(), "%.0f см", height));
+        }
+
+        if (profileData.user != null) {
+            String imagePath = profileData.user.getUserImagePath();
+            if (imagePath != null && !imagePath.isEmpty()) {
+                File imgFile = new File(imagePath);
+                if (imgFile.exists()) {
+                    profilePhotoIV.setImageURI(Uri.fromFile(imgFile));
+                } else {
+                    // Если файл был удален из памяти, ставим дефолтную иконку
+                    profilePhotoIV.setImageResource(R.drawable.ic_user_profile);
+                }
+            } else {
+                // Если пути в БД нет, ставим дефолтную иконку
+                profilePhotoIV.setImageResource(R.drawable.ic_user_profile);
+            }
+        }
 
         // Настройка RecyclerView
         groupRecyclerView = ProfileView.findViewById(R.id.group_RV);
@@ -187,8 +264,9 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
     // ===============================================
 
     private String formatChildTitle(String groupName, String template, int index, ProfileDataHolder data, Resources res) {
-        String value = "Н/Д"; // Значение по умолчанию
+        String value = " Н/Д"; // Значение по умолчанию
         String unit = "";     // Единица измерения
+
 
         // --- Группа "Профиль" ---
         if (groupName.equals(res.getString(R.string.group_profile))) {
@@ -198,7 +276,7 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
                         value = " " + data.user.getUserName();
                         break;
                     case 1: // Рост:
-                        value = " " +String.format(Locale.getDefault(), "%.1f", data.user.getUserHeight());
+                        value = " " + String.format(Locale.getDefault(), "%.1f", data.user.getUserHeight());
                         unit = " см";
                         break;
                     case 2: // Вес: (берем из истории веса)
@@ -213,9 +291,7 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
                         break;
                 }
             }
-        }
-
-        else if (groupName.equals(res.getString(R.string.group_general_goal))) {
+        } else if (groupName.equals(res.getString(R.string.group_general_goal))) {
             if (data.generalGoalModel != null) {
                 switch (index) {
                     case 0:
@@ -245,8 +321,7 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
                         break;
                 }
             }
-        }
-        else if (groupName.equals(res.getString(R.string.group_activity_goal))) {
+        } else if (groupName.equals(res.getString(R.string.group_activity_goal))) {
             // ИСПОЛЬЗУЕМ activityGoal
             if (data.activityGoal != null) {
                 switch (index) {
@@ -260,8 +335,7 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
                         break;
                 }
             }
-        }
-        else if (groupName.equals(res.getString(R.string.group_food_goal))) {
+        } else if (groupName.equals(res.getString(R.string.group_food_goal))) {
             // ИСПОЛЬЗУЕМ foodGoal (Цель питания)
             if (data.foodGoal != null) {
                 switch (index) {
@@ -282,6 +356,45 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
                         unit = " г";
                         break;
                 }
+            }
+        } // --- Группа "Прогресс" ---
+        else if (groupName.equals(res.getString(R.string.group_progress))) {
+            switch (index) {
+                case 0: // Вес (Ваш кейс ноль)
+                    if (data.latestWeight != null) {
+                        value = " " + String.format(Locale.getDefault(), "%.1f", data.latestWeight.getWeightValue());
+                        unit = " кг";
+                    }
+                    break;
+
+                case 1: // Последняя активность
+                    // Предположим, в модели есть метод getDate()
+                    if (data.todayActivity != null) {
+                        value = " " + getRelativeDate(data.todayActivity.getDate());
+                    } else {
+                        value = " Нет данных";
+                    }
+                    unit = "";
+                    break;
+
+                case 2: // Последняя запись питания
+                    if (data.todayFood != null) {
+                        value = " " + getRelativeDate(data.todayFood.getDate());
+                    } else {
+                        value = " Нет данных";
+                    }
+                    unit = "";
+                    break;
+
+                case 3: // Последняя тренировка
+                    if (data.latestWorkout != null) {
+                        // Используем ваш метод getRelativeDate для красивого отображения (Сегодня/Вчера/Дата)
+                        value = " " + getRelativeDate(data.latestWorkout);
+                    } else {
+                        value = " Нет данных";
+                    }
+                    unit = "";
+                    break;
             }
         }
 
@@ -348,7 +461,24 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
     @Override
     public void onResume() {
         super.onResume();
-        refreshProfileData();
+        
+        if (!isPhotoPicking) {
+            refreshProfileData();
+        }
+    }
+
+    public static String getYearDeclension(int age) {
+        if (age % 100 >= 11 && age % 100 <= 14) {
+            return "лет";
+        }
+        int lastDigit = age % 10;
+        if (lastDigit == 1) {
+            return "год";
+        }
+        if (lastDigit >= 2 && lastDigit <= 4) {
+            return "года";
+        }
+        return "лет";
     }
 
     public static String getDaysDeclension(int number) {
@@ -395,11 +525,101 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
         return "раз";
     }
 
+    private String getRelativeDate(String dateString) {
+        if (dateString == null || dateString.isEmpty()) return "Нет записей";
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        try {
+            Calendar cal = Calendar.getInstance();
+            String today = sdf.format(cal.getTime());
+
+            cal.add(Calendar.DAY_OF_YEAR, -1);
+            String yesterday = sdf.format(cal.getTime());
+
+            if (dateString.equals(today)) return "Сегодня";
+            if (dateString.equals(yesterday)) return "Вчера";
+
+            // Если старая дата, меняем формат на "дд ммм"
+            SimpleDateFormat displayFormat = new SimpleDateFormat("d MMM", new Locale("ru"));
+            return displayFormat.format(sdf.parse(dateString));
+        } catch (Exception e) {
+            return dateString;
+        }
+    }
+
+    // Сохранение файла во внутреннюю память (как в настройках)
+    private String saveImageToInternalStorage(Uri uri) {
+        try {
+            String fileName = "profile_" + System.currentTimeMillis() + ".jpg";
+            File file = new File(requireContext().getFilesDir(), fileName);
+
+            // Очистка старых фото
+            File dir = requireContext().getFilesDir();
+            if (dir.exists() && dir.listFiles() != null) {
+                for (File tempFile : dir.listFiles()) {
+                    if (tempFile.getName().startsWith("profile_")) tempFile.delete();
+                }
+            }
+
+            java.io.InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
+            java.io.FileOutputStream outputStream = new java.io.FileOutputStream(file);
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, read);
+            }
+            outputStream.close();
+            inputStream.close();
+            return file.getAbsolutePath();
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // Обновление пути в базе данных
+    private void updatePhotoInDatabase(String path) {
+        UserProfileModel currentProfile = userProfileDAO.getProfile();
+        if (currentProfile != null) {
+            currentProfile.setUserImagePath(path);
+            userProfileDAO.insertOrUpdateProfile(currentProfile);
+        }
+    }
+
     private void refreshProfileData() {
         ProfileDataHolder profileData = fetchProfileData();
         List<ProfileItemModel> updatedList = prepareDataForRecyclerView(profileData);
         profileAdapter.dataList.clear();
         profileAdapter.dataList.addAll(updatedList);
         profileAdapter.notifyDataSetChanged();
+
+        View view = getView();
+        if (view != null && profileData.user != null) {
+            TextView helloTV = view.findViewById(R.id.profile_fragment_name_TV);
+            TextView ageTV = view.findViewById(R.id.profile_fragment_age_TV);
+            TextView heightTV = view.findViewById(R.id.profile_fragment_height_TV);
+            ShapeableImageView profilePhotoIV = view.findViewById(R.id.profile_fragment_photo_IB);
+
+            // 1. Обновляем Имя
+            String userName = profileData.user.getUserName();
+            helloTV.setText(userName != null && !userName.isEmpty() ? "Приветствуем, " + userName + "!" : "Приветствуем пользователь!");
+
+            // 2. Обновляем Возраст и Рост (на случай если их изменили в ProfileSettings)
+            int age = profileData.user.getUserAge();
+            ageTV.setText("Возраст:  " + age + " " + getYearDeclension(age));
+
+            double height = profileData.user.getUserHeight();
+            heightTV.setText("Рост: " + String.format(Locale.getDefault(), "%.0f см", height));
+
+            // 3. Обновляем фото
+            String imagePath = profileData.user.getUserImagePath();
+            if (imagePath != null && !imagePath.isEmpty()) {
+                File imgFile = new File(imagePath);
+                if (imgFile.exists()) {
+                    profilePhotoIV.setImageURI(null); // Сброс кеша
+                    profilePhotoIV.setImageURI(Uri.fromFile(imgFile));
+                }
+            }
+        }
     }
 }

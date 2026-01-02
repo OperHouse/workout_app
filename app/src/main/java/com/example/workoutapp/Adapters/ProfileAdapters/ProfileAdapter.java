@@ -5,6 +5,7 @@ import android.content.res.Resources;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Models.ProfileModels.ProfileItemModel;
 import com.example.workoutapp.R;
+import com.google.android.material.card.MaterialCardView;
 
 import java.util.List;
 
@@ -23,8 +25,9 @@ public class ProfileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public interface OnChildItemClickListener {
         /**
          * Вызывается при нажатии на дочерний элемент.
+         *
          * @param flatPosition Плоская позиция элемента в списке dataList.
-         * @param title Заголовок нажатого элемента (для дополнительной информации).
+         * @param title        Заголовок нажатого элемента (для дополнительной информации).
          */
         void onChildItemClick(int flatPosition, String title);
     }
@@ -72,75 +75,116 @@ public class ProfileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ProfileItemModel item = dataList.get(position);
-
-        // --- Логика скрытия/отображения ---
-        holder.itemView.setVisibility(item.isVisible ? View.VISIBLE : View.GONE);
-        holder.itemView.setLayoutParams(new RecyclerView.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                item.isVisible ? ViewGroup.LayoutParams.WRAP_CONTENT : 0
-        ));
-
         float density = res.getDisplayMetrics().density;
 
-        // --- Логика для отображения группы или дочернего элемента ---
+        // Скрытие/показ элемента
+        holder.itemView.setVisibility(item.isVisible ? View.VISIBLE : View.GONE);
+        RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) holder.itemView.getLayoutParams();
+        if (!item.isVisible) {
+            lp.height = 0;
+            lp.width = 0;
+            lp.setMargins(0, 0, 0, 0);
+        } else {
+            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            // Возвращаем стандартные отступы, если нужно
+        }
+        holder.itemView.setLayoutParams(lp);
+
         if (getItemViewType(position) == ProfileItemModel.TYPE_GROUP) {
-            // Настроим CardView для группы
             GroupViewHolder groupHolder = (GroupViewHolder) holder;
             groupHolder.groupNameTextView.setText(item.title);
 
-            // Получаем LayoutParams для динамического изменения маргинов
-            ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) groupHolder.cardView.getLayoutParams();
-            boolean hasChildren = (position + 1 < dataList.size() &&
-                    dataList.get(position + 1).groupIndex == position);
+            MaterialCardView card = groupHolder.frameLayout;
 
+            // 1. Настройка обводки и фона (теперь через методы MaterialCardView)
+            card.setStrokeColor(res.getColor(R.color.light_gray2));
+            card.setStrokeWidth((int) (2 * density));
+            card.setCardBackgroundColor(res.getColor(R.color.background_1));
+
+            // 2. Логика скругления углов и теней
             if (item.isExpanded) {
-                // Состояние раскрытой группы
-                groupHolder.cardView.setRadius(0f);
-                layoutParams.bottomMargin = 0;
-                groupHolder.linearLayout.setBackgroundResource(hasChildren ? R.drawable.group_bg_top : R.drawable.card_border);
-                groupHolder.expandIndicator.setImageResource(R.drawable.ic_spinner_arrow_down);
+                // Раскрыта: скругляем ТОЛЬКО ВЕРХНИЕ углы, убираем нижний отступ
+                float radius = DEFAULT_RADIUS_DP * density;
+                card.setShapeAppearanceModel(
+                        card.getShapeAppearanceModel()
+                                .toBuilder()
+                                .setTopLeftCornerSize(radius)
+                                .setTopRightCornerSize(radius)
+                                .setBottomLeftCornerSize(0)
+                                .setBottomRightCornerSize(0)
+                                .build()
+                );
+                card.setCardElevation(DEFAULT_ELEVATION_DP * density); // Оставляем тень
+                setBottomMargin(card, 0); // Убираем отступ снизу, чтобы "приклеить" детей
             } else {
-                // Состояние свернутой группы
-                groupHolder.cardView.setCardElevation(DEFAULT_ELEVATION_DP * density);
-                groupHolder.cardView.setRadius(DEFAULT_RADIUS_DP * density);
-                layoutParams.bottomMargin = (int) (DEFAULT_BOTTOM_MARGIN_DP * density);
-                groupHolder.linearLayout.setBackgroundResource(R.drawable.card_border);
-                groupHolder.expandIndicator.setImageResource(R.drawable.ic_spinner_arrow_down);
+                // Свернута: скругляем ВСЕ углы, возвращаем отступ
+                float radius = DEFAULT_RADIUS_DP * density;
+                card.setShapeAppearanceModel(
+                        card.getShapeAppearanceModel()
+                                .toBuilder()
+                                .setAllCornerSizes(radius)
+                                .build()
+                );
+                card.setCardElevation(DEFAULT_ELEVATION_DP * density);
+                setBottomMargin(card, (int) (DEFAULT_BOTTOM_MARGIN_DP * density));
             }
 
-            groupHolder.cardView.setLayoutParams(layoutParams);
+            // Убираем старый фон у внутреннего слоя!
+            groupHolder.linearLayout.setBackground(null);
+            groupHolder.expandIndicator.setImageResource(item.isExpanded ?
+                    R.drawable.ic_arrow_up_foreground : R.drawable.ic_arrow_down_foreground);
+
         } else {
-            // Настройка дочернего элемента
             ChildViewHolder childHolder = (ChildViewHolder) holder;
             childHolder.childTextView.setText(item.title);
 
-            // Убираем тень для дочернего элемента
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                holder.itemView.setElevation(0f);
+            // 1. Убираем/ставим стрелку в зависимости от группы
+            if (item.groupIndex >= 0 && item.groupIndex < dataList.size()) {
+                String parentTitle = dataList.get(item.groupIndex).title;
+                String progressTitle = res.getString(R.string.group_progress);
+
+                if (parentTitle.equals(progressTitle)) {
+                    // Группа "Прогресс" — полностью убираем все иконки (лево, верх, право, низ)
+                    childHolder.childTextView.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+
+                    // Также отключаем кликабельность, чтобы не было эффекта нажатия
+                    childHolder.itemView.setClickable(false);
+                    childHolder.itemView.setFocusable(false);
+                } else {
+                    // Остальные группы — возвращаем стрелку вправо
+                    childHolder.childTextView.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_arrow_next_foreground, 0);
+
+                    // Включаем кликабельность обратно
+                    childHolder.itemView.setClickable(true);
+                    childHolder.itemView.setFocusable(true);
+                }
             }
 
-            int groupIndex = item.groupIndex;
-            boolean isLastChildInGroup = (position + 1 >= dataList.size() ||
-                    dataList.get(position + 1).type == ProfileItemModel.TYPE_GROUP ||
-                    dataList.get(position + 1).groupIndex != groupIndex);
+            // Определяем, является ли этот ребенок последним в группе
+            boolean isLastChild = (position + 1 >= dataList.size() ||
+                    dataList.get(position + 1).type == ProfileItemModel.TYPE_GROUP);
 
-            ViewGroup.MarginLayoutParams childLayoutParams =
-                    (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();
-
-            childLayoutParams.topMargin = 0;
-
-            if (isLastChildInGroup) {
-                holder.itemView.setBackgroundResource(R.drawable.group_bg_bottom);
-                childLayoutParams.bottomMargin = (int) (DEFAULT_BOTTOM_MARGIN_DP * density);
+            if (isLastChild) {
+                // Последний ребенок: используем фон с закругленными нижними углами
+                childHolder.itemView.setBackgroundResource(R.drawable.group_bg_bottom);
+                setBottomMargin(childHolder.itemView, (int) (DEFAULT_BOTTOM_MARGIN_DP * density));
             } else {
-                holder.itemView.setBackgroundResource(R.drawable.group_bg_mid);
-                childLayoutParams.bottomMargin = 0;
+                // Средний ребенок: прямые углы
+                childHolder.itemView.setBackgroundResource(R.drawable.group_bg_mid);
+                setBottomMargin(childHolder.itemView, 0);
             }
-            holder.itemView.setLayoutParams(childLayoutParams);
         }
     }
 
-
+    // Вспомогательный метод для изменения отступов
+    private void setBottomMargin(View view, int bottomMargin) {
+        if (view.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+            params.bottomMargin = bottomMargin;
+            view.requestLayout();
+        }
+    }
 
 
     @Override
@@ -191,12 +235,12 @@ public class ProfileAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         public TextView groupNameTextView;
         public ImageView expandIndicator;
         public LinearLayout linearLayout;
-        public CardView cardView;
+        public MaterialCardView frameLayout;
 
         public GroupViewHolder(View itemView) {
             super(itemView);
             // itemview - это CardView (корневой элемент group_item_card.xml)
-            this.cardView = (CardView) itemView;
+            this.frameLayout = (MaterialCardView) itemView;
 
             groupNameTextView = itemView.findViewById(R.id.group_name);
             expandIndicator = itemView.findViewById(R.id.expand_indicator);

@@ -85,4 +85,34 @@ public class DailyFoodTrackingDao {
         }
         return model;
     }
+    public DailyFoodTrackingModel getLatestEntry() {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        DailyFoodTrackingModel model = null;
+
+        // Сортируем по дате в обратном порядке и берем 1 запись
+        Cursor cursor = db.query(
+                DAILY_FOOD_TRACKING_TABLE,
+                null,
+                null,
+                null,
+                null,
+                null,
+                DAILY_FOOD_TRACKING_DATE + " DESC",
+                "1"
+        );
+
+        if (cursor != null && cursor.moveToFirst()) {
+            model = new DailyFoodTrackingModel(
+                    cursor.getInt(cursor.getColumnIndexOrThrow(TRACKING_FOOD_ID)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(TRACKING_CALORIES)),
+                    cursor.getFloat(cursor.getColumnIndexOrThrow(TRACKING_PROTEIN)),
+                    cursor.getFloat(cursor.getColumnIndexOrThrow(TRACKING_FAT)),
+                    cursor.getFloat(cursor.getColumnIndexOrThrow(TRACKING_CARB)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DAILY_FOOD_TRACKING_DATE))
+            );
+            cursor.close();
+        }
+        return model;
+    }
+
 }

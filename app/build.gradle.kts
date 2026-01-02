@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace = "com.example.workoutapp"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.workoutapp"
-        minSdk = 24
-        targetSdk = 34
+        minSdk = 26
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -49,6 +49,9 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.2")
     implementation("androidx.paging:paging-runtime:3.3.6")
-    //noinspection UseTomlInstead
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha11")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.0")
+    implementation("com.google.guava:guava:31.1-android")
+
     implementation("androidx.paging:paging-common:3.3.6")
 }

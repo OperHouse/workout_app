@@ -28,10 +28,12 @@ import com.example.workoutapp.Adapters.NutritionAdapters.OutsideMealAdapter;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
+import com.example.workoutapp.Data.ProfileDao.DailyFoodTrackingDao;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.Models.NutritionModels.MealNameModel;
+import com.example.workoutapp.Models.ProfileModels.DailyFoodTrackingModel;
 import com.example.workoutapp.R;
 
 import java.text.SimpleDateFormat;
@@ -216,9 +218,33 @@ public class NutritionFragment extends Fragment {
             text1.setVisibility(View.GONE);
             text2.setVisibility(View.GONE);
         }
-
+        syncDailyTotals();
     }
+    private void syncDailyTotals() {
+        if (mealList == null || mealList.isEmpty()) return;
 
+        int totalCalories = 0;
+        float totalProtein = 0;
+        float totalFat = 0;
+        float totalCarbs = 0;
+
+        // Считаем общую сумму по всем приемам пищи за сегодня
+        for (MealModel meal : mealList) {
+            for (FoodModel food : meal.getMeal_food_list()) {
+                totalCalories += (int) food.getCalories();
+                totalProtein += (float) food.getProtein();
+                totalFat += (float) food.getFat();
+                totalCarbs += (float) food.getCarb();
+            }
+        }
+
+        // Сохраняем/обновляем в таблице истории
+        DailyFoodTrackingDao historyDao = new DailyFoodTrackingDao(MainActivity.getAppDataBase());
+
+        DailyFoodTrackingModel dailyRecord = new DailyFoodTrackingModel(0, totalCalories, totalProtein, totalFat, totalCarbs, currentFormattedDate);
+
+        historyDao.insertOrUpdate(dailyRecord);
+    }
     public void removeFoodFromMeal() {
         mealList.clear();
 

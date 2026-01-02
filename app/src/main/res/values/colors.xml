@@ -5,6 +5,7 @@
     <color name="bottom_navigation_item_color">#11111b</color>
     <color name="light_gray">#aaaaaa</color>
     <color name="light_gray2">#43516C</color>
+    <color name="light_gray3">#2E3A4D</color>
     <color name="grey">#808080</color>
     <color name="background_1">#2E3042</color>
     <color name="active_color">#FF5722</color>
