@@ -11,6 +11,8 @@ carUiLib = "2.6.0"
 preference = "1.2.1"
 constraintlayoutVersion = "2.2.1"
 materialVersion = "1.13.0"
+kotlin = "2.2.0"
+coreKtx = "1.17.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -24,7 +26,9 @@ car-ui-lib = { group = "com.android.car.ui", name = "car-ui-lib", version.ref = 
 preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayoutVersion" }
 google-material = { group = "com.google.android.material", name = "material", version.ref = "materialVersion" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
+kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 
