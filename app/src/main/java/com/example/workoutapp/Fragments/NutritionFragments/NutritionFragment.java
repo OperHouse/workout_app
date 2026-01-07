@@ -1,5 +1,7 @@
 package com.example.workoutapp.Fragments.NutritionFragments;
 
+import static com.google.android.material.internal.ViewUtils.hideKeyboard;
+
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.graphics.drawable.ColorDrawable;
@@ -13,11 +15,10 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,10 +26,13 @@ import com.example.workoutapp.Adapters.NutritionAdapters.OutsideMealAdapter;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
+import com.example.workoutapp.Data.ProfileDao.DailyFoodTrackingDao;
+import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.Models.NutritionModels.MealNameModel;
+import com.example.workoutapp.Models.ProfileModels.DailyFoodTrackingModel;
 import com.example.workoutapp.R;
 
 import java.text.SimpleDateFormat;
@@ -40,44 +44,43 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-
 public class NutritionFragment extends Fragment {
 
     private RecyclerView outer_RV;
     private OutsideMealAdapter outsideMealAdapter;
     private List<MealModel> mealList = new ArrayList<>();
-    private MealNameDao mealNameDao = new MealNameDao(MainActivity.getAppDataBase());
-    private ConnectingMealDao connectingMealDao = new ConnectingMealDao(MainActivity.getAppDataBase());
-    private MealFoodDao foodMealDao = new MealFoodDao(MainActivity.getAppDataBase());
+
+    // Переносим инициализацию DAO в метод, чтобы гарантировать наличие БД
+    private MealNameDao mealNameDao;
+    private ConnectingMealDao connectingMealDao;
+    private MealFoodDao foodMealDao;
 
     private ImageView imageView;
-    private TextView text1;
-    private TextView text2;
+    private TextView text1, text2;
     private String currentFormattedDate;
 
     @SuppressLint("MissingInflatedId")
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View NutritionFragmentView = inflater.inflate(R.layout.fragment_nutrition, container, false);
-        Button addMealBtn = NutritionFragmentView.findViewById(R.id.addMealBtn);
-        outer_RV = NutritionFragmentView.findViewById(R.id.MealRecyclerView);
-        imageView = NutritionFragmentView.findViewById(R.id.imageView);
-        text1 = NutritionFragmentView.findViewById(R.id.textView1);
-        text2 = NutritionFragmentView.findViewById(R.id.textView2);
+        View view = inflater.inflate(R.layout.fragment_nutrition, container, false);
+
+        // Инициализация DAO через MainActivity
+        initDAOs();
+
+        Button addMealBtn = view.findViewById(R.id.nutrition_fragment_add_meal_Btn);
+        outer_RV = view.findViewById(R.id.nutrition_fragment_meal_RV);
+        imageView = view.findViewById(R.id.nutrition_fragment_image_IV);
+        text1 = view.findViewById(R.id.nutrition_fragment_title2_TV);
+        text2 = view.findViewById(R.id.nutrition_fragment_hint2_TV);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            LocalDate currentDate = LocalDate.now();
-            currentFormattedDate = currentDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+            currentFormattedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
         } else {
-            currentFormattedDate = "";
+            currentFormattedDate = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(new java.util.Date());
         }
 
-
-
-        outsideMealAdapter = new OutsideMealAdapter(NutritionFragment.this, outer_RV);
-
-        outer_RV.setHasFixedSize(true);
+        outsideMealAdapter = new OutsideMealAdapter(this, outer_RV);
         outer_RV.setLayoutManager(new LinearLayoutManager(requireContext()));
         outer_RV.setAdapter(outsideMealAdapter);
 
@@ -85,149 +88,117 @@ public class NutritionFragment extends Fragment {
 
         addMealBtn.setOnClickListener(v -> ShowDialogAddMeal(currentFormattedDate));
 
-        // Настройка отображения даты
-        TextView dateTextView = NutritionFragmentView.findViewById(R.id.dateTextNutrition);
-        Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, d MMMM", new Locale("ru", "RU"));
-        String formattedDate = dateFormat.format(calendar.getTime());
-        formattedDate = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1);
-        dateTextView.setText(formattedDate);
+        setupDateHeader(view);
 
         getParentFragmentManager().setFragmentResultListener("preset_added_result", this, (key, bundle) -> {
-            boolean added = bundle.getBoolean("meal_preset_added", false);
-            if (added) {
-                refreshAdapter(); // твой метод обновления списка
+            if (bundle.getBoolean("meal_preset_added", false)) {
+                refreshMealData();
             }
         });
 
-        return NutritionFragmentView;
+        return view;
+    }
+
+    private void initDAOs() {
+        AppDataBase db = MainActivity.getAppDataBase();
+        mealNameDao = new MealNameDao(db);
+        connectingMealDao = new ConnectingMealDao(db);
+        foodMealDao = new MealFoodDao(db);
+    }
+
+    private void setupDateHeader(View view) {
+        TextView dateTextView = view.findViewById(R.id.nutrition_fragment_date_TV);
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, d MMMM", new Locale("ru", "RU"));
+        String formattedDate = dateFormat.format(calendar.getTime());
+        if (!formattedDate.isEmpty()) {
+            formattedDate = formattedDate.substring(0, 1).toUpperCase() + formattedDate.substring(1);
+        }
+        dateTextView.setText(formattedDate);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        refreshMealData(); // Это вызовет updateMealList и обновит UI
-    }
-    private void ShowDialogAddMeal(String data) {
-        Dialog dialogAddMeal = new Dialog(requireContext());
-        dialogAddMeal.setContentView(R.layout.add_meal_dialog);
-        Objects.requireNonNull(dialogAddMeal.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        dialogAddMeal.getWindow().setBackgroundDrawable(new ColorDrawable(0));
-        dialogAddMeal.show();
-
-        ImageButton backBtn = dialogAddMeal.findViewById(R.id.imageButtonBack1);
-        EditText nameMeal_ET = dialogAddMeal.findViewById(R.id.editText);
-        Button createMealBtn = dialogAddMeal.findViewById(R.id.createWorkBtn);
-        Button goToPresetsBtn = dialogAddMeal.findViewById(R.id.presetsMealBtn);
-
-        // Обработчик кнопки "Назад"
-        backBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialogAddMeal.dismiss();
-            }
-        });
-
-        goToPresetsBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialogAddMeal.dismiss();
-                Fragment selectionFragment = new SelectionMealPresetsFragment();
-                FragmentManager fragmentManager = getParentFragmentManager(); // или getFragmentManager()
-                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-
-                fragmentTransaction
-                        .hide(NutritionFragment.this)
-                        .add(R.id.frameLayout, selectionFragment, "selection_meal_preset") // Добавляем новый фрагмент с тегом
-                        .addToBackStack(null)  // Чтобы можно было вернуться назад
-                        .commit();
-            }
-        });
-
-        createMealBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String mealName = nameMeal_ET.getText().toString().trim();
-
-                if (mealName.isEmpty()) {
-                    Toast.makeText(requireContext(), "Пожалуйста, введите название приема пищи", Toast.LENGTH_SHORT).show();
-                } else {
-                    mealNameDao.insertMealName(mealName, data);
-                    updateMealList(data);
-                    mealNameDao.logAllMealNames();
-                }
-
-                dialogAddMeal.dismiss();
-            }
-        });
+        // Если фрагмент не скрыт, обновляем данные
+        if (!isHidden()) {
+            refreshMealData();
+        }
     }
 
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        // Срабатывает при переключении вкладок в BottomNavigationView (show/hide)
+        if (!hidden) {
+            refreshMealData();
+        }
+    }
 
-    private void updateMealList(String data) {
-        // Очищаем список перед добавлением новых данных
+    private void updateMealList(String date) {
+        AppDataBase db = MainActivity.getAppDataBase();
+        if (db == null || !db.isDbOpen()) return;
+
         mealList.clear();
 
-
-
-        // Получаем все ID приемов пищи на текущую дату
-        List<Integer> mealIds = mealNameDao.getMealNamesIdsByDate(data);
+        // Получаем данные асинхронно или проверяем безопасность
+        List<Integer> mealIds = mealNameDao.getMealNamesIdsByDate(date);
 
         for (Integer mealId : mealIds) {
             MealNameModel mealName = mealNameDao.getMealNameModelById(mealId);
             if (mealName == null) continue;
 
-            String name = mealName.getMeal_name();
-            String mealData = mealName.getMealData();
-
-            // Создаем новый MealModel с текущим списком foodModels
-            MealModel meal = new MealModel(mealId, name, mealData, foodMealDao.getMealFoodsByIds(connectingMealDao.getFoodIdsForMeal(mealId)));
-            mealList.add(new MealModel(meal));  // Добавляем в новый список
+            MealModel meal = new MealModel(
+                    mealId,
+                    mealName.getMeal_name(),
+                    mealName.getMealData(),
+                    foodMealDao.getMealFoodsByIds(connectingMealDao.getFoodIdsForMeal(mealId))
+            );
+            mealList.add(meal);
         }
 
-        // Обновляем адаптер с новым списком
         outsideMealAdapter.updateOuterAdapterList(mealList);
-
-        if (!mealList.isEmpty()) {
-            imageView.setVisibility(View.GONE);
-            text1.setVisibility(View.GONE);
-            text2.setVisibility(View.GONE);
-        }
-
+        togglePlaceholders();
+        syncDailyTotals();
     }
 
-    public void removeFoodFromMeal() {
-        mealList.clear();
+    private void togglePlaceholders() {
+        int visibility = mealList.isEmpty() ? View.VISIBLE : View.GONE;
+        int invVisibility = mealList.isEmpty() ? View.GONE : View.VISIBLE; // для элементов, которые скрываем
 
-
-
-        // Получаем все ID приемов пищи на текущую дату
-        List<Integer> mealIds = mealNameDao.getMealNamesIdsByDate(currentFormattedDate);
-
-        for (Integer mealId : mealIds) {
-            MealNameModel mealName = mealNameDao.getMealNameModelById(mealId);
-            if (mealName == null) continue;
-
-            String name = mealName.getMeal_name();
-            String mealData = mealName.getMealData();
-
-            // Создаем новый MealModel с текущим списком foodModels
-            MealModel meal = new MealModel(mealId, name, mealData, foodMealDao.getMealFoodsByIds(connectingMealDao.getFoodIdsForMeal(mealId)));
-            mealList.add(new MealModel(meal));  // Добавляем в новый список
-        }
+        imageView.setVisibility(mealList.isEmpty() ? View.VISIBLE : View.GONE);
+        text1.setVisibility(mealList.isEmpty() ? View.VISIBLE : View.GONE);
+        text2.setVisibility(mealList.isEmpty() ? View.VISIBLE : View.GONE);
     }
-    @SuppressLint("NotifyDataSetChanged")
-    public void updateFoodInMeal(int mealId, FoodModel updatedFood) {
+
+    private void syncDailyTotals() {
+        AppDataBase db = MainActivity.getAppDataBase();
+        if (db == null || !db.isDbOpen() || mealList.isEmpty()) return;
+
+        int totalCalories = 0;
+        float totalProtein = 0, totalFat = 0, totalCarbs = 0;
+
         for (MealModel meal : mealList) {
-            if (meal.getMeal_name_id() == mealId) {
-                meal.updateFood(updatedFood); // ты должен реализовать этот метод в MealModel
-                break;
+            for (FoodModel food : meal.getMeal_food_list()) {
+                totalCalories += (int) food.getCalories();
+                totalProtein += (float) food.getProtein();
+                totalFat += (float) food.getFat();
+                totalCarbs += (float) food.getCarb();
             }
         }
 
-        // Обновляем только нужную карточку
-        outsideMealAdapter.notifyDataSetChanged();
+        DailyFoodTrackingDao historyDao = new DailyFoodTrackingDao(db);
+        DailyFoodTrackingModel dailyRecord = new DailyFoodTrackingModel(0, totalCalories, totalProtein, totalFat, totalCarbs, currentFormattedDate);
+        historyDao.insertOrUpdate(dailyRecord);
     }
 
+    public void refreshMealData() {
+        if (outer_RV != null) {
+            updateMealList(currentFormattedDate);
+        }
+    }
+
+    // Упрощенный метод без создания нового адаптера
     public void refreshAdapter() {
         mealList = new ArrayList<>();
 
@@ -264,13 +235,83 @@ public class NutritionFragment extends Fragment {
         }
     }
 
+    @SuppressLint({"RestrictedApi", "ClickableViewAccessibility"})
+    private void ShowDialogAddMeal(String date) {
+        Dialog dialog = new Dialog(requireContext());
+        dialog.setContentView(R.layout.add_meal_dialog);
+        Objects.requireNonNull(dialog.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(0));
 
-    public void refreshMealData() {
-        if (outer_RV != null) {
-            updateMealList(currentFormattedDate);
-        }
+        ImageButton backBtn = dialog.findViewById(R.id.nutrition_close_D_BTN);
+        EditText nameMeal_ET = dialog.findViewById(R.id.nutrition_name_D_ET);
+        Button createMealBtn = dialog.findViewById(R.id.nutrition_create_D_BTN);
+        Button goToPresetsBtn = dialog.findViewById(R.id.nutrition_presets_D_BTN);
+        ConstraintLayout rootLayout = dialog.findViewById(R.id.add_meal_dialog_CL);
+        TextView tvErrorName = dialog.findViewById(R.id.tv_error_name);
+
+        backBtn.setOnClickListener(v -> dialog.dismiss());
+
+        goToPresetsBtn.setOnClickListener(v -> {
+            dialog.dismiss();
+            openPresetsFragment();
+        });
+
+        rootLayout.setOnTouchListener((v, event) -> {
+            nameMeal_ET.clearFocus();
+            hideKeyboard(nameMeal_ET);
+            return false;
+        });
+
+        createMealBtn.setOnClickListener(v -> {
+            String mealName = nameMeal_ET.getText().toString().trim();
+            if (mealName.isEmpty()) {
+                tvErrorName.setText("Пожалуйста, введите название приёма пищи");
+                tvErrorName.setVisibility(View.VISIBLE);
+            } else {
+                mealNameDao.insertMealName(mealName, date);
+                updateMealList(date);
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
     }
 
+    private void openPresetsFragment() {
+        Fragment selectionFragment = new SelectionMealPresetsFragment();
+        getParentFragmentManager().beginTransaction()
+                .hide(this)
+                .add(R.id.frameLayout, selectionFragment, "selection_meal_preset")
+                .addToBackStack(null)
+                .commit();
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    public void updateFoodInMeal(int mealId, FoodModel updatedFood) {
+        for (MealModel meal : mealList) {
+            if (meal.getMeal_name_id() == mealId) {
+                meal.updateFood(updatedFood);
+                break;
+            }
+        }
+        outsideMealAdapter.notifyDataSetChanged();
+        syncDailyTotals();
+    }
+
+    public void removeFoodFromMeal() {
+        mealList.clear();
+        // Получаем все ID приемов пищи на текущую дату
+        List<Integer> mealIds = mealNameDao.getMealNamesIdsByDate(currentFormattedDate);
+        for (Integer mealId : mealIds) {
+            MealNameModel mealName = mealNameDao.getMealNameModelById(mealId);
+            if (mealName == null) continue;
+            String name = mealName.getMeal_name();
+            String mealData = mealName.getMealData();
+            // Создаем новый MealModel с текущим списком foodModels
+            MealModel meal = new MealModel(mealId, name, mealData, foodMealDao.getMealFoodsByIds(connectingMealDao.getFoodIdsForMeal(mealId)));
+            mealList.add(new MealModel(meal)); // Добавляем в новый список
+        }
+    }
 
     public OutsideMealAdapter getOutsideMealAdapter() {
         return outsideMealAdapter;

@@ -229,8 +229,34 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
                 new String[]{String.valueOf(exerciseId)});
     }
 
-    // Метод getExByState больше не нужен, его функционал заменяет PagingSource
-    // Если он используется в других частях, его можно оставить, но лучше заменить на пагинацию
+    /**
+     * Возвращает дату последней завершенной тренировки.
+     * @return Строка с датой в формате yyyy-MM-dd или null, если данных нет.
+     */
+    public String getLatestWorkoutDate() {
+        SQLiteDatabase database = dbHelper.getReadableDatabase();
+        String latestDate = null;
+        Cursor cursor = null;
 
+        try {
+            // Выбираем максимальную дату среди завершенных упражнений
+            String query = "SELECT MAX(" + AppDataBase.WORKOUT_EXERCISE_DATE + ")" +
+                    " FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE +
+                    " WHERE " + AppDataBase.WORKOUT_EXERCISE_STATE + " = ?";
+
+            cursor = database.rawQuery(query, new String[]{"finished"});
+
+            if (cursor != null && cursor.moveToFirst()) {
+                latestDate = cursor.getString(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+        return latestDate;
+    }
 
 }

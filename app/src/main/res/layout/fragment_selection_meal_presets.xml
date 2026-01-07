@@ -37,108 +37,88 @@ android:background="#2E3042">
         </ImageButton>
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/select_meal_preset_hint_TV"
+            style="@style/TextStyle.Big.Bold"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:gravity="start|center"
-            android:text="Пресеты"
-            android:textColor="@color/white"
-            android:textSize="20sp"
-            android:textStyle="bold"
+            android:text="@string/preset"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.4"
-            app:layout_constraintStart_toEndOf="@+id/imageButtonBack"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
         </TextView>
 
-        <SearchView
-            android:id="@+id/searchPresets"
-            android:layout_width="0dp"
-            android:layout_height="30dp"
+        <include
+            android:id="@+id/select_meal_preset_search_include"
+            layout="@layout/custom_searchview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:layout_marginTop="15dp"
             android:layout_marginEnd="10dp"
-            android:background="@drawable/search_back"
-            android:iconifiedByDefault="false"
-            android:queryHint="Поиск пресетов"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView" >
+            android:layout_marginTop="10dp"
+            app:layout_constraintTop_toBottomOf="@+id/select_meal_preset_hint_TV" />
 
-        </SearchView>
+
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <Button
-        android:id="@+id/createPresetBtn"
+        android:id="@+id/select_meal_preset_create_preset_Btn"
+        style="@style/SmallButtonWithIc_Plus"
         android:layout_width="wrap_content"
-        android:layout_height="36dp"
-        android:layout_marginTop="15dp"
+        android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
-        android:background="@drawable/btn_1"
-        android:drawableStart="@drawable/ic_plus"
-        android:drawablePadding="4dp"
-        android:elegantTextHeight="true"
-        android:gravity="start|center_vertical"
-        android:paddingStart="4dp"
-        android:paddingEnd="6dp"
+        android:layout_marginTop="10dp"
         android:text="Создать пресет"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textSize="13sp"
-        android:textStyle="normal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/constraintLayout">
 
     </Button>
 
     <TextView
-        android:id="@+id/textView4"
+        android:id="@+id/select_meal_preset_hint2_TV"
+        style="@style/TextStyle.Big.Bold"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
-        android:layout_marginTop="15dp"
-        android:text="Пресеты"
-        android:textColor="@color/white"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="@+id/createPresetBtn"
+        android:text="@string/subtitle_meal_presets"
+        app:layout_constraintBottom_toBottomOf="@+id/select_meal_preset_create_preset_Btn"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/constraintLayout">
+        app:layout_constraintTop_toTopOf="@+id/select_meal_preset_create_preset_Btn">
 
     </TextView>
 
     <TextView
-        android:id="@+id/textView7"
+        android:id="@+id/select_meal_preset_title_TV"
+        style="@style/TextStyle.Small"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="10dp"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
         android:layout_marginTop="10dp"
-        android:text="Жми '+ Создать пресет' чтобы начать"
+        android:text="@string/hint_add_meal_preset"
         android:textColor="@color/white"
         android:textAlignment="center"
         android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/createPresetBtn">
+        app:layout_constraintTop_toBottomOf="@+id/select_meal_preset_create_preset_Btn">
 
     </TextView>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/presetsRecycler"
+        android:id="@+id/select_meal_preset_RV"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView7"
-        tools:listitem="@layout/preset_meal_item_card">
+        app:layout_constraintTop_toBottomOf="@+id/select_meal_preset_title_TV"
+        tools:listitem="@layout/eat_elm_card">
 
     </androidx.recyclerview.widget.RecyclerView>
 

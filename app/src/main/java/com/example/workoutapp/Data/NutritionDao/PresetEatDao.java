@@ -1,19 +1,18 @@
 package com.example.workoutapp.Data.NutritionDao;
 
-import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_TABLE;
+import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_AMOUNT;
+import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_CALORIES;
+import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_CARB;
+import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_FAT;
 import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_ID;
+import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_MEASUREMENT_TYPE;
 import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_NAME;
 import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_PROTEIN;
-import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_FAT;
-import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_CARB;
-import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_CALORIES;
-import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_AMOUNT;
-import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_MEASUREMENT_TYPE;
+import static com.example.workoutapp.Data.Tables.AppDataBase.PRESET_FOOD_TABLE;
 
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
@@ -182,22 +181,6 @@ public class PresetEatDao {
 
     private double roundToOneDecimal(double value) {
         return Math.round(value * 10.0) / 10.0;
-    }
-
-
-    // Логирование всех preset eat записей
-    public void logAllPresetFood() {
-        List<FoodModel> allFoods = getAllPresetFood();
-        for (FoodModel food : allFoods) {
-            Log.d("PresetEatDao", "ID: " + food.getFood_id()
-                    + ", Name: " + food.getFood_name()
-                    + ", Protein: " + food.getProtein()
-                    + ", Fat: " + food.getFat()
-                    + ", Carb: " + food.getCarb()
-                    + ", Calories: " + food.getCalories()
-                    + ", Amount: " + food.getAmount()
-                    + ", Measurement: " + food.getMeasurement_type());
-        }
     }
 }
 

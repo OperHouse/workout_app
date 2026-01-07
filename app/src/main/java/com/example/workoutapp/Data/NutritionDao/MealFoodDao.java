@@ -3,7 +3,6 @@ package com.example.workoutapp.Data.NutritionDao;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
@@ -143,45 +142,5 @@ public class MealFoodDao {
 
 
 
-    //==============================Логирование======================================//
 
-    public void logAllMealFoods() {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-
-        Cursor cursor = db.query(
-                AppDataBase.MEAL_FOOD_TABLE,
-                null, // выбираем все столбцы
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                int id = cursor.getInt(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_ID));
-                String name = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_NAME));
-                double protein = cursor.getDouble(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_PROTEIN));
-                double fat = cursor.getDouble(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_FAT));
-                double carb = cursor.getDouble(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_CARB));
-                double calories = cursor.getDouble(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_CALORIES));
-                int amount = cursor.getInt(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_AMOUNT));
-                String measurement = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_MEASUREMENT_TYPE));
-
-                Log.d("MealFoodDao", "ID: " + id +
-                        ", Name: " + name +
-                        ", Protein: " + protein +
-                        ", Fat: " + fat +
-                        ", Carb: " + carb +
-                        ", Calories: " + calories +
-                        ", Amount: " + amount +
-                        ", Measure: " + measurement);
-            } while (cursor.moveToNext());
-
-            cursor.close();
-        }
-
-        db.close();
-    }
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.cardview.widget.CardView
     android:id="@+id/constraintLayout"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -7,69 +7,61 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_marginRight="10dp"
     android:layout_marginLeft="10dp"
-    android:layout_marginTop="5dp">
+    android:layout_marginTop="5dp"
+    android:elevation="8dp"
+    android:paddingTop="8dp"
+    android:layout_marginBottom="8dp"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="19dp">
 
-    <LinearLayout
-        android:id="@+id/linearLayoutMain"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/card_border">
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/eat_elm_card_CL"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:paddingBottom="10dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginBottom="5dp"
+            android:background="@drawable/card_border">
 
 
             <TextView
-                android:id="@+id/nameEat"
-                android:layout_width="wrap_content"
+                android:id="@+id/foodName_D_TV"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:gravity="left|center"
-                android:textStyle="bold"
                 android:layout_marginTop="10dp"
-                android:textColor="@color/white"
                 android:layout_marginStart="15dp"
-                android:text="Название еды"
+                android:layout_marginEnd="10dp"
+                android:gravity="start|center_vertical"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:text="@string/food_name"
+                style="@style/TextStyle.Big.Bold"
+                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-            </TextView>
+                app:layout_constraintEnd_toStartOf="@id/foodCaloriesContainer_D_LL" />
 
             <TextView
-                android:id="@+id/amountEat"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="left|center"
-                android:textStyle="bold"
-                android:textColor="@color/white"
-                android:layout_marginTop="10dp"
-                android:layout_marginLeft="5dp"
-                android:text="(количество-шт)"
-                app:layout_constraintStart_toEndOf="@+id/nameEat"
-                app:layout_constraintTop_toTopOf="parent">
-
-            </TextView>
-
-            <TextView
-                android:id="@+id/pfcText"
+                android:id="@+id/protFatCarb_D_TV"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="5dp"
-                android:layout_marginBottom="10dp"
                 android:gravity="left|center"
-                android:text="БЖУ"
-                android:textColor="@color/white"
+                android:text="@string/food_pfc_plug"
+                style="@style/TextStyle.Small"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/nameEat">
+                app:layout_constraintTop_toBottomOf="@+id/foodName_D_TV">
 
             </TextView>
 
             <LinearLayout
-                android:id="@+id/linearLayout"
+                android:id="@+id/foodCaloriesContainer_D_LL"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/card_border2"
+                android:background="@drawable/card_border"
+                android:padding="3dp"
+                android:layout_marginTop="10dp"
                 android:layout_marginEnd="10dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -77,10 +69,10 @@
 
 
                 <ImageView
-                    android:id="@+id/imageExType"
+                    android:id="@+id/fireImage_D_IV"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:layout_marginRight="10dp"
+                    android:layout_marginEnd="5dp"
                     android:layout_marginStart="5dp"
                     android:layout_marginTop="5dp"
                     android:layout_marginBottom="5dp"
@@ -95,10 +87,9 @@
                     android:id="@+id/eatCalories"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="100kkal"
+                    android:text="@string/food_calories_plug"
                     android:gravity="center_vertical"
-                    android:textSize="16sp"
-                    android:textColor="@color/white"
+                    style="@style/TextStyle.Small"
                     android:layout_marginStart="2dp"
                     android:layout_marginTop="5dp"
                     android:layout_marginBottom="5dp"
@@ -111,6 +102,5 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>
