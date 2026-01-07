@@ -183,6 +183,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     public static AppDataBase getAppDataBase() {
+        if (appDataBase == null) {
+        }
         return appDataBase;
     }
 

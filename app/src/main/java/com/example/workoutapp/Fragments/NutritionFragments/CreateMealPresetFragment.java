@@ -10,7 +10,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -78,7 +77,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
     private String searchText = "";
 
     private boolean isAmountDropdownManuallyShown = false;
-    private static long pendingNewFoodId = -1;
+    public static long pendingNewFoodId = -1;
 
 
     private NutritionMode currentMode = NutritionMode.CREATE_PRESET;
@@ -95,21 +94,9 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
     public void onResume() {
         super.onResume();
 
-        // 🔥 ЛОГ: Проверяем значение pendingNewFoodId при возобновлении
-        Log.d("PresetFragment", "onResume called. pendingNewFoodId is: " + pendingNewFoodId);
 
-        if (pendingNewFoodId != -1) {
-            Log.d("PresetFragment", "CONDITION MET. Loading food ID: " + pendingNewFoodId);
-
-            // ВАЖНО: Ваша функция addNewFoodToAdapter принимает int, поэтому нужно приведение (int)
-            addNewFoodToAdapter((int) pendingNewFoodId);
-
-            // СБРАСЫВАЕМ ФЛАГ
-            pendingNewFoodId = -1;
-        } else {
-            Log.d("PresetFragment", "CONDITION FAILED (pendingNewFoodId is -1). No update needed.");
-        }
     }
+
     public CreateMealPresetFragment( NutritionMode mode) {
         this.currentMode = mode;
     }
@@ -780,7 +767,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                 }else {
                     foodAdapter.deleteEat(eatToDelete);
                 }
-
+                toggleUIState();
                 r.requestLayout();
                 dialogDeleteEat.dismiss();
             }
@@ -796,6 +783,22 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         // Слушаем закрытие по клику вне
         dialogDeleteEat.setOnCancelListener(dialog -> isDialogClosedByOutsideClick.set(true));
         dialogDeleteEat.show();
+    }
+
+    private void toggleUIState() {
+        TextView text = getView().findViewById(R.id.create_meal_preset_fragment_title_TV);
+        Button createPresetBtn = getView().findViewById(R.id.create_meal_preset_fragment_next_Btn);
+
+        if (foodAdapter.getItemCount() == 0) {
+            // Если еды нет
+            createPresetBtn.setVisibility(View.GONE);
+            text.setVisibility(View.VISIBLE);
+            text.setText(getString(R.string.hint_add_food_preset)); // Или ваш текст для пустого списка
+        } else {
+            // Если еда есть
+            createPresetBtn.setVisibility(View.VISIBLE);
+            text.setVisibility(View.GONE);
+        }
     }
 
 
@@ -981,10 +984,14 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         // Предполагается, что allEatsList - это список, используемый FoodAdapter
         if (baseEatList != null && foodAdapter != null) {
                 FoodModel newFood = baseEatDao.getFoodById(newFoodId);
-            baseEatList.add(0, newFood);
+                baseEatList.add(0, newFood);
                 foodAdapter.addSingleFood(newFood);
                 // 3. Уведомляем адаптер о вставке
-                foodAdapter.notifyItemInserted(0);
+                int insertedPosition = foodAdapter.getItemCount() - 1;
+
+                //Раньше стояло по позиции, не знаю почему так, но видимо были причины
+                //Пока оставил тут полное обновление адаптера
+                foodAdapter.notifyDataSetChanged();
             }
     }
 

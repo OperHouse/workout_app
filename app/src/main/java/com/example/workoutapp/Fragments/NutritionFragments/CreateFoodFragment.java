@@ -262,7 +262,7 @@ public class CreateFoodFragment extends Fragment {
                     if (newFoodId > 0) {
                         // 2. ОТПРАВЛЯЕМ ID ЧЕРЕЗ FragmentResultListener
                         Bundle result = new Bundle();
-                        result.putLong("new_food_id", newFoodId); // 🔥 ИСПОЛЬЗУЕМ putLong!
+                        result.putLong("new_food_id", newFoodId);
                         getParentFragmentManager().setFragmentResult("new_food_added", result);
                     }
 
