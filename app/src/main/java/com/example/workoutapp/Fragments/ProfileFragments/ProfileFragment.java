@@ -1,6 +1,7 @@
 package com.example.workoutapp.Fragments.ProfileFragments;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
@@ -19,7 +20,7 @@ import com.example.workoutapp.Adapters.ProfileAdapters.ProfileAdapter;
 import com.example.workoutapp.Data.ProfileDao.ActivityGoalDao;
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.ProfileDao.DailyFoodTrackingDao;
-import com.example.workoutapp.Data.ProfileDao.FoodGainGoalDao; // <-- НОВЫЙ ИМПОРТ DAO
+import com.example.workoutapp.Data.ProfileDao.FoodGainGoalDao;
 import com.example.workoutapp.Data.ProfileDao.GeneralGoalDao;
 import com.example.workoutapp.Data.ProfileDao.UserProfileDao;
 import com.example.workoutapp.Data.ProfileDao.WeightHistoryDao;
@@ -33,7 +34,6 @@ import com.example.workoutapp.Models.ProfileModels.GeneralGoalModel;
 import com.example.workoutapp.Models.ProfileModels.ProfileItemModel;
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
-import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
 import com.google.android.material.imageview.ShapeableImageView;
 
@@ -74,10 +74,8 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
         public DailyActivityTrackingModel todayActivity;
         public GeneralGoalModel generalGoalModel;
         public String latestWorkout;
-
-        // Новые поля
         public ActivityGoalModel activityGoal;
-        public FoodGainGoalModel foodGoal; // <-- ЦЕЛЬ ПИТАНИЯ
+        public FoodGainGoalModel foodGoal;
     }
 
     // ===============================================
@@ -95,7 +93,7 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
         // 2. Цели
         data.generalGoalModel = generalGoalDao.getLatestGoal();
         data.activityGoal = activityGoalDao.getLatestGoal();
-        data.foodGoal = foodGainGoalDao.getLatestGoal(); // <-- ПОЛУЧЕНИЕ ЦЕЛИ ПИТАНИЯ
+        data.foodGoal = foodGainGoalDao.getLatestGoal();
 
         // 3. Ежедневные трекеры (для Активности)
         String todayDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().getTime());
@@ -216,6 +214,8 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
         groupNames.add(res.getString(R.string.group_general_goal));   // Общая цель
         groupNames.add(res.getString(R.string.group_activity_goal));  // Цели активности
         groupNames.add(res.getString(R.string.group_food_goal));      // Цели питания
+        groupNames.add("Данные");      // Цели питания
+        groupNames.add(getResources().getString(R.string.Permissions));      // Цели питания
 
 
         Map<String, Integer> childListResIdMap = new HashMap<>();
@@ -456,6 +456,11 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
                         .commit();
             }
         }
+
+        if (groupName.equals(getResources().getString(R.string.Permissions))) {
+            Intent intent = new Intent(getContext(), HealthSettingsActivity.class);
+            startActivity(intent);
+        }
     }
 
     @Override
@@ -620,6 +625,18 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
                     profilePhotoIV.setImageURI(Uri.fromFile(imgFile));
                 }
             }
+        }
+    }
+
+    @Override
+    public void onGroupItemClick(int flatPosition, String title) {
+        // Получаем строку из ресурсов (R.string.Permissions)
+        String permissionsTitle = getResources().getString(R.string.Permissions);
+
+        // Если нажали на "Разрешения" или "Данные"
+        if (title != null && (title.equals(permissionsTitle) || title.equals("Данные"))) {
+            Intent intent = new Intent(getContext(), HealthSettingsActivity.class);
+            startActivity(intent);
         }
     }
 }
