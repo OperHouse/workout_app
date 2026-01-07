@@ -21,9 +21,9 @@ public class NutritionCircleView extends View {
     public NutritionCircleView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
 
-        proteinPaint.setColor(0xFFD32F2F); // насыщенный красный
-        fatPaint.setColor(0xFFFFEB3B);     // яркий жёлтый
-        carbPaint.setColor(0xFF81C784);    // зелёный (как и раньше)
+        proteinPaint.setColor(0xFFD9E0F2); // голубой почти белый(который на белках)
+        fatPaint.setColor(0xFF7398DF);     // голубой(который жиры)
+        carbPaint.setColor(0xFF4A68BE);    // голубой потемнее(углеводы)
 
         proteinPaint.setStyle(Paint.Style.STROKE);
         fatPaint.setStyle(Paint.Style.STROKE);

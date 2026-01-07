@@ -3,7 +3,7 @@
 xmlns:app="http://schemas.android.com/apk/res-auto"
 xmlns:tools="http://schemas.android.com/tools"
 android:layout_width="match_parent"
-android:id="@+id/fragment_root_layout"
+android:id="@+id/workout_root_NSV"
 android:layout_height="wrap_content"
 android:scrollbars = "vertical"
 android:scrollbarStyle="insideInset"
@@ -15,7 +15,7 @@ tools:context=".Fragments.NutritionFragments.NutritionFragment">
     android:layout_height="wrap_content">
 
     <TextView
-        android:id="@+id/dateTextNutrition"
+        android:id="@+id/nutrition_fragment_date_TV"
         android:layout_width="wrap_content"
         android:layout_height="30dp"
         android:layout_marginStart="10dp"
@@ -28,20 +28,20 @@ tools:context=".Fragments.NutritionFragments.NutritionFragment">
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/NutritionTextView"
+        android:id="@+id/nutrition_fragment_hint_TV"
         android:layout_width="150dp"
         android:layout_height="30dp"
         android:gravity="start|center"
-        android:text="Питание"
+        android:text="@string/nutrition_hint_title"
         android:textColor="@color/white"
         android:textSize="20sp"
         android:visibility="visible"
-        app:layout_constraintStart_toStartOf="@+id/dateTextNutrition"
-        app:layout_constraintTop_toBottomOf="@+id/dateTextNutrition">
+        app:layout_constraintStart_toStartOf="@+id/nutrition_fragment_date_TV"
+        app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_date_TV">
     </TextView>
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/cardView"
+        android:id="@+id/nutrition_fragment_card_CV"
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:layout_marginStart="10dp"
@@ -52,98 +52,89 @@ tools:context=".Fragments.NutritionFragments.NutritionFragment">
         app:cardElevation="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/NutritionTextView">
+        app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_hint_TV">
 
     </androidx.cardview.widget.CardView>
 
     <TextView
-        android:id="@+id/textView3"
-        android:layout_width="wrap_content"
-        android:layout_height="36dp"
-        android:layout_marginTop="30dp"
+        android:id="@+id/nutrition_fragment_title_TV"
+        style="@style/TextStyle.Big.Bold"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
-        android:text="Приемы пищи"
-        android:textColor="@color/white"
-        android:textSize="20sp"
-        android:gravity="bottom"
-        android:textStyle="bold"
-        android:visibility="visible"
-        android:layout_marginEnd="10dp"
+        android:text="@string/nutrition_meals_title"
+        app:layout_constraintBottom_toBottomOf="@+id/nutrition_fragment_add_meal_Btn"
+        app:layout_constraintEnd_toStartOf="@+id/nutrition_fragment_add_meal_Btn"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cardView">
+        app:layout_constraintTop_toTopOf="@+id/nutrition_fragment_add_meal_Btn">
 
     </TextView>
 
-    <Button
-        android:id="@+id/addMealBtn"
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/nutrition_fragment_add_meal_Btn"
+        style="@style/SmallButtonWithIc_Plus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="10dp"
-        android:background="@drawable/btn_1"
-        android:drawableStart="@drawable/ic_plus"
-        android:drawablePadding="3dp"
         android:gravity="start|center_vertical"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
-        android:text="Добавить прием пищи"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        android:textSize="13sp"
-        android:textStyle="normal"
-        app:layout_constraintBaseline_toBaselineOf="@+id/textView3"
+        android:text="@string/add_meal_button"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cardView" />
-
+        app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_card_CV" />
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/nutrition_fragment_image_IV"
         android:layout_width="200dp"
         android:layout_height="200dp"
-        android:layout_marginTop="108dp"
+        android:layout_marginTop="52dp"
         android:background="@drawable/immage_eat_foreground"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView3">
+        app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_title_TV">
 
     </ImageView>
 
     <TextView
-        android:id="@+id/textView1"
+        android:id="@+id/nutrition_fragment_title2_TV"
+        style="@style/TextStyle.Big.Bold"
         android:layout_width="wrap_content"
-        android:layout_height="30dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
         android:gravity="start|center"
-        android:text="Начни отслеживать свое питание!"
-        android:textColor="@color/white"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:visibility="visible"
+        android:text="@string/nutrition_tracking_title"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView">
+        app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_image_IV">
 
     </TextView>
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/nutrition_fragment_hint2_TV"
+        style="@style/TextStyle.Small"
         android:layout_width="wrap_content"
-        android:layout_height="30dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
         android:gravity="start|center"
-        android:textColor="@color/white"
-        android:text="Жми '+ Добавить прием пищи' чтобы начать"
+        android:text="@string/nutrition_tracking_hint"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView1">
+        app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_title2_TV">
 
     </TextView>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/MealRecyclerView"
+        android:id="@+id/nutrition_fragment_meal_RV"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
         android:scrollbars="none"
-        tools:listitem="@layout/ex_item_workout_layout"
-        app:layout_constraintTop_toBottomOf="@+id/textView2">
+        tools:listitem="@layout/outside_meal_elm_card"
+        app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_hint2_TV">
 
 
     </androidx.recyclerview.widget.RecyclerView>

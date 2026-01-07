@@ -18,35 +18,39 @@
             android:layout_marginBottom="10dp">
 
             <TextView
-                android:id="@+id/textView1"
+                android:id="@+id/dialog_preset_detail_title_D_TV"
+                style="@style/TextStyle.Big.Bold"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
                 android:layout_marginTop="10dp"
-                android:layout_marginStart="15dp"
-                android:text="Название пресета"
-                android:textColor="@color/white"
-                android:textSize="20sp"
-                android:textStyle="bold"
+                android:ellipsize="end"
                 android:gravity="start|center_vertical"
+                android:maxLines="2"
+                android:text="@string/title"
+                app:layout_constraintBottom_toBottomOf="@+id/preset_close_D_BTN"
+                app:layout_constraintEnd_toStartOf="@+id/preset_close_D_BTN"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/imageButtonBack1"
-                app:layout_constraintBottom_toBottomOf="@+id/imageButtonBack1" />
+                app:layout_constraintTop_toTopOf="parent" />
 
-            <ImageButton
-                android:id="@+id/imageButtonBack1"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+
+
+            <ImageView
+                android:id="@+id/preset_close_D_BTN"
+                android:layout_width="50dp"
+                android:layout_height="match_parent"
                 android:layout_marginTop="10dp"
+                android:padding="10dp"
                 android:layout_marginEnd="10dp"
-                android:background="@drawable/ic_close_foreground"
-                app:layout_constraintTop_toTopOf="parent"
+                android:adjustViewBounds="true"
+                android:src="@drawable/ic_close_foreground"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent" />
+                app:layout_constraintTop_toTopOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView"
+            android:id="@+id/dialog_preset_detail_RV"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -54,17 +58,15 @@
 
 
         <Button
-            android:id="@+id/changePresetBtn"
+            android:id="@+id/dialog_preset_detail_change_Btn"
+            style="@style/BigButton"
             android:layout_width="match_parent"
-            android:layout_height="36dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:layout_marginTop="15dp"
+            android:layout_marginTop="10dp"
             android:layout_marginEnd="10dp"
             android:layout_marginBottom="10dp"
-            android:background="@drawable/btn_2"
-            android:text="Изменить пресет"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
+            android:text="@string/change_preset"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/recyclerView">

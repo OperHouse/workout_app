@@ -6,11 +6,11 @@ import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -58,7 +58,7 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
     @NonNull
     @Override
     public PresetViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.preset_meal_item_card, parent, false);
+        View view = LayoutInflater.from(context).inflate(R.layout.eat_elm_card, parent, false);
         return new PresetViewHolder(view);
     }
 
@@ -133,10 +133,6 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
                         // Связываем mealId с этими eatId
                         connectingMealDao.connecting(meal_Id, insertedEatIds);
 
-                        mealNameDao.logAllMealNames();
-                        mealFoodDao.logAllMealFoods();
-                        connectingMealDao.logAllConnections();
-
                         selectionListener.onPresetMealSelected();
                         fragment.getParentFragmentManager().popBackStack();
                     } else {
@@ -186,14 +182,14 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
     public static class PresetViewHolder extends RecyclerView.ViewHolder {
 
         TextView namePresetMeal, pfcText, eatCalories;
-        LinearLayout linearLayoutMain;
+        ConstraintLayout constraintLayout;
 
         public PresetViewHolder(@NonNull View itemView) {
             super(itemView);
-            namePresetMeal = itemView.findViewById(R.id.namePresetMeal);
-            pfcText = itemView.findViewById(R.id.pfcText);
+            namePresetMeal = itemView.findViewById(R.id.foodName_D_TV);
+            pfcText = itemView.findViewById(R.id.protFatCarb_D_TV);
             eatCalories = itemView.findViewById(R.id.eatCalories);
-            linearLayoutMain = itemView.findViewById(R.id.linearLayoutMain);
+            constraintLayout = itemView.findViewById(R.id.eat_elm_card_CL);
         }
     }
 }

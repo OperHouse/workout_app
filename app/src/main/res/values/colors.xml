@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="bottom_navigation_item_color">#11111b</color>
     <color name="light_gray">#aaaaaa</color>
     <color name="light_gray2">#43516C</color>
+    <color name="light_gray3">#2E3A4D</color>
     <color name="grey">#808080</color>
     <color name="background_1">#2E3042</color>
     <color name="active_color">#FF5722</color>
@@ -17,6 +18,11 @@
     <color name="red">#F44336</color>
     <color name="lime">#00FF00</color>
     <color name="protein_red">#D32F2F</color>
+    <color name="error_red">#AE2F4F</color>
     <color name="fat_yellow">#FFEB3B</color>
     <color name="carb_green">#81C784</color>
+    <color name="mtrl_textinput_default_box_stroke_color" tools:override="true">#43516C</color>
+
+
+
 </resources>

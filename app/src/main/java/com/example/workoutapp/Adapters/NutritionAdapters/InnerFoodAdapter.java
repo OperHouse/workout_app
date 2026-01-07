@@ -9,7 +9,6 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,12 +21,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
-import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.Tools.OnMealUpdatedListener;
 import com.example.workoutapp.Fragments.NutritionFragments.NutritionFragment;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.NutritionCircleView;
+import com.example.workoutapp.Tools.OnMealUpdatedListener;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.jetbrains.annotations.Contract;
 
@@ -66,8 +67,8 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
     @NonNull
     @Override
     public InnerFoodAdapter.InnerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.inside_eat_elm_card, parent, false);
-        return new InnerFoodAdapter.InnerViewHolder(v);
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.eat_elm_card, parent, false);
+        return new InnerViewHolder(v);
     }
 
     @SuppressLint("SetTextI18n")
@@ -75,10 +76,15 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
     public void onBindViewHolder(@NonNull InnerFoodAdapter.InnerViewHolder holder, int position) {
         FoodModel foodElm = innerAdapterFoodList.get(position);
 
-        holder.foodName.setText(foodElm.getFood_name());
-        holder.foodAmount.setText(foodElm.getAmount() + " " + foodElm.getMeasurement_type());
+        holder.foodName.setText(foodElm.getFood_name() + " (" + foodElm.getAmount() + " " + foodElm.getMeasurement_type() + ")");
         @SuppressLint("DefaultLocale") String calories = String.format("%.0f", foodElm.getCalories());
-        holder.foodCalories.setText(calories);
+
+        @SuppressLint("DefaultLocale") String protein = String.format("%.1f", foodElm.getProtein());
+        @SuppressLint("DefaultLocale") String fat = String.format("%.1f", foodElm.getFat());
+        @SuppressLint("DefaultLocale") String carb = String.format("%.1f", foodElm.getCarb());
+
+        holder.pfc.setText("Б: " + protein + " / Ж: " + fat + " / У: " + carb);
+        holder.foodCalories.setText(calories + " Ккал ");
         holder.itemView.setOnClickListener(v -> showEditFoodDialog(foodElm, position));
 
 
@@ -91,18 +97,19 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
         dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
 
         // UI
-        TextView title = dialog.findViewById(R.id.textView1);
-        TextView amountLabel = dialog.findViewById(R.id.textView2);
-        AutoCompleteTextView autoComplete = dialog.findViewById(R.id.autoCompleteAmount);
-        EditText editText = dialog.findViewById(R.id.editTextAmount);
-        Button updateBtn = dialog.findViewById(R.id.createWorkBtn);
-        ImageButton closeBtn = dialog.findViewById(R.id.imageButtonBack1);
+        TextView title = dialog.findViewById(R.id.nutrition_title_D_TV);
+        TextView amountLabel = dialog.findViewById(R.id.nutrition_hint_D_TV);
+        TextInputEditText textInputEditText = dialog.findViewById(R.id.fragment_create_food_amound_food_TIET);
+        AutoCompleteTextView dropdownInner  = dialog.findViewById(R.id.fragment_create_food_amound_food_dropdown_TIET);
+        TextInputLayout dropdownOutVisibility = dialog.findViewById(R.id.fragment_create_food_amound_food_dropdown_TIL);
+        Button updateBtn = dialog.findViewById(R.id.nutrition_create_D_BTN);
+        ImageButton closeBtn = dialog.findViewById(R.id.nutrition_close_D_BTN);
 
-        TextView proteinTV = dialog.findViewById(R.id.textViewProtein);
-        TextView fatTV = dialog.findViewById(R.id.textViewFat);
-        TextView carbTV = dialog.findViewById(R.id.textViewCarb);
-        TextView caloriesTV = dialog.findViewById(R.id.textViewCalories);
-        NutritionCircleView circle = dialog.findViewById(R.id.NutritionCircleView);
+        TextView proteinTV = dialog.findViewById(R.id.nutrition_protein_label_D_TV);
+        TextView fatTV = dialog.findViewById(R.id.nutrition_fat_label_D_TV);
+        TextView carbTV = dialog.findViewById(R.id.nutrition_carb_label_D_TV);
+        TextView caloriesTV = dialog.findViewById(R.id.nutrition_calories_label_D_TV);
+        NutritionCircleView circle = dialog.findViewById(R.id.nutrition_circle_D_CUSTOM);
 
         title.setText("Изменить: " + foodElm.getFood_name());
         String type = foodElm.getMeasurement_type().toLowerCase();
@@ -110,12 +117,12 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
 
         // UI логика в зависимости от типа измерения
         if (type.contains("г") || type.contains("мл")) {
-            editText.setVisibility(View.VISIBLE);
-            autoComplete.setVisibility(View.GONE);
-            editText.setText(String.valueOf(foodElm.getAmount()));
+            textInputEditText.setVisibility(View.VISIBLE);
+            dropdownOutVisibility.setVisibility(View.GONE);
+            textInputEditText.setText(String.valueOf(foodElm.getAmount()));
         } else {
-            editText.setVisibility(View.GONE);
-            autoComplete.setVisibility(View.VISIBLE);
+            textInputEditText.setVisibility(View.GONE);
+            dropdownInner.setVisibility(View.VISIBLE);
 
             // Настроим автодополнение
             List<String> options = new java.util.ArrayList<>();
@@ -125,7 +132,7 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
 
             // Используем универсальный метод для настройки autoComplete
             setupAutoComplete(
-                    autoComplete,
+                    dropdownInner,
                     adapter,
                     null,
                     () -> isAmountDropdownManuallyShown,
@@ -137,13 +144,13 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
                     caloriesTV,
                     circle
             );
-            autoComplete.setText(options.get(0), false);
+            dropdownInner.setText(options.get(0), false);
         }
 
         // Макросы
         updateMacrosUI(foodElm, proteinTV, fatTV, carbTV, caloriesTV, circle);
 
-        editText.addTextChangedListener(new android.text.TextWatcher() {
+        textInputEditText.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 int newAmount = parseIntOrZero(s.toString().trim());
@@ -157,11 +164,11 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
         updateBtn.setOnClickListener(v -> {
             int newAmount;
 
-            if (editText.getVisibility() == View.VISIBLE) {
-                newAmount = parseIntOrZero(editText.getText().toString().trim());
+            if (textInputEditText.getVisibility() == View.VISIBLE) {
+                newAmount = parseIntOrZero(textInputEditText.getText().toString().trim());
             } else {
                 try {
-                    newAmount = Integer.parseInt(autoComplete.getText().toString().split(" ")[0]);
+                    newAmount = Integer.parseInt(dropdownInner.getText().toString().split(" ")[0]);
                 } catch (Exception e) {
                     Toast.makeText(context, "Неверный ввод", Toast.LENGTH_SHORT).show();
                     return;
@@ -246,10 +253,6 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
                     }
 
                     ((NutritionFragment) fragment).removeFoodFromMeal();
-
-
-                    connectingMealDao.logAllConnections();
-                    mealFoodDao.logAllMealFoods();
                 }
             }
         });
@@ -378,15 +381,15 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
         circleView.setMacros(protein, fat, carb);
     }
 
-    public class InnerViewHolder extends RecyclerView.ViewHolder {
+    public static class InnerViewHolder extends RecyclerView.ViewHolder {
 
-        TextView foodName, foodAmount, foodCalories;
+        TextView foodName, foodCalories, pfc;
 
         public InnerViewHolder(@NonNull View itemView) {
             super(itemView);
-            foodName = itemView.findViewById(R.id.nameEat);
-            foodAmount = itemView.findViewById(R.id.amountEat);
+            foodName = itemView.findViewById(R.id.foodName_D_TV);
             foodCalories = itemView.findViewById(R.id.eatCalories);
+            pfc = itemView.findViewById(R.id.protFatCarb_D_TV);
         }
     }
 }

@@ -13,7 +13,6 @@ import static com.example.workoutapp.Data.Tables.AppDataBase.BASE_FOOD_TABLE;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
@@ -40,6 +39,22 @@ public class BaseEatDao {
 
         db.insert(BASE_FOOD_TABLE, null, values);
         db.close();
+    }
+
+    public long addFoodReturnID(FoodModel eat) { // <-- Измените тип возвращаемого значения на long
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(BASE_FOOD_NAME, eat.getFood_name());
+        values.put(BASE_FOOD_PROTEIN, eat.getProtein());
+        values.put(BASE_FOOD_FAT, eat.getFat());
+        values.put(BASE_FOOD_CARB, eat.getCarb());
+        values.put(BASE_FOOD_CALORIES, eat.getCalories());
+        values.put(BASE_FOOD_AMOUNT, eat.getAmount());
+        values.put(BASE_FOOD_MEASUREMENT_TYPE, eat.getMeasurement_type());
+
+        long id = db.insert(BASE_FOOD_TABLE, null, values); // <-- insert возвращает ID
+        db.close();
+        return id; // <-- Возвращаем ID
     }
 
     // Метод удаления еды по ID
@@ -86,17 +101,61 @@ public class BaseEatDao {
         return eatList;
     }
 
-    public void logAllEat() {
-        List<FoodModel> allEats = getAllEat();
-        for (FoodModel eat : allEats) {
-            Log.d("BaseEatDao", "ID: " + eat.getFood_id()
-                    + ", Name: " + eat.getFood_name()
-                    + ", Protein: " + eat.getProtein()
-                    + ", Fat: " + eat.getFat()
-                    + ", Carb: " + eat.getCarb()
-                    + ", Calories: " + eat.getCalories()
-                    + ", Amount: " + eat.getAmount()
-                    + ", Measurement: " + eat.getMeasurement_type());
+    public int getLastInsertedFoodId() {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        int id = -1;
+
+        // Получаем ID последней вставленной строки
+        Cursor cursor = db.rawQuery("SELECT last_insert_rowid()", null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            id = cursor.getInt(0);
+            cursor.close();
         }
+
+        db.close();
+        return id;
     }
+    /**
+     * Получает объект FoodModel по его ID из таблицы BASE_FOOD_TABLE.
+     * @param foodId ID продукта, который нужно получить.
+     * @return Объект FoodModel или null, если продукт не найден.
+     */
+    public FoodModel getFoodById(long foodId) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        FoodModel eat = null;
+
+        Cursor cursor = db.query(
+                BASE_FOOD_TABLE,
+                null, // Все столбцы
+                BASE_FOOD_ID + " = ?", // Условие WHERE: фильтруем по ID
+                new String[]{String.valueOf(foodId)},
+                null,
+                null,
+                null
+        );
+
+        // Если курсор содержит хотя бы одну строку (продукт найден)
+        if (cursor != null && cursor.moveToFirst()) {
+            // Извлечение данных из курсора
+            int id = cursor.getInt(cursor.getColumnIndexOrThrow(BASE_FOOD_ID));
+            String name = cursor.getString(cursor.getColumnIndexOrThrow(BASE_FOOD_NAME));
+            double protein = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_PROTEIN));
+            double fat = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_FAT));
+            double carb = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_CARB));
+            double calories = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_CALORIES));
+            int amount = cursor.getInt(cursor.getColumnIndexOrThrow(BASE_FOOD_AMOUNT));
+            String measurementType = cursor.getString(cursor.getColumnIndexOrThrow(BASE_FOOD_MEASUREMENT_TYPE));
+
+            // Создание объекта FoodModel
+            eat = new FoodModel(id, name, protein, fat, carb, calories, amount, measurementType);
+
+            cursor.close();
+        }
+
+        db.close();
+        return eat;
+    }
+
+
 }

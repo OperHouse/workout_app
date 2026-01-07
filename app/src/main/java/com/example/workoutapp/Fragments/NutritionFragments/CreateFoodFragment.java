@@ -1,13 +1,15 @@
 package com.example.workoutapp.Fragments.NutritionFragments;
 
+import static com.google.android.material.internal.ViewUtils.hideKeyboard;
+
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -15,129 +17,220 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.workoutapp.Data.NutritionDao.BaseEatDao;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.Tools.NutritionMode;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.example.workoutapp.R;
+import com.example.workoutapp.Tools.NutritionMode;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
-
 
 public class CreateFoodFragment extends Fragment {
 
-
     private NutritionMode mode;
-
     private boolean isAmountDropdownManuallyShown = false;
     private boolean isTypeDropdownManuallyShown = false;
     private BaseEatDao baseEatDao;
 
-    public CreateFoodFragment() {
-        // Required empty public constructor
-    }
+    public CreateFoodFragment() { }
 
     public CreateFoodFragment(NutritionMode mode) {
         this.mode = mode;
     }
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.baseEatDao = new BaseEatDao(MainActivity.getAppDataBase());
-
     }
 
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint({"ClickableViewAccessibility", "RestrictedApi"})
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View createEatFragment = inflater.inflate(R.layout.fragment_create_eat, container, false);
 
+        Button createEatBtn = createEatFragment.findViewById(R.id.fragment_create_food_create_food_Btn);
+        ImageButton imageButtonBack = createEatFragment.findViewById(R.id.fragment_create_food_back_IB);
 
-        Button createEatBtn = createEatFragment.findViewById(R.id.createEatBtn);
-        ImageButton imageButtonBack = createEatFragment.findViewById(R.id.imageButtonBack);
+        // Основные поля
+        TextInputEditText editTextNameEat = createEatFragment.findViewById(R.id.fragment_create_food_food_name_TIET);
+        TextInputEditText editTextProtein = createEatFragment.findViewById(R.id.fragment_create_food_protein_TIET);
+        TextInputEditText editTextFat = createEatFragment.findViewById(R.id.fragment_create_food_fat_TIET);
+        TextInputEditText editTextCarb = createEatFragment.findViewById(R.id.fragment_create_food_carbs_TIET);
+        TextInputEditText editTextCalories = createEatFragment.findViewById(R.id.fragment_create_food_calories_TIET);
 
-        // Получение ссылок
-        EditText editTextNameEat = createEatFragment.findViewById(R.id.editTextNameEat);
-        EditText editTextProtein = createEatFragment.findViewById(R.id.editTextProtein);
-        EditText editTextFat = createEatFragment.findViewById(R.id.editTextFat);
-        EditText editTextCarb = createEatFragment.findViewById(R.id.editTextCarb);
-        EditText editTextCalories = createEatFragment.findViewById(R.id.editTextCalories);
+        // Поля количества (оба варианта внутри FrameLayout)
+        TextInputLayout editAmountTIL = createEatFragment.findViewById(R.id.fragment_create_food_amound_food_TIL);
+        TextInputEditText editAmountTIET = createEatFragment.findViewById(R.id.fragment_create_food_amound_food_TIET);
+        TextInputLayout dropdownAmountTIL = createEatFragment.findViewById(R.id.fragment_create_food_amound_food_dropdown_TIL);
+        AutoCompleteTextView dropdownAmountTIET = createEatFragment.findViewById(R.id.fragment_create_food_amound_food_dropdown_TIET);
 
-        AutoCompleteTextView autoCompleteType = createEatFragment.findViewById(R.id.autoCompleteType);
-        EditText editTextAmount = createEatFragment.findViewById(R.id.editTextAmount);
-        AutoCompleteTextView autoCompleteAmount = createEatFragment.findViewById(R.id.autoCompleteAmount);
+        // Тип измерений
+        AutoCompleteTextView autoCompleteType = createEatFragment.findViewById(R.id.fragment_create_food_measurement_type_dropdown_TIET);
 
+        // Контейнер для потери фокуса при нажатии в пустое место
+        View rootLayout = createEatFragment.findViewById(R.id.root_CL);
 
-        imageButtonBack.setOnClickListener(v -> {
-            requireActivity().getOnBackPressedDispatcher().onBackPressed();
-        });
+        imageButtonBack.setOnClickListener(v -> requireActivity().getOnBackPressedDispatcher().onBackPressed());
 
+        // === пересчёт калорий ===
         TextWatcher macroTextWatcher = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 recalculateCalories(editTextProtein, editTextFat, editTextCarb, editTextCalories);
             }
-
-            @Override
-            public void afterTextChanged(Editable s) {}
+            @Override public void afterTextChanged(Editable s) {}
         };
 
         editTextProtein.addTextChangedListener(macroTextWatcher);
         editTextFat.addTextChangedListener(macroTextWatcher);
         editTextCarb.addTextChangedListener(macroTextWatcher);
 
-        // Значения
+        // === данные и адаптеры ===
         ArrayList<String> amountList = new ArrayList<>();
         for (int i = 1; i <= 50; i++) amountList.add(String.valueOf(i));
-
         String[] measurementTypes = {"шт", "гр", "мл", "кружки"};
 
-        // Адаптеры
-        ArrayAdapter<String> amountAdapter = createStyledAdapter(requireContext(), amountList);
-        ArrayAdapter<String> typeAdapter = createStyledAdapter(requireContext(), Arrays.asList(measurementTypes));
 
-        // Начальные значения
-        autoCompleteAmount.setText(amountList.get(0), false);
+        ArrayAdapter<String> amountAdapter = new ArrayAdapter<>(
+                requireContext(),
+                R.layout.spinners_style,
+                amountList
+        );
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(
+                requireContext(),
+                R.layout.spinners_style,
+                measurementTypes
+        );
+
+        dropdownAmountTIET.setAdapter(amountAdapter);
+        autoCompleteType.setAdapter(typeAdapter);
         autoCompleteType.setText(measurementTypes[0], false);
 
-        // Настройка выпадающих списков
-        setupAutoComplete(
-                autoCompleteAmount,
-                amountAdapter,
-                null,
-                () -> isAmountDropdownManuallyShown,
-                value -> isAmountDropdownManuallyShown = value
-        );
+        // === логика отображения количества ===
+        Runnable applyVisibilityByType = () -> {
+            String selected = autoCompleteType.getText().toString().trim().toLowerCase();
 
-        setupAutoComplete(
-                autoCompleteType,
-                typeAdapter,
-                () -> {
-                    String selected = autoCompleteType.getText().toString().toLowerCase();
-                    if (selected.equals("гр") || selected.equals("мл")) {
-                        autoCompleteAmount.setVisibility(View.GONE);
-                        editTextAmount.setVisibility(View.VISIBLE);
-                    } else {
-                        autoCompleteAmount.setVisibility(View.VISIBLE);
-                        editTextAmount.setVisibility(View.GONE);
-                    }
-                },
-                () -> isTypeDropdownManuallyShown,
-                value -> isTypeDropdownManuallyShown = value
-        );
+            if (selected.equals("гр") || selected.equals("мл")) {
+                editAmountTIL.setVisibility(View.VISIBLE);
+                dropdownAmountTIL.setVisibility(View.GONE);
+            } else {
+                dropdownAmountTIL.setVisibility(View.VISIBLE);
+                editAmountTIL.setVisibility(View.GONE);
+
+                if (dropdownAmountTIET.getText().toString().trim().isEmpty()) {
+                    dropdownAmountTIET.setText(amountList.get(0), false);
+                }
+            }
+        };
+        applyVisibilityByType.run();
+
+
+        // === слушатели фокуса и клавиатуры ===
+        View.OnFocusChangeListener hideKeyboardOnBlur = (v, hasFocus) -> {
+            if (!hasFocus) hideKeyboard(v);
+        };
+
+        editTextNameEat.setOnFocusChangeListener(hideKeyboardOnBlur);
+        editAmountTIET.setOnFocusChangeListener(hideKeyboardOnBlur);
+        editTextProtein.setOnFocusChangeListener(hideKeyboardOnBlur);
+        editTextFat.setOnFocusChangeListener(hideKeyboardOnBlur);
+        editTextCarb.setOnFocusChangeListener(hideKeyboardOnBlur);
+        editTextCalories.setOnFocusChangeListener(hideKeyboardOnBlur);
+
+        // закрытие клавиатуры при нажатии Done
+        editTextCalories.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT) {
+                hideKeyboard(v);
+                v.clearFocus();
+                return true;
+            }
+            return false;
+        });
+        editTextProtein.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT) {
+                hideKeyboard(v);
+                v.clearFocus();
+                return true;
+            }
+            return false;
+        });
+        editTextFat.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT) {
+                hideKeyboard(v);
+                v.clearFocus();
+                return true;
+            }
+            return false;
+        });
+        editTextCarb.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT) {
+                hideKeyboard(v);
+                v.clearFocus();
+                return true;
+            }
+            return false;
+        });
+        editTextNameEat.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT) {
+                hideKeyboard(v);
+                v.clearFocus();
+                return true;
+            }
+            return false;
+        });
+        editAmountTIET.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT) {
+                hideKeyboard(v);
+                v.clearFocus();
+                return true;
+            }
+            return false;
+        });
+
+
+
+        // потери фокуса при касании в пустое место
+        rootLayout.setOnTouchListener((v, event) -> {
+            editTextNameEat.clearFocus();
+            editAmountTIET.clearFocus();
+            editTextProtein.clearFocus();
+            editTextFat.clearFocus();
+            editTextCarb.clearFocus();
+            editTextCalories.clearFocus();
+            autoCompleteType.clearFocus();
+            dropdownAmountTIET.clearFocus();
+            return false;
+        });
+
+        // закрытие дропдаунов при выборе
+        autoCompleteType.setOnItemClickListener((parent, view, position, id) -> {
+            applyVisibilityByType.run(); // <-- ИСПРАВЛЕНИЕ: Вызываем логику переключения полей
+            autoCompleteType.clearFocus();
+        });
+        dropdownAmountTIET.setOnItemClickListener((parent, view, position, id) -> dropdownAmountTIET.clearFocus());
+
+        // обработка касания для открытия/закрытия dropdown
+        autoCompleteType.setOnClickListener(v -> {
+            if (!autoCompleteType.isPopupShowing()) {
+                autoCompleteType.clearFocus();
+            }
+            else autoCompleteType.showDropDown();
+        });
+
+        dropdownAmountTIET.setOnClickListener(v -> {
+            if (!dropdownAmountTIET.isPopupShowing()){
+                dropdownAmountTIET.clearFocus();
+            }
+            else
+                dropdownAmountTIET.showDropDown();
+        });
+
+        // === кнопка "Создать еду" ===
         createEatBtn.setOnClickListener(v -> {
             try {
                 String foodName = editTextNameEat.getText().toString().trim();
@@ -147,91 +240,49 @@ public class CreateFoodFragment extends Fragment {
                 double calories = parseDoubleOrZero(editTextCalories.getText().toString());
 
                 int amount;
-                if (editTextAmount.getVisibility() == View.VISIBLE) {
-                    amount = parseIntOrZero(editTextAmount.getText().toString());
+                if (editAmountTIL.getVisibility() == View.VISIBLE) {
+                    amount = parseIntOrZero(editAmountTIET.getText().toString());
                 } else {
-                    amount = parseIntOrZero(autoCompleteAmount.getText().toString());
+                    amount = parseIntOrZero(dropdownAmountTIET.getText().toString());
                 }
 
                 String measurementType = autoCompleteType.getText().toString().trim();
 
                 FoodModel newEat = new FoodModel(
-                        0, // eat_id, можно оставить 0
-                        foodName,
-                        protein,
-                        fat,
-                        carb,
-                        calories,
-                        amount,
-                        measurementType
+                        0, foodName, protein, fat, carb, calories, amount, measurementType
                 );
-                baseEatDao.addEat(newEat);
-                baseEatDao.logAllEat();
 
-                if (mode ==  NutritionMode.CREATE_PRESET) {
-                    requireActivity().getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.frameLayout, new CreateMealPresetFragment())
-                            .commit();
-                } else if (mode == NutritionMode.ADD_MEAL) {
-                    requireActivity().getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.frameLayout, new CreateMealPresetFragment(NutritionMode.ADD_MEAL))
-                            .commit();
-                } else {
-                    requireActivity().getOnBackPressedDispatcher().onBackPressed();
+
+
+
+                try {
+                    // 1. Сохраняем и получаем ID (предполагается, что baseEatDao.addEat возвращает long ID)
+                    long newFoodId = baseEatDao.addFoodReturnID(newEat);
+
+                    if (newFoodId > 0) {
+                        // 2. ОТПРАВЛЯЕМ ID ЧЕРЕЗ FragmentResultListener
+                        Bundle result = new Bundle();
+                        result.putLong("new_food_id", newFoodId);
+                        getParentFragmentManager().setFragmentResult("new_food_added", result);
+                    }
+
+                    // 3. Возвращаемся ТОЛЬКО ПОСЛЕ ОТПРАВКИ РЕЗУЛЬТАТА
+                    if (mode == NutritionMode.CREATE_PRESET) {
+                        getParentFragmentManager().beginTransaction()
+                                .replace(R.id.frameLayout, new CreateMealPresetFragment())
+                                .commit();
+                    } else if (mode == NutritionMode.ADD_MEAL) {
+                        getParentFragmentManager().popBackStack(); // Возвращает к скрытому CreateMealPresetFragment
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(requireContext(), "Ошибка при создании еды: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
-
             } catch (Exception e) {
                 Toast.makeText(requireContext(), "Ошибка при создании еды: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
 
         return createEatFragment;
-    }
-
-    private void setupAutoComplete(
-            AutoCompleteTextView autoCompleteView,
-            ArrayAdapter<String> adapter,
-            Runnable onItemSelected,
-            BooleanSupplier isDropdownShownSupplier,
-            Consumer<Boolean> setDropdownState
-    ) {
-        autoCompleteView.setAdapter(adapter);
-        autoCompleteView.setDropDownVerticalOffset(2);
-
-        autoCompleteView.setOnClickListener(v -> {
-            boolean isShown = isDropdownShownSupplier.getAsBoolean();
-            if (isShown) {
-                autoCompleteView.dismissDropDown();
-            } else {
-                autoCompleteView.showDropDown();
-            }
-            setDropdownState.accept(!isShown);
-        });
-
-        autoCompleteView.setOnItemClickListener((parent, view, position, id) -> {
-            setDropdownState.accept(false);
-            if (onItemSelected != null) onItemSelected.run();
-        });
-
-        autoCompleteView.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) {
-                setDropdownState.accept(false);
-                autoCompleteView.dismissDropDown();
-            }
-        });
-    }
-    private ArrayAdapter<String> createStyledAdapter(Context context, List<String> items) {
-        return new ArrayAdapter<String>(context, R.layout.item_dropdown_small_padding, items) {
-            @NonNull
-            @Override
-            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-                View view = super.getView(position, convertView, parent);
-                view.setBackgroundColor(ContextCompat.getColor(context, R.color.light_gray2));
-                return view;
-            }
-        };
     }
 
     private double parseDoubleOrZero(String value) {

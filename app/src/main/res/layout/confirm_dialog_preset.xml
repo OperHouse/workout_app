@@ -1,103 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="10dp">
 
     <LinearLayout
+        android:id="@+id/confirm_dialog_Root_LL"
         android:layout_width="match_parent"
-        android:background="@drawable/card_border"
-        android:layout_height="match_parent">
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/card_border">
 
-            <TextView
-                android:id="@+id/namePreset_TV"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="25dp"
-                android:layout_marginRight="10dp"
-                android:layout_marginLeft="10dp"
-                android:text="Название пресета"
-                android:textColor="@color/white"
-                android:textSize="30sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:layout_editor_absoluteX="10dp"
+        tools:layout_editor_absoluteY="10dp">
+
+        <!-- Заголовок -->
+        <TextView
+            android:id="@+id/preset_hint_D_TV"
+            style="@style/TextStyle.Big.Bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:gravity="center"
+            android:text="@string/preset_name_hint"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
 
-            </TextView>
+        <!-- Поле ввода -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/preset_name_D_TIL"
+            style="@style/CustomTextInputLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:hint="@string/preset_name_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/preset_hint_D_TV">
 
-            <TextView
-                android:id="@+id/text1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:gravity="center"
-                android:text="Введите название пресета"
-                android:textColor="@color/white"
-                android:textSize="17sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/namePreset_TV">
-
-            </TextView>
-
-            <EditText
-                android:id="@+id/namePreset_ET"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/preset_name_D_ET"
+                style="@style/CustomTextInputEditText"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginStart="20dp"
-                android:layout_marginEnd="20dp"
-                android:layout_marginTop="20dp"
-                android:background="@drawable/edit_text_back"
-                android:hint="Пример названия: Понедельник"
-                android:paddingStart="10sp"
-                android:textColor="@color/white"
-                android:textColorHint="@color/light_gray2"
-                android:textSize="16sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/text1">
+                android:layout_height="wrap_content"
+                android:inputType="textCapSentences"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-            </EditText>
+        <TextView
+            android:id="@+id/preset_add_name_dialog_error_TV"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:text="@string/error_name_workout_preset"
+            android:textColor="@color/red"
+            android:textSize="14sp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preset_name_D_TIL" />
 
 
-            <Button
-                android:id="@+id/createBtn"
-                android:layout_width="125dp"
-                android:layout_height="36dp"
-                android:layout_marginStart="50dp"
-                android:layout_marginTop="30dp"
-                android:layout_marginBottom="20dp"
-                android:background="@drawable/btn_2"
-                android:text="Добавить"
-                android:textColor="@color/white"
-                android:textSize="11sp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/namePreset_ET" />
+            <!-- Кнопка "Создать" -->
+        <Button
+            android:id="@+id/preset_create_D_BTN"
+            style="@style/SmallButton"
+            android:layout_width="125dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:text="@string/add"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/preset_cancel_D_BTN"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/preset_add_name_dialog_error_TV" />
 
-            <Button
-                android:id="@+id/closeBtn"
-                android:layout_width="125dp"
-                android:layout_height="36dp"
-                android:background="@drawable/btn_2"
-                android:backgroundTint="@color/red"
-                android:text="Отмена"
-                android:layout_marginTop="30dp"
-                android:layout_marginBottom="20dp"
-                android:textColor="@color/white"
-                android:textSize="12sp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/createBtn"
-                app:layout_constraintTop_toBottomOf="@+id/namePreset_ET" />
+            <!-- Кнопка "Отмена" -->
+        <Button
+            android:id="@+id/preset_cancel_D_BTN"
+            style="@style/SmallButton"
+            android:layout_width="125dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:text="@string/cancellation"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/preset_create_D_BTN"
+            app:layout_constraintTop_toBottomOf="@id/preset_add_name_dialog_error_TV" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>

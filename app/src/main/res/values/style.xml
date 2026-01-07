@@ -1,13 +1,148 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <style name="BottomNavigationViewStyle" parent="Widget.Design.BottomNavigationView">
         <item name="itemIconTint">#11111b</item>
         <item name="itemTextColor">#11111b</item>
     </style>
-    <style name="ExposedDropdownMenu" parent="Widget.Material3.TextInputLayout.FilledBox.Dense.ExposedDropdownMenu">
-    </style>
+
+    <style name="ExposedDropdownMenu" parent="Widget.Material3.TextInputLayout.FilledBox.Dense.ExposedDropdownMenu" />
 
     <style name="AppPopupTheme" parent="ThemeOverlay.MaterialComponents.Light">
         <item name="android:popupBackground">@color/light_gray2</item>
     </style>
+
+    <style name="LoginTextInputLayoutStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+        <item name="boxStrokeColor">#fff</item>
+        <item name="boxStrokeWidthFocused">3dp</item>
+        <item name="boxStrokeWidth">2dp</item>
+    </style>
+
+    <style name="BigButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:textAppearance">@style/TextStyle.Button.Big</item>
+
+        <item name="cornerRadius">100dp</item>
+        <item name="strokeColor">@color/light_gray2</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:gravity">center</item>
+
+        <item name="android:elevation">3dp</item>
+        <item name="android:stateListAnimator">@animator/button_press_animator</item>
+
+    </style>
+
+    <style name="SmallButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:textAppearance">@style/TextStyle.Button.Small</item>
+
+        <item name="cornerRadius">100dp</item>
+        <item name="strokeColor">@color/light_gray2</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:gravity">center</item>
+
+        <item name="android:elevation">3dp</item>
+        <item name="android:stateListAnimator">@animator/button_press_animator</item>
+
+    </style>
+
+    <style name="SmallButtonWithIc_Plus" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:textAppearance">@style/TextStyle.Button.Small</item>
+
+        <item name="cornerRadius">100dp</item>
+        <item name="strokeColor">@color/light_gray2</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:gravity">start|center_vertical</item>
+
+        <item name="icon">@drawable/ic_plus</item>
+        <item name="iconTint">@color/white</item>
+        <item name="iconPadding">3dp</item>
+        <item name="iconGravity">textStart</item>
+
+        <item name="android:elevation">3dp</item>
+        <item name="android:stateListAnimator">@animator/button_press_animator</item>
+
+    </style>
+
+    <style name="CustomTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/white</item> <!-- Цвет обводки -->
+        <item name="boxBackgroundMode">outline</item> <!-- Режим фона: только обводка -->
+        <item name="android:focusable">true</item> <!-- Фокусируемость -->
+        <item name="hintTextColor">@color/white</item> <!-- Цвет подсказки -->
+        <item name="android:textColorHint">@color/light_gray2</item> <!-- Цвет текста подсказки -->
+    </style>
+
+    <!-- Стиль для TextInputEditText -->
+    <style name="CustomTextInputEditText">
+        <item name="android:textColor">@color/white</item> <!-- Цвет текста -->
+        <item name="android:textCursorDrawable">@drawable/custom_cursor</item> <!-- Кастомный курсор -->
+        <item name="android:cursorVisible">true</item> <!-- Видимость курсора -->
+        <item name="android:focusable">true</item> <!-- Фокусируемость -->
+    </style>
+
+    <!-- Стиль для кнопки с анимацией парения и нажатия -->
+    <style name="CustomImageButton" parent="Widget.MaterialComponents.Button">
+        <!-- Убираем фон по умолчанию -->
+        <item name="android:background">@drawable/ic_back</item>
+
+        <!-- Добавляем тень -->
+        <item name="android:elevation">4dp</item> <!-- Эффект парения (поднятие над фоном) -->
+        <item name="android:translationZ">4dp</item> <!-- Эффект при взаимодействии, чтобы кнопка выглядела, как будто "плавает" -->
+        <item name="android:layout_marginStart">10dp</item> <!-- Отступ от начала -->
+        <item name="android:layout_marginTop">10dp</item> <!-- Отступ сверху -->
+    </style>
+
+    <!-- ==========================Вид текста========================== -->
+
+
+    <style name="TextStyle.Big" parent="Widget.AppCompat.TextView">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="TextStyle.Small" parent="Widget.AppCompat.TextView">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="TextStyle.Big.Bold">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextStyle.Small.Bold">
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextStyle.Button.Big" parent="Widget.AppCompat.TextView">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="TextStyle.Button.Small" parent="Widget.AppCompat.TextView">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+
+    <style name="CircleImage">
+        <item name="cornerSize">50%</item>
+    </style>
+
 </resources>
