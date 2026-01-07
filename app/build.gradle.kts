@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.androidApplication)
+    alias(libs.plugins.kotlinAndroid)
 }
 
 android {
@@ -30,6 +31,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 dependencies {
@@ -41,17 +45,18 @@ dependencies {
     implementation(libs.preference)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.google.material)
+    implementation(libs.androidx.core.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation ("androidx.sqlite:sqlite:2.5.1")
+    implementation ("androidx.sqlite:sqlite:2.6.2")
     implementation ("it.xabaras.android:recyclerview-swipedecorator:1.4")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.2")
+    implementation("com.google.android.material:material:1.13.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0")
     implementation("androidx.paging:paging-runtime:3.3.6")
-    implementation("androidx.health.connect:connect-client:1.1.0-alpha11")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.0")
-    implementation("com.google.guava:guava:31.1-android")
+    implementation("androidx.health.connect:connect-client:1.1.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+    implementation("com.google.guava:guava:33.5.0-android")
 
     implementation("androidx.paging:paging-common:3.3.6")
 }

@@ -1,15 +1,16 @@
 package com.example.workoutapp;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.health.connect.client.HealthConnectClient;
-import androidx.health.connect.client.permission.HealthPermission;
 
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.Tables.AppDataBase;
@@ -22,47 +23,62 @@ import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
 import com.example.workoutapp.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import androidx.health.connect.client.records.StepsRecord;
-import androidx.health.connect.client.records.TotalCaloriesBurnedRecord;
-import androidx.health.connect.client.request.ReadRecordsRequest;
-import androidx.health.connect.client.response.ReadRecordsResponse; // ВАЖНО: исправлен импорт
-import androidx.health.connect.client.time.TimeRangeFilter;
-import com.google.common.util.concurrent.ListenableFuture; // ВАЖНО
 
-import java.time.Instant;
-import java.util.Calendar; // Для совместимости с API 24
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
 
-import kotlin.jvm.JvmClassMappingKt;
+import kotlin.Unit;
 
-public class MainActivity extends AppCompatActivity implements OnNavigationVisibilityListener {
+public class MainActivity extends AppCompatActivity
+        implements OnNavigationVisibilityListener {
+
     private static final Map<String, Fragment> fragmentCache = new HashMap<>();
-    public ActivityMainBinding bindingMain;
+    private ActivityMainBinding bindingMain;
     private static AppDataBase appDataBase;
     private BottomNavigationView bottomNavigationView;
     private List<ExerciseModel> cachedExercises;
+
+    private ActivityResultLauncher<String[]> healthPermissionLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
+
         bindingMain = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(bindingMain.getRoot());
+
         bottomNavigationView = findViewById(R.id.bottomNavView);
+        bindingMain.bottomNavView.setBackground(null);
 
         appDataBase = AppDataBase.getInstance(getApplicationContext());
-        bindingMain.bottomNavView.setBackground(null);
 
         loadExercisesFromDb();
         setInitialActiveButton();
 
-        // Запуск синхронизации
-        //startHealthSync();
+        // ---------- Health Connect permission launcher ----------
+        healthPermissionLauncher =
+                registerForActivityResult(
+                        new ActivityResultContracts.RequestMultiplePermissions(),
+                        result -> {
+                            boolean allGranted = true;
+                            for (Boolean granted : result.values()) {
+                                if (!granted) {
+                                    allGranted = false;
+                                    break;
+                                }
+                            }
 
+                            if (allGranted) {
+                                syncHealthData();
+                            }
+                        }
+                );
+
+        checkHealthPermissions();
+
+        // ---------- Bottom navigation ----------
         bindingMain.bottomNavView.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.Profile) {
                 showOrAddFragment("profile", new ProfileFragment());
@@ -79,26 +95,92 @@ public class MainActivity extends AppCompatActivity implements OnNavigationVisib
         });
     }
 
+    // ---------- Health Connect permissions ----------
+
+    private void checkHealthPermissions() {
+        HealthConnectHelper.checkGrantedPermissions(
+                this,
+                HealthPermissions.INSTANCE.getREQUIRED_PERMISSIONS(),
+                grantedPermissions -> {
+                    Log.d("HealthConnect", "Granted permissions: " + grantedPermissions);
+                    Toast.makeText(this, "Granted permissions: " + grantedPermissions, Toast.LENGTH_LONG).show();
+
+                    if (!grantedPermissions.containsAll(
+                            HealthPermissions.INSTANCE.getREQUIRED_PERMISSIONS())) {
+                        // Для шагов можно использовать стандартный RequestPermission
+                        String[] permissionsArray =
+                                HealthPermissions.INSTANCE.getREQUIRED_PERMISSIONS().toArray(new String[0]);
+                        healthPermissionLauncher.launch(permissionsArray);
+                    } else {
+                        // Разрешение есть, читаем шаги
+                        syncHealthData();
+                    }
+                    return Unit.INSTANCE;
+                }
+        );
+    }
+
+    /** Синхронизация шагов с SQLite */
+    private void syncHealthData() {
+        HealthConnectReader reader = new HealthConnectReader(this);
+
+        reader.readToday(data -> {
+            DailyActivityTrackingModel model = new DailyActivityTrackingModel(
+                    0,
+                    java.time.LocalDate.now().toString(),
+                    data.getSteps(),
+                    0f // калории пока не учитываем
+            );
+
+            DailyActivityTrackingDao dao = new DailyActivityTrackingDao(appDataBase);
+            dao.insertOrUpdate(model);
+
+            Log.d("HealthConnect", "Steps saved: " + data.getSteps());
+            return Unit.INSTANCE;
+        });
+    }
+
+
+
+    // ---------- Fragment handling ----------
     public void showOrAddFragment(String tag, Fragment fragment) {
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        for (Fragment f : getSupportFragmentManager().getFragments()) { if (f != null) transaction.hide(f); }
-        Fragment existing = getSupportFragmentManager().findFragmentByTag(tag);
+        FragmentTransaction transaction =
+                getSupportFragmentManager().beginTransaction();
+
+        for (Fragment f : getSupportFragmentManager().getFragments()) {
+            if (f != null) transaction.hide(f);
+        }
+
+        Fragment existing =
+                getSupportFragmentManager().findFragmentByTag(tag);
+
         if (existing == null) {
             transaction.add(R.id.frameLayout, fragment, tag);
             fragmentCache.put(tag, fragment);
             transaction.show(fragment);
-        } else { transaction.show(existing); }
+        } else {
+            transaction.show(existing);
+        }
+
         transaction.commit();
     }
 
+    // ---------- Database ----------
     public void loadExercisesFromDb() {
-        WORKOUT_EXERCISE_TABLE_DAO dao = new WORKOUT_EXERCISE_TABLE_DAO(appDataBase);
+        WORKOUT_EXERCISE_TABLE_DAO dao =
+                new WORKOUT_EXERCISE_TABLE_DAO(appDataBase);
         cachedExercises = dao.getExByState("unfinished");
     }
 
-    public List<ExerciseModel> getCachedExercises() { return cachedExercises; }
-    public void reloadExercisesFromDb() { loadExercisesFromDb(); }
-    public static AppDataBase getAppDataBase() { return appDataBase; }
+    public void reloadExercisesFromDb(){loadExercisesFromDb();}
+
+    public List<ExerciseModel> getCachedExercises() {
+        return cachedExercises;
+    }
+
+    public static AppDataBase getAppDataBase() {
+        return appDataBase;
+    }
 
     private void setInitialActiveButton() {
         bindingMain.bottomNavView.getMenu().getItem(2).setChecked(true);
@@ -107,81 +189,13 @@ public class MainActivity extends AppCompatActivity implements OnNavigationVisib
         showOrAddFragment("workout", fragment);
     }
 
+    // ---------- Bottom nav visibility ----------
     @Override
     public void setBottomNavVisibility(boolean isVisible) {
         if (bottomNavigationView != null) {
-            bottomNavigationView.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+            bottomNavigationView.setVisibility(
+                    isVisible ? View.VISIBLE : View.GONE
+            );
         }
     }
-
-//    // Блок Health Connect (Фитнес браслет)
-//    public void startHealthSync() {
-//        // Проверка доступности SDK
-//        if (HealthConnectClient.isAvailable(this)) {
-//            fetchHealthData();
-//        } else {
-//            // Выводим уведомление или логируем ошибку
-//            Log.e("HealthConnect", "SDK недоступен");
-//        }
-//    }
-//
-//    public void fetchHealthData() {
-//        HealthConnectClient client = HealthConnectClient.getOrCreate(this);
-//
-//        // API 24 Friendly: Получаем начало дня (00:00)
-//        Calendar cal = Calendar.getInstance();
-//        cal.set(Calendar.HOUR_OF_DAY, 0);
-//        cal.set(Calendar.MINUTE, 0);
-//        cal.set(Calendar.SECOND, 0);
-//        cal.set(Calendar.MILLISECOND, 0);
-//
-//        Instant startOfDay = Instant.ofEpochMilli(cal.getTimeInMillis());
-//        Instant now = Instant.now();
-//        TimeRangeFilter timeRange = TimeRangeFilter.between(startOfDay, now);
-//
-//        // Асинхронный запрос с Executor
-//        Executors.newSingleThreadExecutor().execute(() -> {
-//            try {
-//                // Запрос для шагов
-//                ReadRecordsRequest<StepsRecord> stepsRequest = new ReadRecordsRequest<>(
-//                        StepsRecord.class, timeRange, Collections.emptySet(), false, 1000, null
-//                );
-//
-//                List<StepsRecord> stepsRecords = client.readRecords(stepsRequest).getRecords();
-//
-//                long totalSteps = 0;
-//                for (StepsRecord record : stepsRecords) {
-//                    totalSteps += record.getCount();
-//                }
-//
-//                // Запрос для калорий
-//                ReadRecordsRequest<TotalCaloriesBurnedRecord> caloriesRequest = new ReadRecordsRequest<>(
-//                        TotalCaloriesBurnedRecord.class, timeRange, Collections.emptySet(), false, 1000, null
-//                );
-//
-//                List<TotalCaloriesBurnedRecord> caloriesRecords = client.readRecords(caloriesRequest).getRecords();
-//                double totalCalories = 0;
-//                for (TotalCaloriesBurnedRecord record : caloriesRecords) {
-//                    totalCalories += record.getEnergy().getKilocalories();
-//                }
-//
-//                saveHealthDataToDb(totalSteps, (float) totalCalories);
-//
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        });
-//    }
-//
-//
-//    private void saveHealthDataToDb(long steps, float calories) {
-//        DailyActivityTrackingDao dao = new DailyActivityTrackingDao(appDataBase);
-//        String todayDate = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-//                .format(new java.util.Date());
-//
-//        DailyActivityTrackingModel model = new DailyActivityTrackingModel(
-//                0, todayDate, (int) steps, calories
-//        );
-//        dao.insertOrUpdate(model);
-//    }
 }
