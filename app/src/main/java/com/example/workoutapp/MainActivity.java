@@ -3,7 +3,6 @@ package com.example.workoutapp;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
@@ -62,6 +61,7 @@ public class MainActivity extends AppCompatActivity
                 registerForActivityResult(
                         new ActivityResultContracts.RequestMultiplePermissions(),
                         result -> {
+                            // Проверяем, выданы ли ВСЕ запрошенные разрешения (шаги и калории)
                             boolean allGranted = true;
                             for (Boolean granted : result.values()) {
                                 if (!granted) {
@@ -72,6 +72,8 @@ public class MainActivity extends AppCompatActivity
 
                             if (allGranted) {
                                 syncHealthData();
+                            } else {
+                                Log.e("HealthConnect", "Не все разрешения выданы пользователем");
                             }
                         }
                 );
@@ -98,21 +100,22 @@ public class MainActivity extends AppCompatActivity
     // ---------- Health Connect permissions ----------
 
     private void checkHealthPermissions() {
+        // Проверяем текущее состояние разрешений через наш Helper
         HealthConnectHelper.checkGrantedPermissions(
                 this,
                 HealthPermissions.INSTANCE.getREQUIRED_PERMISSIONS(),
                 grantedPermissions -> {
                     Log.d("HealthConnect", "Granted permissions: " + grantedPermissions);
-                    Toast.makeText(this, "Granted permissions: " + grantedPermissions, Toast.LENGTH_LONG).show();
 
+                    // Если количество выданных разрешений меньше, чем нам требуется
                     if (!grantedPermissions.containsAll(
                             HealthPermissions.INSTANCE.getREQUIRED_PERMISSIONS())) {
-                        // Для шагов можно использовать стандартный RequestPermission
+
                         String[] permissionsArray =
                                 HealthPermissions.INSTANCE.getREQUIRED_PERMISSIONS().toArray(new String[0]);
                         healthPermissionLauncher.launch(permissionsArray);
                     } else {
-                        // Разрешение есть, читаем шаги
+                        // Все разрешения (шаги + калории) есть, запускаем синхронизацию
                         syncHealthData();
                     }
                     return Unit.INSTANCE;
@@ -125,17 +128,18 @@ public class MainActivity extends AppCompatActivity
         HealthConnectReader reader = new HealthConnectReader(this);
 
         reader.readToday(data -> {
+            // Теперь DailyHealthData содержит и getSteps(), и getCalories()
             DailyActivityTrackingModel model = new DailyActivityTrackingModel(
                     0,
                     java.time.LocalDate.now().toString(),
                     data.getSteps(),
-                    0f // калории пока не учитываем
+                    data.getCalories() // ТЕПЕРЬ СОХРАНЯЕМ КАЛОРИИ
             );
 
             DailyActivityTrackingDao dao = new DailyActivityTrackingDao(appDataBase);
             dao.insertOrUpdate(model);
 
-            Log.d("HealthConnect", "Steps saved: " + data.getSteps());
+            Log.d("HealthConnect", "Data saved. Steps: " + data.getSteps() + ", Cals: " + data.getCalories());
             return Unit.INSTANCE;
         });
     }
