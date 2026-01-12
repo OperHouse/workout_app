@@ -8,22 +8,21 @@ import static com.example.workoutapp.Data.Tables.AppDataBase.DAILY_ACTIVITY_TRAC
 
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 
-import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
+
+import net.sqlcipher.database.SQLiteDatabase;
 
 public class DailyActivityTrackingDao {
 
-    private final AppDataBase dbHelper;
+    private final SQLiteDatabase db;
 
-    public DailyActivityTrackingDao(AppDataBase dbHelper) {
-        this.dbHelper = dbHelper;
+    public DailyActivityTrackingDao(SQLiteDatabase db) {
+        this.db = db;
     }
 
     // Добавление или обновление дневных данных активности
     public void insertOrUpdate(DailyActivityTrackingModel model) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         Cursor cursor = db.query(
                 DAILY_ACTIVITY_TRACKING_TABLE,
@@ -39,19 +38,22 @@ public class DailyActivityTrackingDao {
         values.put(DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE, model.getDate());
 
         if (cursor.moveToFirst()) {
-            db.update(DAILY_ACTIVITY_TRACKING_TABLE, values,
-                    DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE + " = ?", new String[]{model.getDate()});
+            db.update(
+                    DAILY_ACTIVITY_TRACKING_TABLE,
+                    values,
+                    DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE + " = ?",
+                    new String[]{model.getDate()}
+            );
         } else {
             db.insert(DAILY_ACTIVITY_TRACKING_TABLE, null, values);
         }
 
         cursor.close();
-        db.close();
     }
 
     // Получение данных по дате
     public DailyActivityTrackingModel getActivityByDate(String date) {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
         Cursor cursor = db.query(
                 DAILY_ACTIVITY_TRACKING_TABLE,
                 null,
@@ -71,13 +73,12 @@ public class DailyActivityTrackingDao {
         }
 
         cursor.close();
-        db.close();
         return model;
     }
 
     // Получение последней активности
     public DailyActivityTrackingModel getLatestActivity() {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
         Cursor cursor = db.query(
                 DAILY_ACTIVITY_TRACKING_TABLE,
                 null,
@@ -97,7 +98,6 @@ public class DailyActivityTrackingDao {
         }
 
         cursor.close();
-        db.close();
         return model;
     }
 }

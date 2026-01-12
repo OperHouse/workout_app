@@ -22,8 +22,11 @@ import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Data.WorkoutDao.CARDIO_SET_DETAILS_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.STRENGTH_SET_DETAILS_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
+
+import net.sqlcipher.database.SQLiteDatabase;
 
 import java.util.List;
 import java.util.Objects;
@@ -46,7 +49,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
 
     public OutsideAdapter(@NonNull Fragment fragment) {
         this.context = fragment.requireContext();
-        AppDataBase db = AppDataBase.getInstance(context);
+        SQLiteDatabase db = MainActivity.getAppDataBase();
         this.workoutExerciseTableDao = new WORKOUT_EXERCISE_TABLE_DAO(db);
         this.strengthSetDetailsTableDao = new STRENGTH_SET_DETAILS_TABLE_DAO(db);
         this.cardioSetDetailsTableDao = new CARDIO_SET_DETAILS_TABLE_DAO(db);

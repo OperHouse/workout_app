@@ -27,13 +27,14 @@ import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
 import com.example.workoutapp.Data.ProfileDao.DailyFoodTrackingDao;
-import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.Models.NutritionModels.MealNameModel;
 import com.example.workoutapp.Models.ProfileModels.DailyFoodTrackingModel;
 import com.example.workoutapp.R;
+
+import net.sqlcipher.database.SQLiteDatabase;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -100,7 +101,7 @@ public class NutritionFragment extends Fragment {
     }
 
     private void initDAOs() {
-        AppDataBase db = MainActivity.getAppDataBase();
+        SQLiteDatabase db = MainActivity.getAppDataBase();
         mealNameDao = new MealNameDao(db);
         connectingMealDao = new ConnectingMealDao(db);
         foodMealDao = new MealFoodDao(db);
@@ -136,8 +137,7 @@ public class NutritionFragment extends Fragment {
     }
 
     private void updateMealList(String date) {
-        AppDataBase db = MainActivity.getAppDataBase();
-        if (db == null || !db.isDbOpen()) return;
+
 
         mealList.clear();
 
@@ -172,8 +172,7 @@ public class NutritionFragment extends Fragment {
     }
 
     private void syncDailyTotals() {
-        AppDataBase db = MainActivity.getAppDataBase();
-        if (db == null || !db.isDbOpen() || mealList.isEmpty()) return;
+        SQLiteDatabase db = MainActivity.getAppDataBase();
 
         int totalCalories = 0;
         float totalProtein = 0, totalFat = 0, totalCarbs = 0;

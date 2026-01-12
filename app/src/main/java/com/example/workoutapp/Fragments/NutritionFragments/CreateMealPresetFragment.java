@@ -929,7 +929,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                     // 3. Повторно связываем продукты
                     for (FoodModel eat : pressedEat) {
                         FoodModel existing = presetEatDao.findDuplicateFood(eat);
-                        int eatId;
+                        long eatId;
 
                         if (existing != null) {
                             eatId = existing.getFood_id();
