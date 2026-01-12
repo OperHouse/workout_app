@@ -1,196 +1,196 @@
 package com.example.workoutapp.Data.NutritionDao;
 
-import static com.example.workoutapp.Data.Tables.AppDataBase.MEAL_DATA;
-import static com.example.workoutapp.Data.Tables.AppDataBase.MEAL_NAME;
-import static com.example.workoutapp.Data.Tables.AppDataBase.MEAL_NAME_ID;
-import static com.example.workoutapp.Data.Tables.AppDataBase.MEAL_NAME_TABLE;
-
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.NutritionModels.MealNameModel;
+
+import net.sqlcipher.database.SQLiteDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MealNameDao {
-    private final AppDataBase dbHelper;
 
-    public MealNameDao(AppDataBase dbHelper) {
-        this.dbHelper = dbHelper;
+    private final SQLiteDatabase db;
+
+    public MealNameDao(SQLiteDatabase db) {
+        this.db = db;
     }
 
+    // ========================= ADD ========================= //
 
-
-    // Метод добавления названия приема пищи
-    //Возвращает id имени приема пищи для записи в связывающую таблицу (Связаны)
-    public void insertMealName(String name, String date) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
+    /**
+     * Добавляет название приёма пищи и возвращает ID новой записи
+     */
+    public long insertMealName(String name, String date) {
         ContentValues values = new ContentValues();
-        values.put(MEAL_NAME, name);
-        values.put(MEAL_DATA, date);
-        db.insert(MEAL_NAME_TABLE, null, values);
-        db.close();
-    }
+        values.put(AppDataBase.MEAL_NAME, name);
+        values.put(AppDataBase.MEAL_DATA, date);
 
-    public void deleteMealName(int id) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        db.delete(MEAL_NAME_TABLE, MEAL_NAME_ID + " = ?", new String[]{String.valueOf(id)});
-        db.close();
-    }
-
-    public void updateMealName(int presetId, String newName) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put(MEAL_NAME, newName);
-
-        db.update(MEAL_NAME_TABLE, values, MEAL_NAME_ID + " = ?", new String[]{String.valueOf(presetId)});
-        db.close();
-    }
-
-    public String getMealNameById(int id) {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        String mealName = null;
-
-        Cursor cursor = db.query(
-                MEAL_NAME_TABLE,
-                new String[]{MEAL_NAME},
-                MEAL_NAME_ID + " = ?",
-                new String[]{String.valueOf(id)},
-                null,
-                null,
-                null
-        );
-
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                mealName = cursor.getString(cursor.getColumnIndexOrThrow(MEAL_NAME));
-            }
-            cursor.close();
-        }
-        db.close();
-        return mealName;
-    }
-    // Метод для получения массива ID имен по дате
-    public List<Integer> getMealNamesIdsByDate(String date) {
-        List<Integer> idList = new ArrayList<>();
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-
-        // Запрос для поиска всех записей по дате
-        String query = "SELECT " + MEAL_NAME_ID + " FROM " + MEAL_NAME_TABLE + " WHERE " + MEAL_DATA + " = ?";
-        Cursor cursor = db.rawQuery(query, new String[]{date});
-
-        // Если курсор не пустой, извлекаем все ID
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                int id = cursor.getInt(cursor.getColumnIndexOrThrow(MEAL_NAME_ID));
-                idList.add(id);
-            } while (cursor.moveToNext());
-
-            cursor.close();
-        }
-
-        db.close();
-        return idList;
-    }
-
-    // Получить все названия пресетов еды
-    public List<MealNameModel> getAllMealNames() {
-        List<MealNameModel> nameList = new ArrayList<>();
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-
-        Cursor cursor = db.query(
-                MEAL_NAME_TABLE,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
-
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                int id = cursor.getInt(cursor.getColumnIndexOrThrow(MEAL_NAME_ID));
-                String name = cursor.getString(cursor.getColumnIndexOrThrow(MEAL_NAME));
-                String data = cursor.getString(cursor.getColumnIndexOrThrow(MEAL_DATA));
-
-                nameList.add(new MealNameModel(id, name, data));
-            } while (cursor.moveToNext());
-
-            cursor.close();
-        }
-
-        db.close();
-        return nameList;
-    }
-
-    public boolean checkIfMealExist(String name, String date) {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-
-        String query = "SELECT COUNT(*) FROM " + MEAL_NAME_TABLE +
-                " WHERE " + MEAL_NAME + " = ? AND " + MEAL_DATA + " = ?";
-        Cursor cursor = db.rawQuery(query, new String[]{name, date});
-
-        boolean exists = false;
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                int count = cursor.getInt(0);
-                exists = count > 0;
-            }
-            cursor.close();
-        }
-
-        db.close();
-        return exists;
-    }
-    public long getLastInsertedMealNameId() {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        long id = -1;
-
-        Cursor cursor = db.rawQuery(
-                "SELECT MAX(" + MEAL_NAME_ID + ") FROM " + MEAL_NAME_TABLE,
-                null
-        );
-
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                id = cursor.getLong(0);
-            }
-            cursor.close();
-        }
-
-        db.close();
+        long id = db.insert(AppDataBase.MEAL_NAME_TABLE, null, values);
+        Log.d("MealNameDao", "Inserted meal name with id: " + id);
         return id;
     }
 
-    public MealNameModel getMealNameModelById(int id) {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
+    // ========================= DELETE ========================= //
+
+    public void deleteMealName(long id) {
+        db.delete(AppDataBase.MEAL_NAME_TABLE, AppDataBase.MEAL_NAME_ID + " = ?", new String[]{String.valueOf(id)});
+        Log.d("MealNameDao", "Deleted meal name with id: " + id);
+    }
+
+    // ========================= UPDATE ========================= //
+
+    public void updateMealName(long mealId, String newName) {
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.MEAL_NAME, newName);
+
+        db.update(AppDataBase.MEAL_NAME_TABLE, values, AppDataBase.MEAL_NAME_ID + " = ?", new String[]{String.valueOf(mealId)});
+        Log.d("MealNameDao", "Updated meal name with id: " + mealId);
+    }
+
+    // ========================= GET ========================= //
+
+    public MealNameModel getMealNameModelById(long id) {
         MealNameModel mealModel = null;
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    AppDataBase.MEAL_NAME_TABLE,
+                    null,
+                    AppDataBase.MEAL_NAME_ID + " = ?",
+                    new String[]{String.valueOf(id)},
+                    null,
+                    null,
+                    null
+            );
 
-        Cursor cursor = db.query(
-                MEAL_NAME_TABLE,
-                null,
-                MEAL_NAME_ID + " = ?",
-                new String[]{String.valueOf(id)},
-                null,
-                null,
-                null
-        );
-
-        if (cursor != null && cursor.moveToFirst()) {
-            int mealId = cursor.getInt(cursor.getColumnIndexOrThrow(MEAL_NAME_ID));
-            String name = cursor.getString(cursor.getColumnIndexOrThrow(MEAL_NAME));
-            String data = cursor.getString(cursor.getColumnIndexOrThrow(MEAL_DATA)); // mealData
-
-            mealModel = new MealNameModel(mealId, name, data);
-            cursor.close();
+            if (cursor.moveToFirst()) {
+                mealModel = new MealNameModel(
+                        cursor.getInt(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_NAME_ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_NAME)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_DATA))
+                );
+            }
+        } finally {
+            if (cursor != null) cursor.close();
         }
-
-        db.close();
         return mealModel;
+    }
+
+    public String getMealNameById(long id) {
+        String name = null;
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    AppDataBase.MEAL_NAME_TABLE,
+                    new String[]{AppDataBase.MEAL_NAME},
+                    AppDataBase.MEAL_NAME_ID + " = ?",
+                    new String[]{String.valueOf(id)},
+                    null,
+                    null,
+                    null
+            );
+
+            if (cursor.moveToFirst()) {
+                name = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_NAME));
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return name;
+    }
+
+    public List<Integer> getMealNamesIdsByDate(String date) {
+        List<Integer> idList = new ArrayList<>();
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT " + AppDataBase.MEAL_NAME_ID +
+                            " FROM " + AppDataBase.MEAL_NAME_TABLE +
+                            " WHERE " + AppDataBase.MEAL_DATA + " = ?",
+                    new String[]{date}
+            );
+
+            if (cursor.moveToFirst()) {
+                do {
+                    int id = cursor.getInt(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_NAME_ID));
+                    idList.add(id);
+                } while (cursor.moveToNext());
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return idList;
+    }
+
+    public List<MealNameModel> getAllMealNames() {
+        List<MealNameModel> nameList = new ArrayList<>();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    AppDataBase.MEAL_NAME_TABLE,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            if (cursor.moveToFirst()) {
+                do {
+                    MealNameModel model = new MealNameModel(
+                            cursor.getInt(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_NAME_ID)),
+                            cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_NAME)),
+                            cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_DATA))
+                    );
+                    nameList.add(model);
+                } while (cursor.moveToNext());
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return nameList;
+    }
+
+    // ========================= CHECK EXISTENCE ========================= //
+
+    public boolean checkIfMealExist(String name, String date) {
+        boolean exists = false;
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT 1 FROM " + AppDataBase.MEAL_NAME_TABLE +
+                            " WHERE " + AppDataBase.MEAL_NAME + " = ? AND " + AppDataBase.MEAL_DATA + " = ? LIMIT 1",
+                    new String[]{name, date}
+            );
+            exists = cursor.moveToFirst();
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return exists;
+    }
+
+    // ========================= LAST INSERTED ID ========================= //
+
+    public long getLastInsertedMealNameId() {
+        long id = -1;
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery(
+                    "SELECT MAX(" + AppDataBase.MEAL_NAME_ID + ") FROM " + AppDataBase.MEAL_NAME_TABLE,
+                    null
+            );
+            if (cursor.moveToFirst()) {
+                id = cursor.getLong(0);
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return id;
     }
 }

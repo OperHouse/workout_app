@@ -194,7 +194,7 @@ public class ActivityGoalFragment extends Fragment {
                 caloriesToBurn
         );
 
-        goalDao.insertGoal(newGoal); // добавляем в базу
+        goalDao.addGoal(newGoal); // добавляем в базу
 
         Toast.makeText(requireContext(), "Цели активности сохранены.", Toast.LENGTH_SHORT).show();
 
