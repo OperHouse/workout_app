@@ -1,99 +1,98 @@
 package com.example.workoutapp.Data.NutritionDao;
 
-
 import static com.example.workoutapp.Data.Tables.AppDataBase.CONNECTING_MEAL_FOOD_ID;
 import static com.example.workoutapp.Data.Tables.AppDataBase.CONNECTING_MEAL_NAME_ID;
 import static com.example.workoutapp.Data.Tables.AppDataBase.CONNECTING_MEAL_TABLE;
 
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
-import com.example.workoutapp.Data.Tables.AppDataBase;
+import net.sqlcipher.database.SQLiteDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ConnectingMealDao {
-    private final AppDataBase dbHelper;
-    public ConnectingMealDao(AppDataBase dbHelper) {
-        this.dbHelper = dbHelper;
+
+    private final SQLiteDatabase db;
+
+    public ConnectingMealDao(SQLiteDatabase db) {
+        this.db = db;
     }
 
+    // ========================= ADD CONNECTIONS ========================= //
+
+    // Подключение нескольких продуктов к одному приёму пищи
     public void connecting(long mealId, List<Long> foodIds) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-
         for (Long foodId : foodIds) {
-            ContentValues values = new ContentValues();
-            values.put(AppDataBase.CONNECTING_MEAL_NAME_ID, mealId);
-            values.put(AppDataBase.CONNECTING_MEAL_FOOD_ID, foodId);
-            db.insert(AppDataBase.CONNECTING_MEAL_TABLE, null, values);
+            connectingSingleFood(mealId, foodId);
         }
-
     }
 
-
-    public void connectingSingleFood(long mealId, long food_id) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
+    // Подключение одного продукта к приёму пищи
+    public void connectingSingleFood(long mealId, long foodId) {
         ContentValues values = new ContentValues();
-        values.put(AppDataBase.CONNECTING_MEAL_NAME_ID, mealId);
-        values.put(AppDataBase.CONNECTING_MEAL_FOOD_ID, food_id);
-        db.insert(AppDataBase.CONNECTING_MEAL_TABLE, null, values);
-        db.close();
+        values.put(CONNECTING_MEAL_NAME_ID, mealId);
+        values.put(CONNECTING_MEAL_FOOD_ID, foodId);
+        db.insert(CONNECTING_MEAL_TABLE, null, values);
+        Log.d("ConnectingMealDao", "Connected foodId " + foodId + " to mealId " + mealId);
     }
 
+    // ========================= GET CONNECTIONS ========================= //
 
-    public List<Long> getFoodIdsForMeal(int mealId) {
-        List<Long> eatIds = new ArrayList<>();
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
+    // Получаем список foodId для конкретного mealId
+    public List<Long> getFoodIdsForMeal(long mealId) {
+        List<Long> foodIds = new ArrayList<>();
+        Cursor cursor = null;
 
-        // Запрос на получение всех eatId для конкретного mealId
-        Cursor cursor = db.rawQuery(
-                "SELECT " + CONNECTING_MEAL_FOOD_ID + " FROM " + CONNECTING_MEAL_TABLE +
-                        " WHERE " + CONNECTING_MEAL_NAME_ID + " = ?",
-                new String[]{String.valueOf(mealId)}
-        );
+        try {
+            cursor = db.query(
+                    CONNECTING_MEAL_TABLE,
+                    new String[]{CONNECTING_MEAL_FOOD_ID},
+                    CONNECTING_MEAL_NAME_ID + " = ?",
+                    new String[]{String.valueOf(mealId)},
+                    null,
+                    null,
+                    null
+            );
 
-        Log.d("ConnectingMealDao", "Executing query for mealId: " + mealId);
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    long foodId = cursor.getLong(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_FOOD_ID));
+                    foodIds.add(foodId);
+                    Log.d("ConnectingMealDao", "Found foodId: " + foodId + " for mealId: " + mealId);
+                } while (cursor.moveToNext());
+            } else {
+                Log.d("ConnectingMealDao", "No foodIds found for mealId: " + mealId);
+            }
 
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                // Используем getLong для получения значения типа long
-                long eatId = cursor.getLong(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_FOOD_ID));
-                Log.d("ConnectingMealDao", "Found eatId: " + eatId);
-                eatIds.add(eatId); // Добавляем найденный eatId в список
-            } while (cursor.moveToNext());
-
-            cursor.close();
-        } else {
-            Log.d("ConnectingMealDao", "No eatIds found for mealId: " + mealId);
+        } finally {
+            if (cursor != null) cursor.close();
         }
 
-        db.close();
-
-        return eatIds;
+        return foodIds;
     }
 
-    public void deleteConnection(int mealId, int foodId) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
+    // ========================= DELETE CONNECTIONS ========================= //
+
+    // Удаление конкретной связи еды и приёма пищи
+    public void deleteConnection(long mealId, long foodId) {
         db.delete(
-                AppDataBase.CONNECTING_MEAL_TABLE,
-                AppDataBase.CONNECTING_MEAL_NAME_ID + " = ? AND " + AppDataBase.CONNECTING_MEAL_FOOD_ID + " = ?",
+                CONNECTING_MEAL_TABLE,
+                CONNECTING_MEAL_NAME_ID + " = ? AND " + CONNECTING_MEAL_FOOD_ID + " = ?",
                 new String[]{String.valueOf(mealId), String.valueOf(foodId)}
         );
-        db.close();
+        Log.d("ConnectingMealDao", "Deleted connection: mealId=" + mealId + ", foodId=" + foodId);
     }
 
-    public void deleteAllConnectionsForMeal(int mealId) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
+    // Удаление всех связей для конкретного приёма пищи
+    public void deleteAllConnectionsForMeal(long mealId) {
         db.delete(
-                AppDataBase.CONNECTING_MEAL_TABLE,
-                AppDataBase.CONNECTING_MEAL_NAME_ID + " = ?",
+                CONNECTING_MEAL_TABLE,
+                CONNECTING_MEAL_NAME_ID + " = ?",
                 new String[]{String.valueOf(mealId)}
         );
-        db.close();
+        Log.d("ConnectingMealDao", "Deleted all connections for mealId: " + mealId);
     }
-
-
 }

@@ -1,82 +1,107 @@
 package com.example.workoutapp.Data.NutritionDao;
 
-import static com.example.workoutapp.Data.Tables.AppDataBase.MEAL_PRESET_NAME;
-import static com.example.workoutapp.Data.Tables.AppDataBase.MEAL_PRESET_NAME_ID;
-import static com.example.workoutapp.Data.Tables.AppDataBase.MEAL_PRESET_NAME_TABLE;
-
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.Models.NutritionModels.MealNameModel;
 
+import net.sqlcipher.database.SQLiteDatabase;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class PresetMealNameDao {
-    private final AppDataBase dbHelper;
 
-    public PresetMealNameDao(AppDataBase dbHelper) {
-        this.dbHelper = dbHelper;
+    private final SQLiteDatabase db;
+
+    public PresetMealNameDao(SQLiteDatabase db) {
+        this.db = db;
     }
 
-    // Метод добавления названия пресета еды
-    // В PresetMealNameDao
+    // ========================= ADD ========================= //
     public long addMealPresetName(String name) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put("meal_preset_name", name); // замените на ваше реальное имя поля
-        long id = db.insert("meal_preset_name_table", null, values);
-        db.close();
-        return id;
+        values.put(AppDataBase.MEAL_PRESET_NAME, name);
+        return db.insert(AppDataBase.MEAL_PRESET_NAME_TABLE, null, values);
     }
 
-    // Метод удаления по ID
-    public void deleteMealPresetName(int id) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        db.delete(MEAL_PRESET_NAME_TABLE, MEAL_PRESET_NAME_ID + " = ?", new String[]{String.valueOf(id)});
-        db.close();
+    // ========================= DELETE ========================= //
+    public void deleteMealPresetName(long id) {
+        db.delete(AppDataBase.MEAL_PRESET_NAME_TABLE, AppDataBase.MEAL_PRESET_NAME_ID + " = ?", new String[]{String.valueOf(id)});
     }
 
-    // Получить все названия пресетов еды
+    // ========================= UPDATE ========================= //
+    public void updatePresetName(long presetId, String newName) {
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.MEAL_PRESET_NAME, newName);
+        db.update(AppDataBase.MEAL_PRESET_NAME_TABLE, values, AppDataBase.MEAL_PRESET_NAME_ID + " = ?", new String[]{String.valueOf(presetId)});
+    }
+
+    // ========================= GET ========================= //
+    public String getMealPresetNameById(long id) {
+        String presetName = null;
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    AppDataBase.MEAL_PRESET_NAME_TABLE,
+                    new String[]{AppDataBase.MEAL_PRESET_NAME},
+                    AppDataBase.MEAL_PRESET_NAME_ID + " = ?",
+                    new String[]{String.valueOf(id)},
+                    null,
+                    null,
+                    null
+            );
+
+            if (cursor.moveToFirst()) {
+                presetName = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_PRESET_NAME));
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return presetName;
+    }
+
     public List<MealNameModel> getAllMealPresetNames() {
         List<MealNameModel> nameList = new ArrayList<>();
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
 
-        Cursor cursor = db.query(
-                MEAL_PRESET_NAME_TABLE,
-                null, // все столбцы
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        try {
+            cursor = db.query(
+                    AppDataBase.MEAL_PRESET_NAME_TABLE,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
 
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                int id = cursor.getInt(cursor.getColumnIndexOrThrow(MEAL_PRESET_NAME_ID));
-                String name = cursor.getString(cursor.getColumnIndexOrThrow(MEAL_PRESET_NAME));
-
-                nameList.add(new MealNameModel(id, name));
-            } while (cursor.moveToNext());
-
-            cursor.close();
+            if (cursor.moveToFirst()) {
+                do {
+                    int id = cursor.getInt(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_PRESET_NAME_ID));
+                    String name = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_PRESET_NAME));
+                    nameList.add(new MealNameModel(id, name));
+                } while (cursor.moveToNext());
+            }
+        } finally {
+            if (cursor != null) cursor.close();
         }
 
-        db.close();
         return nameList;
     }
 
+    /**
+     * Получение всех preset meals с привязанными FoodModel
+     */
     public List<MealModel> getAllPresetMealModels(
             ConnectingMealPresetDao connectionDao,
             PresetEatDao eatDao
     ) {
         List<MealModel> presetMeals = new ArrayList<>();
-        List<MealNameModel> mealNames = getAllMealPresetNames(); // твой метод
+        List<MealNameModel> mealNames = getAllMealPresetNames();
 
         for (MealNameModel meal : mealNames) {
             int mealId = meal.getMeal_name_id();
@@ -87,7 +112,7 @@ public class PresetMealNameDao {
 
             // Получаем FoodModel по id
             List<FoodModel> eatList = new ArrayList<>();
-            for (int eatId : eatIds) {
+                for (Integer eatId : eatIds) {
                 FoodModel eat = eatDao.getPresetFoodById(eatId);
                 if (eat != null) {
                     eatList.add(eat);
@@ -99,38 +124,4 @@ public class PresetMealNameDao {
 
         return presetMeals;
     }
-    public void updatePresetName(int presetId, String newName) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put(MEAL_PRESET_NAME, newName);
-
-        db.update(MEAL_PRESET_NAME_TABLE, values, MEAL_PRESET_NAME_ID + " = ?", new String[]{String.valueOf(presetId)});
-        db.close();
-    }
-    public String getMealPresetNameById(int id) {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        String presetName = null;
-
-        Cursor cursor = db.query(
-                MEAL_PRESET_NAME_TABLE,
-                new String[]{MEAL_PRESET_NAME},
-                MEAL_PRESET_NAME_ID + " = ?",
-                new String[]{String.valueOf(id)},
-                null,
-                null,
-                null
-        );
-
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                presetName = cursor.getString(cursor.getColumnIndexOrThrow(MEAL_PRESET_NAME));
-            }
-            cursor.close();
-        }
-
-        db.close();
-        return presetName;
-    }
-
 }
