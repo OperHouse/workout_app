@@ -16,14 +16,19 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Adapters.WorkoutAdapters.OutsideAdapter;
+import com.example.workoutapp.Data.ProfileDao.ActivityGoalDao;
+import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.WorkoutDao.CARDIO_SET_DETAILS_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.STRENGTH_SET_DETAILS_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
+import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
+import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
 import com.example.workoutapp.Models.WorkoutModels.CardioSetModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Models.WorkoutModels.StrengthSetModel;
 import com.example.workoutapp.R;
+import com.example.workoutapp.Tools.ActivityRingView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -55,17 +60,13 @@ public class WorkoutFragment extends Fragment {
     }
 
 
-
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_workout, container, false);
 
         TextView dateTextWorkout = view.findViewById(R.id.workout_date_TV);
         Button addExBtn = view.findViewById(R.id.workout_add_ex_BTN);
         Button finalWorkBtn = view.findViewById(R.id.workout_finish_BTN);
-
-
 
 
         // Инициализируем recyclerView
@@ -85,8 +86,7 @@ public class WorkoutFragment extends Fragment {
             FragmentManager fragmentManager = getParentFragmentManager(); // или getFragmentManager()
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
-            fragmentTransaction
-                    .hide(this)  // Скрываем текущий WorkoutFragment
+            fragmentTransaction.hide(this)  // Скрываем текущий WorkoutFragment
                     .add(R.id.frameLayout, selectionFragment, "selection_ex") // Добавляем новый фрагмент с тегом
                     .addToBackStack(null)  // Чтобы можно было вернуться назад
                     .commit();
@@ -97,7 +97,7 @@ public class WorkoutFragment extends Fragment {
             cardioSetDetailsTableDao = new CARDIO_SET_DETAILS_TABLE_DAO(MainActivity.getAppDataBase());
             strengthSetDetailsTableDao = new STRENGTH_SET_DETAILS_TABLE_DAO(MainActivity.getAppDataBase());
 
-            for (ExerciseModel elm: exList) {
+            for (ExerciseModel elm : exList) {
                 if (elm.getSets().isEmpty()) {
                     workoutExerciseTableDao.deleteExercise(elm);
                     continue;
@@ -166,6 +166,20 @@ public class WorkoutFragment extends Fragment {
             Toast.makeText(requireContext(), "Тренировка завершена!", Toast.LENGTH_SHORT).show();
         });
 
+        ActivityRingView activityRingView = view.findViewById(R.id.activityRing);
+
+        // Находим контейнеры, которые мы добавили через <include>
+        View stepsCard = view.findViewById(R.id.statSteps);
+        View burnedCard = view.findViewById(R.id.statBurned);
+        View distanceCard = view.findViewById(R.id.statDistance);
+        View warning = view.findViewById(R.id.activity_warning_container);
+
+        // Связываем всё вместе
+        activityRingView.setupLabels(stepsCard, burnedCard, distanceCard, warning);
+
+        // Устанавливаем данные из БД
+        loadActivity(activityRingView);
+
         Calendar calendar = Calendar.getInstance();
         SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, d MMMM", new Locale("ru", "RU"));
         String formattedDate = dateFormat.format(calendar.getTime());
@@ -202,6 +216,43 @@ public class WorkoutFragment extends Fragment {
             assert getView() != null;
             updateUI(getView(), exList);
         }
+    }
+
+    private void loadActivity(ActivityRingView ringView) {
+
+        DailyActivityTrackingDao activityDao = new DailyActivityTrackingDao(MainActivity.getAppDataBase());
+
+        ActivityGoalDao goalDao = new ActivityGoalDao(MainActivity.getAppDataBase());
+
+        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().getTime());
+
+        DailyActivityTrackingModel activity = activityDao.getActivityByDate(today);
+
+        int steps = activity != null ? activity.getTrackingActivitySteps() : 0;
+        int burned = activity != null ? (int) activity.getTrackingCaloriesBurned() : 0;
+
+
+        ActivityGoalModel goal = goalDao.getLatestGoal();
+
+        int stepsGoal;
+        int burnedGoal;
+        boolean isDefaultGoals;
+
+        if (goal != null) {
+            stepsGoal = goal.getStepsGoal();
+            burnedGoal = goal.getCaloriesToBurn();
+            isDefaultGoals = false;
+        } else {
+            stepsGoal = 10000;
+            burnedGoal = 300;
+            isDefaultGoals = true;
+        }
+
+
+        double distance = steps * 0.75 / 1000.0;
+
+
+        ringView.setActivityData(steps, stepsGoal, burned, burnedGoal, distance, isDefaultGoals);
     }
 
 
