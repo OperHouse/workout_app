@@ -1,11 +1,16 @@
 package com.example.workoutapp.Data.Tables;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import net.sqlcipher.database.SQLiteDatabase;
+import net.sqlcipher.database.SQLiteOpenHelper;
+
+
+
 public class AppDataBase extends SQLiteOpenHelper {
+
+    private SQLiteDatabase database;
 
     private static final String DB_NAME = "WorkoutApp.db";
     private static final int DB_VERSION = 3;
@@ -14,6 +19,7 @@ public class AppDataBase extends SQLiteOpenHelper {
     // Конструктор private для реализации Singleton
     private AppDataBase(Context context) {
         super(context.getApplicationContext(), DB_NAME, null, DB_VERSION);
+        SQLiteDatabase.loadLibs(context);
     }
 
     // Потокобезопасный метод получения экземпляра базы
@@ -33,12 +39,7 @@ public class AppDataBase extends SQLiteOpenHelper {
 
     // Проверка состояния (для использования во фрагментах)
     public boolean isDbOpen() {
-        try {
-            SQLiteDatabase db = this.getReadableDatabase();
-            return db != null && db.isOpen();
-        } catch (Exception e) {
-            return false;
-        }
+        return database != null && database.isOpen();
     }
 
     // ======================== КОНСТАНТЫ ТАБЛИЦ ======================== //

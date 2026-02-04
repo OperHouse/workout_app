@@ -1,11 +1,14 @@
 package com.example.workoutapp.Adapters.NutritionAdapters;
 
+import static com.google.android.material.internal.ViewUtils.hideKeyboard;
+
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -14,7 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
@@ -30,8 +33,7 @@ import com.example.workoutapp.Tools.OnMealUpdatedListener;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
-import org.jetbrains.annotations.Contract;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
@@ -90,6 +92,7 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
 
     }
 
+    @SuppressLint({"ClickableViewAccessibility", "RestrictedApi"})
     private void showEditFoodDialog(FoodModel foodElm, int position) {
         Dialog dialog = new Dialog(context);
         dialog.setContentView(R.layout.amount_dialog);
@@ -104,6 +107,7 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
         TextInputLayout dropdownOutVisibility = dialog.findViewById(R.id.fragment_create_food_amound_food_dropdown_TIL);
         Button updateBtn = dialog.findViewById(R.id.nutrition_create_D_BTN);
         ImageButton closeBtn = dialog.findViewById(R.id.nutrition_close_D_BTN);
+        ConstraintLayout DialogRootLayout = dialog.findViewById(R.id.amount_dialog_root_CL);
 
         TextView proteinTV = dialog.findViewById(R.id.nutrition_protein_label_D_TV);
         TextView fatTV = dialog.findViewById(R.id.nutrition_fat_label_D_TV);
@@ -112,23 +116,39 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
         NutritionCircleView circle = dialog.findViewById(R.id.nutrition_circle_D_CUSTOM);
 
         title.setText("Изменить: " + foodElm.getFood_name());
-        String type = foodElm.getMeasurement_type().toLowerCase();
-        amountLabel.setText("Количество пищи в (" + type + ")");
+        String measurementType = foodElm.getMeasurement_type().toLowerCase();
+        amountLabel.setText("Количество пищи в (" + measurementType + ")");
+
+        DialogRootLayout.setOnTouchListener((v, event) -> {
+            dropdownInner.clearFocus();
+            textInputEditText.clearFocus();
+            return false;
+        });
+        textInputEditText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT) {
+                hideKeyboard(v);
+                v.clearFocus();
+                return true;
+            }
+            return false;
+        });
 
         // UI логика в зависимости от типа измерения
-        if (type.contains("г") || type.contains("мл")) {
+        if (measurementType.contains("гр") || measurementType.contains("мл")) {
             textInputEditText.setVisibility(View.VISIBLE);
             dropdownOutVisibility.setVisibility(View.GONE);
             textInputEditText.setText(String.valueOf(foodElm.getAmount()));
         } else {
-            textInputEditText.setVisibility(View.GONE);
-            dropdownInner.setVisibility(View.VISIBLE);
+           textInputEditText.setVisibility(View.GONE);
+            dropdownOutVisibility.setVisibility(View.VISIBLE);
 
             // Настроим автодополнение
-            List<String> options = new java.util.ArrayList<>();
-            for (int i = 1; i <= 50; i++) options.add(i + " " + type);
+            List<String> options = new ArrayList<>();
+            for (int i = 1; i <= 50; i++) {
+                options.add(i + " " + measurementType);
+            }
 
-            ArrayAdapter<String> adapter = createStyledAdapter(context, options);
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(context,R.layout.spinners_style, options);
 
             // Используем универсальный метод для настройки autoComplete
             setupAutoComplete(
@@ -159,6 +179,7 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
             }
             @Override public void afterTextChanged(android.text.Editable s) {}
         });
+
 
         updateBtn.setText("Обновить");
         updateBtn.setOnClickListener(v -> {
@@ -249,7 +270,7 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
                     Toast.makeText(context, "Еда удалена", Toast.LENGTH_SHORT).show();
 
                     if (listener != null) {
-                        listener.onFoodDeleted(foodToDelete.getFood_id());
+                        listener.onFoodDeleted(foodToDelete.getFood_id(), meal_id);
                     }
 
                     ((NutritionFragment) fragment).removeFoodFromMeal();
@@ -338,20 +359,6 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
                 autoCompleteView.dismissDropDown();
             }
         });
-    }
-
-    @NonNull
-    @Contract("_, _ -> new")
-    private ArrayAdapter<String> createStyledAdapter(Context context, List<String> items) {
-        return new ArrayAdapter<String>(context, R.layout.item_dropdown_small_padding, items) {
-            @NonNull
-            @Override
-            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-                View view = super.getView(position, convertView, parent);
-                view.setBackgroundColor(ContextCompat.getColor(context, R.color.light_gray2));
-                return view;
-            }
-        };
     }
 
     @SuppressLint("DefaultLocale")

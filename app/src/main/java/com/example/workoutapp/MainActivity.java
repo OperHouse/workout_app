@@ -11,8 +11,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.example.workoutapp.Data.EncryptionTools.DatabaseProvider;
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
-import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Fragments.NutritionFragments.NutritionFragment;
 import com.example.workoutapp.Fragments.ProfileFragments.ProfileFragment;
@@ -22,6 +22,8 @@ import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
 import com.example.workoutapp.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import net.sqlcipher.database.SQLiteDatabase;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +36,7 @@ public class MainActivity extends AppCompatActivity
 
     private static final Map<String, Fragment> fragmentCache = new HashMap<>();
     private ActivityMainBinding bindingMain;
-    private static AppDataBase appDataBase;
+    private static SQLiteDatabase appDataBase;
     private BottomNavigationView bottomNavigationView;
     private List<ExerciseModel> cachedExercises;
 
@@ -51,7 +53,9 @@ public class MainActivity extends AppCompatActivity
         bottomNavigationView = findViewById(R.id.bottomNavView);
         bindingMain.bottomNavView.setBackground(null);
 
-        appDataBase = AppDataBase.getInstance(getApplicationContext());
+        appDataBase = DatabaseProvider.get(this);
+        //DatabaseExporter.exportDatabase(this, "WorkoutApp_plain.db");
+
 
         loadExercisesFromDb();
         setInitialActiveButton();
@@ -182,7 +186,7 @@ public class MainActivity extends AppCompatActivity
         return cachedExercises;
     }
 
-    public static AppDataBase getAppDataBase() {
+    public static SQLiteDatabase getAppDataBase() {
         if (appDataBase == null) {
         }
         return appDataBase;

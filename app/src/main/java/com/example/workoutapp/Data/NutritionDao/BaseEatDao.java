@@ -12,150 +12,134 @@ import static com.example.workoutapp.Data.Tables.AppDataBase.BASE_FOOD_TABLE;
 
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 
-import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
+
+import net.sqlcipher.database.SQLiteDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class BaseEatDao {
-    private final AppDataBase dbHelper;
 
-    public BaseEatDao(AppDataBase dbHelper) {this.dbHelper = dbHelper;}
+    private final SQLiteDatabase db;
 
-    // Метод добавления еды
+    public BaseEatDao(SQLiteDatabase db) {
+        this.db = db;
+    }
+
+    // Добавление еды
     public void addEat(FoodModel eat) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(BASE_FOOD_NAME, eat.getFood_name());
-        values.put(BASE_FOOD_PROTEIN, eat.getProtein());
-        values.put(BASE_FOOD_FAT, eat.getFat());
-        values.put(BASE_FOOD_CARB, eat.getCarb());
-        values.put(BASE_FOOD_CALORIES, eat.getCalories());
-        values.put(BASE_FOOD_AMOUNT, eat.getAmount());
-        values.put(BASE_FOOD_MEASUREMENT_TYPE, eat.getMeasurement_type());
-
+        ContentValues values = getContentValues(eat);
         db.insert(BASE_FOOD_TABLE, null, values);
-        db.close();
     }
 
-    public long addFoodReturnID(FoodModel eat) { // <-- Измените тип возвращаемого значения на long
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(BASE_FOOD_NAME, eat.getFood_name());
-        values.put(BASE_FOOD_PROTEIN, eat.getProtein());
-        values.put(BASE_FOOD_FAT, eat.getFat());
-        values.put(BASE_FOOD_CARB, eat.getCarb());
-        values.put(BASE_FOOD_CALORIES, eat.getCalories());
-        values.put(BASE_FOOD_AMOUNT, eat.getAmount());
-        values.put(BASE_FOOD_MEASUREMENT_TYPE, eat.getMeasurement_type());
-
-        long id = db.insert(BASE_FOOD_TABLE, null, values); // <-- insert возвращает ID
-        db.close();
-        return id; // <-- Возвращаем ID
+    // Добавление еды с возвратом ID
+    public long addFoodReturnID(FoodModel eat) {
+        ContentValues values = getContentValues(eat);
+        return db.insert(BASE_FOOD_TABLE, null, values);
     }
 
-    // Метод удаления еды по ID
+    // Удаление еды по ID
     public void deleteEat(int eatId) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
         db.delete(BASE_FOOD_TABLE, BASE_FOOD_ID + " = ?", new String[]{String.valueOf(eatId)});
-        db.close();
     }
 
-    // Метод получения всех записей еды
+    // Получение всех продуктов
     public List<FoodModel> getAllEat() {
         List<FoodModel> eatList = new ArrayList<>();
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
 
-        Cursor cursor = db.query(
-                BASE_FOOD_TABLE,
-                null, // все столбцы
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+        try {
+            cursor = db.query(
+                    BASE_FOOD_TABLE,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
 
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                int id = cursor.getInt(cursor.getColumnIndexOrThrow(BASE_FOOD_ID));
-                String name = cursor.getString(cursor.getColumnIndexOrThrow(BASE_FOOD_NAME));
-                double protein = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_PROTEIN));
-                double fat = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_FAT));
-                double carb = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_CARB));
-                double calories = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_CALORIES));
-                int amount = cursor.getInt(cursor.getColumnIndexOrThrow(BASE_FOOD_AMOUNT));
-                String measurementType = cursor.getString(cursor.getColumnIndexOrThrow(BASE_FOOD_MEASUREMENT_TYPE));
-
-                FoodModel eat = new FoodModel(id, name, protein, fat, carb, calories, amount, measurementType);
-                eatList.add(eat);
-            } while (cursor.moveToNext());
-
-            cursor.close();
+            if (cursor != null && cursor.moveToFirst()) {
+                do {
+                    eatList.add(getFoodModelFromCursor(cursor));
+                } while (cursor.moveToNext());
+            }
+        } finally {
+            if (cursor != null) cursor.close();
         }
 
-        db.close();
         return eatList;
     }
 
-    public int getLastInsertedFoodId() {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        int id = -1;
-
-        // Получаем ID последней вставленной строки
-        Cursor cursor = db.rawQuery("SELECT last_insert_rowid()", null);
-
-        if (cursor != null && cursor.moveToFirst()) {
-            id = cursor.getInt(0);
-            cursor.close();
-        }
-
-        db.close();
-        return id;
-    }
-    /**
-     * Получает объект FoodModel по его ID из таблицы BASE_FOOD_TABLE.
-     * @param foodId ID продукта, который нужно получить.
-     * @return Объект FoodModel или null, если продукт не найден.
-     */
+    // Получение продукта по ID
     public FoodModel getFoodById(long foodId) {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
         FoodModel eat = null;
+        Cursor cursor = null;
 
-        Cursor cursor = db.query(
-                BASE_FOOD_TABLE,
-                null, // Все столбцы
-                BASE_FOOD_ID + " = ?", // Условие WHERE: фильтруем по ID
-                new String[]{String.valueOf(foodId)},
-                null,
-                null,
-                null
-        );
+        try {
+            cursor = db.query(
+                    BASE_FOOD_TABLE,
+                    null,
+                    BASE_FOOD_ID + " = ?",
+                    new String[]{String.valueOf(foodId)},
+                    null,
+                    null,
+                    null
+            );
 
-        // Если курсор содержит хотя бы одну строку (продукт найден)
-        if (cursor != null && cursor.moveToFirst()) {
-            // Извлечение данных из курсора
-            int id = cursor.getInt(cursor.getColumnIndexOrThrow(BASE_FOOD_ID));
-            String name = cursor.getString(cursor.getColumnIndexOrThrow(BASE_FOOD_NAME));
-            double protein = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_PROTEIN));
-            double fat = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_FAT));
-            double carb = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_CARB));
-            double calories = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_CALORIES));
-            int amount = cursor.getInt(cursor.getColumnIndexOrThrow(BASE_FOOD_AMOUNT));
-            String measurementType = cursor.getString(cursor.getColumnIndexOrThrow(BASE_FOOD_MEASUREMENT_TYPE));
-
-            // Создание объекта FoodModel
-            eat = new FoodModel(id, name, protein, fat, carb, calories, amount, measurementType);
-
-            cursor.close();
+            if (cursor != null && cursor.moveToFirst()) {
+                eat = getFoodModelFromCursor(cursor);
+            }
+        } finally {
+            if (cursor != null) cursor.close();
         }
 
-        db.close();
         return eat;
     }
 
+    // Получение ID последней вставленной строки
+    public long getLastInsertedFoodId() {
+        long id = -1;
+        Cursor cursor = null;
 
+        try {
+            cursor = db.rawQuery("SELECT last_insert_rowid()", null);
+            if (cursor != null && cursor.moveToFirst()) {
+                id = cursor.getLong(0);
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+
+        return id;
+    }
+
+    // ========================= HELPERS ========================= //
+
+    private ContentValues getContentValues(FoodModel eat) {
+        ContentValues values = new ContentValues();
+        values.put(BASE_FOOD_NAME, eat.getFood_name());
+        values.put(BASE_FOOD_PROTEIN, eat.getProtein());
+        values.put(BASE_FOOD_FAT, eat.getFat());
+        values.put(BASE_FOOD_CARB, eat.getCarb());
+        values.put(BASE_FOOD_CALORIES, eat.getCalories());
+        values.put(BASE_FOOD_AMOUNT, eat.getAmount());
+        values.put(BASE_FOOD_MEASUREMENT_TYPE, eat.getMeasurement_type());
+        return values;
+    }
+
+    private FoodModel getFoodModelFromCursor(Cursor cursor) {
+        int id = cursor.getInt(cursor.getColumnIndexOrThrow(BASE_FOOD_ID));
+        String name = cursor.getString(cursor.getColumnIndexOrThrow(BASE_FOOD_NAME));
+        double protein = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_PROTEIN));
+        double fat = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_FAT));
+        double carb = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_CARB));
+        double calories = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_CALORIES));
+        int amount = cursor.getInt(cursor.getColumnIndexOrThrow(BASE_FOOD_AMOUNT));
+        String measurementType = cursor.getString(cursor.getColumnIndexOrThrow(BASE_FOOD_MEASUREMENT_TYPE));
+
+        return new FoodModel(id, name, protein, fat, carb, calories, amount, measurementType);
+    }
 }

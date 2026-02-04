@@ -5,7 +5,6 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -185,7 +184,7 @@ public class FoodAdapter extends RecyclerView.Adapter<FoodAdapter.MyViewHolder> 
         TextView pfcText;
         TextView eatCalories;
         ConstraintLayout eat_elm_card_CL;
-        LinearLayout foodCaloriesContainer_D_LL;
+        ConstraintLayout foodCaloriesContainer_D_LL;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);

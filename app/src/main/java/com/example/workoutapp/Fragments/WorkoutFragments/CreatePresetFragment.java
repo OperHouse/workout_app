@@ -315,7 +315,7 @@ public class CreatePresetFragment extends Fragment implements OnExItemClickListe
             }
 
             if (currentState == WorkoutMode.CREATE_PRESET) {
-                long newPresetId = presetNameDao.addPresetName(presetName);
+                long newPresetId = presetNameDao.addPreset(presetName);
                 for (BaseExModel exercise : selectedExercises) {
                     connectingPresetDao.addPresetExercise(newPresetId, exercise.getBase_ex_id());
                 }

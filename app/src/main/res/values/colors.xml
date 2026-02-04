@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <color name="black">#FF000000</color>
+    <color name="black2">#373C45</color>
     <color name="white">#FFFFFFFF</color>
     <color name="bottom_navigation_item_color">#11111b</color>
     <color name="light_gray">#aaaaaa</color>
@@ -16,6 +17,7 @@
     <color name="black_overlay">#66000000</color>
     <color name="yellow">#FFEB3B</color>
     <color name="red">#F44336</color>
+    <color name="pink">#F48FB1</color>
     <color name="lime">#00FF00</color>
     <color name="protein_red">#D32F2F</color>
     <color name="error_red">#AE2F4F</color>

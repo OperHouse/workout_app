@@ -104,7 +104,6 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
                 // 2. Создаем новый фрагмент
                 Fragment newPresetFragment = new CreateMealPresetFragment(meal_id, NutritionMode.ADD_MEAL);
 
-                // 🔥 ИСПРАВЛЕНИЕ: Используем HIDE и ADD
                 fragmentTransaction
                         .hide(fragment) // Скрываем ТЕКУЩИЙ фрагмент, чтобы сохранить его состояние
                         .add(R.id.frameLayout, newPresetFragment, "create_meal_preset_add_food") // Добавляем новый фрагмент
@@ -122,9 +121,14 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
             }
 
             @Override
-            public void onFoodDeleted(int foodId) {
+            public void onFoodDeleted(int foodId, int mealID) {
                 mealElm.removeFoodById(foodId);
                 notifyItemChanged(position);
+                ((NutritionFragment) fragment).removeFoodFromMealByID(foodId, mealID);
+
+                if (fragment instanceof NutritionFragment) {
+                    ((NutritionFragment) fragment).syncDailyTotals();
+                }
             }
         });
 
@@ -208,11 +212,6 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
         double totalCarb = 0;
         double totalCalories = 0;
 
-        if (mealElm.getMeal_food_list() == null || mealElm.getMeal_food_list().isEmpty()) {
-            // Опционально: сбросить макросы в 0 или скрыть представление, если это необходимо
-            // holder.tvProtein.setText("0g");
-            return;
-        }
 
         for (FoodModel eat : mealElm.getMeal_food_list()) {
             totalProtein += eat.getProtein();
@@ -221,17 +220,20 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
             totalCalories += eat.getCalories();
         }
 
+
         @SuppressLint("DefaultLocale") String protein = String.format("%.1f", totalProtein);
         @SuppressLint("DefaultLocale") String fat = String.format("%.1f", totalFat);
         @SuppressLint("DefaultLocale") String carb = String.format("%.1f", totalCarb);
         @SuppressLint("DefaultLocale") String calories = String.format("%.0f", totalCalories);
 
 
+        holder.KKAL_TV.setVisibility(View.VISIBLE);
+        holder.PFC_TV.setVisibility(View.VISIBLE);
         holder.KKAL_TV.setText("Калории: " + calories);
         holder.PFC_TV.setText("Б: " + protein + " / Ж: " + fat + " / У: " + carb);
-    }
 
-    ;
+
+    }
 
     public void updateFoodInMeal(int mealId, FoodModel updatedFood) {
         for (int i = 0; i < allMealList.size(); i++) {
