@@ -1,12 +1,14 @@
 package com.example.workoutapp
 
 import android.content.Context
+import android.health.connect.datatypes.ExerciseCompletionGoal
 import android.util.Log
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.request.AggregateRequest
+import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,36 +29,55 @@ class HealthConnectReader(context: Context) {
 
     fun readToday(callback: (DailyHealthData) -> Unit) {
         CoroutineScope(Dispatchers.IO).launch {
-            // Вычисляем начало текущего дня в системном часовом поясе
             val startOfDay = ZonedDateTime.now(ZoneId.systemDefault())
                 .toLocalDate()
                 .atStartOfDay(ZoneId.systemDefault())
                 .toInstant()
             val now = Instant.now()
+            val filter = TimeRangeFilter.between(startOfDay, now)
 
             try {
-                // Используем агрегацию для получения суммы шагов и калорий одним запросом
-                val response = client.aggregate(
+                // 1. Читаем шаги
+                val stepsResponse = client.aggregate(
                     AggregateRequest(
-                        metrics = setOf(
-                            StepsRecord.COUNT_TOTAL,
-                            ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL
-                        ),
-                        timeRangeFilter = TimeRangeFilter.between(startOfDay, now)
+                        metrics = setOf(StepsRecord.COUNT_TOTAL),
+                        timeRangeFilter = filter
                     )
                 )
+                val totalSteps = stepsResponse[StepsRecord.COUNT_TOTAL]?.toInt() ?: 0
 
-                // Извлекаем данные (если данных нет, вернется null, поэтому используем ?: 0)
-                val totalSteps = response[StepsRecord.COUNT_TOTAL]?.toInt() ?: 0
-                val activityTotalCalories = response[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories?.toFloat() ?: 0f
+                // 2. Читаем АКТИВНЫЕ калории (энергия от упражнений и движения)
+                val activeCalsResponse = client.aggregate(
+                    AggregateRequest(
+                        metrics = setOf(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL),
+                        timeRangeFilter = filter
+                    )
+                )
+                val activeCals = activeCalsResponse[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories?.toFloat() ?: 0f
 
-                Log.d("HealthConnectReader", "Final data - Steps: $totalSteps, Cals: $activityTotalCalories")
+                // 3. Читаем ОБЩИЕ калории (активные + базовый метаболизм BMR)
+                val totalCalsResponse = client.aggregate(
+                    AggregateRequest(
+                        metrics = setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL),
+                        timeRangeFilter = filter
+                    )
+                )
+                val totalCals = totalCalsResponse[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.toFloat() ?: 0f
+
+                Log.d("HealthConnectReader", "Steps: $totalSteps")
+                Log.d("HealthConnectReader", "Active Calories: $activeCals")
+                Log.d("HealthConnectReader", "Total Calories (inc. Metabolism): $totalCals")
+
+                // Логика выбора:
+                // Если активные калории есть (> 0), обычно лучше использовать их для "эквивалента еды".
+                // Если активных 0, но общие есть, можно использовать общие (но помните, что там сидит метаболизм).
+                val finalCalories = if (activeCals > 0) activeCals else totalCals
 
                 withContext(Dispatchers.Main) {
-                    callback(DailyHealthData(totalSteps, activityTotalCalories))
+                    callback(DailyHealthData(totalSteps, finalCalories))
                 }
             } catch (e: Exception) {
-                Log.e("HealthConnectReader", "Ошибка при чтении данных: ${e.message}")
+                Log.e("HealthConnectReader", "Ошибка при чтении: ${e.message}")
                 withContext(Dispatchers.Main) {
                     callback(DailyHealthData(0, 0f))
                 }

@@ -64,6 +64,8 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
     implementation("com.google.android.material:material:1.13.0")
 
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
+
 
     implementation("androidx.paging:paging-common:3.3.6")
 }
