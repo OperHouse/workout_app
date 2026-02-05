@@ -6,6 +6,8 @@
         tools:ignore="HealthConnectPolicy" />
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"
         tools:ignore="HealthConnectPolicy" />
+    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"
+        tools:ignore="HealthConnectPolicy" />
 
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
@@ -44,6 +46,16 @@
                 <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 
