@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,6 +22,7 @@ import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.WorkoutDao.CARDIO_SET_DETAILS_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.STRENGTH_SET_DETAILS_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
+import com.example.workoutapp.Fragments.FoodEquivalentFragment;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
@@ -35,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 public class WorkoutFragment extends Fragment {
 
@@ -45,6 +48,13 @@ public class WorkoutFragment extends Fragment {
     private WORKOUT_EXERCISE_TABLE_DAO workoutExerciseTableDao;
     private CARDIO_SET_DETAILS_TABLE_DAO cardioSetDetailsTableDao;
     private STRENGTH_SET_DETAILS_TABLE_DAO strengthSetDetailsTableDao;
+
+    private float currentBurnedCalories = 0f;
+    private float currentDistance = 0f;
+    private int currentSteps = 0;
+
+    private int selectedCardFoodIcon = R.drawable.ic_donut; // Иконка по умолчанию
+    private int selectedCardFoodCal = 250;
 
     public WorkoutFragment() {
         // Required empty public constructor
@@ -59,6 +69,21 @@ public class WorkoutFragment extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
+    private static class FoodPreview {
+        int iconRes;
+        int calPerUnit;
+
+        FoodPreview(int iconRes, int cal) {
+            this.iconRes = iconRes;
+            this.calPerUnit = cal;
+        }
+    }
+
+    // Поля класса WorkoutFragment
+    private FoodPreview selectedFood;
+    private ImageView foodIconIv;
+    private TextView foodCountTv;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -67,6 +92,9 @@ public class WorkoutFragment extends Fragment {
         TextView dateTextWorkout = view.findViewById(R.id.workout_date_TV);
         Button addExBtn = view.findViewById(R.id.workout_add_ex_BTN);
         Button finalWorkBtn = view.findViewById(R.id.workout_finish_BTN);
+        LinearLayout foodBtn = view.findViewById(R.id.food_equivalent_LL);
+        foodIconIv = view.findViewById(R.id.card_food_icon);
+        foodCountTv = view.findViewById(R.id.card_food_count);
 
 
         // Инициализируем recyclerView
@@ -91,6 +119,27 @@ public class WorkoutFragment extends Fragment {
                     .addToBackStack(null)  // Чтобы можно было вернуться назад
                     .commit();
         });
+
+
+
+        setupRandomFood(view);
+
+        foodBtn.setOnClickListener(v -> {
+            // Передаем актуальные глобальные переменные, которые обновились в loadActivity
+            FoodEquivalentFragment fragment = FoodEquivalentFragment.newInstance(
+                    currentBurnedCalories,
+                    currentDistance,
+                    currentSteps,
+                    selectedCardFoodIcon
+            );
+
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.frameLayout, fragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
+
+
 
         finalWorkBtn.setOnClickListener(v -> {
             workoutExerciseTableDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
@@ -157,6 +206,7 @@ public class WorkoutFragment extends Fragment {
                     workoutExerciseTableDao.markExerciseAsFinished(elm.getExercise_id()); // Помечаем как завершённое
                 }
             }
+
 
             // Обновляем список упражнений, чтобы отобразить завершённые
             exList = workoutExerciseTableDao.getExByState("unfinished");
@@ -228,8 +278,17 @@ public class WorkoutFragment extends Fragment {
 
         DailyActivityTrackingModel activity = activityDao.getActivityByDate(today);
 
-        int steps = activity != null ? activity.getTrackingActivitySteps() : 0;
-        int burned = activity != null ? (int) activity.getTrackingCaloriesBurned() : 0;
+        this.currentSteps = activity != null ? activity.getTrackingActivitySteps() : 0;
+        this.currentBurnedCalories = activity != null ?  activity.getTrackingCaloriesBurned() : 0f;
+        this.currentDistance = (float) (currentSteps * 0.75 / 1000.0);
+
+        // Расчет количества еды
+        if (selectedFood != null && currentBurnedCalories > 0) {
+            int count = (int) (currentBurnedCalories / selectedFood.calPerUnit);
+            foodCountTv.setText("x" + count);
+        } else {
+            foodCountTv.setText("x0");
+        }
 
 
         ActivityGoalModel goal = goalDao.getLatestGoal();
@@ -249,11 +308,33 @@ public class WorkoutFragment extends Fragment {
         }
 
 
-        double distance = steps * 0.75 / 1000.0;
-
-
-        ringView.setActivityData(steps, stepsGoal, burned, burnedGoal, distance, isDefaultGoals);
+        ringView.setActivityData(currentSteps, stepsGoal, (int) currentBurnedCalories, burnedGoal, currentDistance, isDefaultGoals);
     }
 
+    private void setupRandomFood(View view) {
+        // Список доступной еды
+        int[][] foodPool = {
+                {R.drawable.ic_donut, 250},
+                {R.drawable.ic_burger, 510},
+                {R.drawable.ic_pizza, 285},
+                {R.drawable.ic_chicken_leg, 215},
+                {R.drawable.ic_fries, 340},
+                {R.drawable.ic_ice_cream, 190},
+                {R.drawable.ic_nugget, 45}
+        };
+
+        int[] randomSelection = foodPool[new Random().nextInt(foodPool.length)];
+
+        // Инициализируем те самые переменные, которые используются везде
+        selectedCardFoodIcon = randomSelection[0];
+        selectedCardFoodCal = randomSelection[1];
+
+        // ВАЖНО: Инициализируем объект selectedFood, который проверяется в loadActivity
+        selectedFood = new FoodPreview(selectedCardFoodIcon, selectedCardFoodCal);
+
+        foodIconIv.setImageResource(selectedCardFoodIcon);
+    }
 
 }
+
+
