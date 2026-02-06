@@ -118,15 +118,23 @@
 
                     <include
                         android:id="@+id/statSteps"
-                        layout="@layout/item_activity_stat" />
+                        layout="@layout/item_activity_stat"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="6dp"/>
 
                     <include
                         android:id="@+id/statBurned"
-                        layout="@layout/item_activity_stat" />
+                        layout="@layout/item_activity_stat"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="6dp"/>
 
                     <include
                         android:id="@+id/statDistance"
-                        layout="@layout/item_activity_stat" />
+                        layout="@layout/item_activity_stat"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
 
                 </LinearLayout>
 
