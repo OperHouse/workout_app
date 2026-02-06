@@ -99,6 +99,16 @@ public class FoodEquivalentFragment extends Fragment {
         userAvatarIv = view.findViewById(R.id.user_avatar);
 
         view.findViewById(R.id.btn_back).setOnClickListener(v -> requireActivity().onBackPressed());
+        view.findViewById(R.id.statistic_BTN).setOnClickListener(v -> {
+            // 1. Создаем экземпляр фрагмента
+            ActivityStatisticFragment fragment = new ActivityStatisticFragment();
+
+            // 2. Выполняем транзакцию
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.frameLayout, fragment)
+                    .addToBackStack(null) // позволяет вернуться назад по кнопке "Back"
+                    .commit();
+        });
 
         // 1. Загрузка профиля (Имя + Фото)
         loadUserProfile();
