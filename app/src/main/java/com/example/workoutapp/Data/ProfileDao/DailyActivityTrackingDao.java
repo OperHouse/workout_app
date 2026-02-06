@@ -13,6 +13,9 @@ import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class DailyActivityTrackingDao {
 
     private final SQLiteDatabase db;
@@ -99,5 +102,32 @@ public class DailyActivityTrackingDao {
 
         cursor.close();
         return model;
+    }
+
+    // Получение списка активностей за диапазон дат (для кэширования пачек)
+    public List<DailyActivityTrackingModel> getActivityRange(String startDate, String endDate) {
+        List<DailyActivityTrackingModel> list = new ArrayList<>();
+
+        Cursor cursor = db.query(
+                DAILY_ACTIVITY_TRACKING_TABLE,
+                null,
+                DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE + " BETWEEN ? AND ?",
+                new String[]{startDate, endDate},
+                null, null,
+                DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE + " ASC"
+        );
+
+        if (cursor.moveToFirst()) {
+            do {
+                list.add(new DailyActivityTrackingModel(
+                        cursor.getInt(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS)),
+                        cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_CALORIES_BURN))
+                ));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return list;
     }
 }
