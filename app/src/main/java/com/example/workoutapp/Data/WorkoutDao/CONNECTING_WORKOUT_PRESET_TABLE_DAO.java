@@ -71,4 +71,8 @@ public class CONNECTING_WORKOUT_PRESET_TABLE_DAO {
         String[] whereArgs = {String.valueOf(presetId)};
         db.delete(AppDataBase.CONNECTING_WORKOUT_PRESET_TABLE, whereClause, whereArgs);
     }
+
+    public void deleteAll() {
+        db.delete(AppDataBase.CONNECTING_WORKOUT_PRESET_TABLE, null, null);
+    }
 }
