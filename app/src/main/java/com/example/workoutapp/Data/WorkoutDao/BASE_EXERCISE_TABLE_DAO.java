@@ -1,5 +1,7 @@
 package com.example.workoutapp.Data.WorkoutDao;
 
+import static com.example.workoutapp.Data.Tables.AppDataBase.BASE_EXERCISE_TABLE;
+
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -30,7 +32,7 @@ public class BASE_EXERCISE_TABLE_DAO {
         values.put(AppDataBase.BASE_EXERCISE_TYPE, exercise.getExType());
         values.put(AppDataBase.BASE_EXERCISE_BODY_TYPE, exercise.getBodyType());
 
-        return db.insert(AppDataBase.BASE_EXERCISE_TABLE, null, values);
+        return db.insert(BASE_EXERCISE_TABLE, null, values);
     }
 
     // =========================
@@ -49,7 +51,7 @@ public class BASE_EXERCISE_TABLE_DAO {
             };
 
             cursor = db.query(
-                    AppDataBase.BASE_EXERCISE_TABLE,
+                    BASE_EXERCISE_TABLE,
                     columns,
                     AppDataBase.BASE_EXERCISE_ID + " = ?",
                     new String[]{String.valueOf(baseExId)},
@@ -93,7 +95,7 @@ public class BASE_EXERCISE_TABLE_DAO {
             };
 
             cursor = db.query(
-                    AppDataBase.BASE_EXERCISE_TABLE,
+                    BASE_EXERCISE_TABLE,
                     columns,
                     null,
                     null,
@@ -128,7 +130,7 @@ public class BASE_EXERCISE_TABLE_DAO {
     // =========================
     public void deleteExercise(long id) {
         db.delete(
-                AppDataBase.BASE_EXERCISE_TABLE,
+                BASE_EXERCISE_TABLE,
                 AppDataBase.BASE_EXERCISE_ID + " = ?",
                 new String[]{String.valueOf(id)}
         );
@@ -144,10 +146,23 @@ public class BASE_EXERCISE_TABLE_DAO {
         values.put(AppDataBase.BASE_EXERCISE_BODY_TYPE, exercise.getBodyType());
 
         db.update(
-                AppDataBase.BASE_EXERCISE_TABLE,
+                BASE_EXERCISE_TABLE,
                 values,
                 AppDataBase.BASE_EXERCISE_ID + " = ?",
                 new String[]{String.valueOf(exercise.getBase_ex_id())}
         );
+    }
+
+
+    public long getCount() {
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + BASE_EXERCISE_TABLE, null);
+        long count = 0;
+        if (cursor.moveToFirst()) count = cursor.getLong(0);
+        cursor.close();
+        return count;
+    }
+
+    public void deleteAllExercises() {
+        db.delete(AppDataBase.BASE_EXERCISE_TABLE, null, null);
     }
 }

@@ -1,4 +1,4 @@
-package com.example.workoutapp.Fragments.ProfileFragments;
+package com.example.workoutapp.Fragments.ProfileFragments.HealthSettingsActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,8 +8,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.workoutapp.HealthConnectHelper;
-import com.example.workoutapp.HealthPermissions;
 import com.example.workoutapp.R;
 
 import kotlin.Unit;

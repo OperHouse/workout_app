@@ -119,6 +119,7 @@
     <string name="group_activity_goal">Цели активности</string>
     <string name="group_food_goal">Цели питания</string>
     <string name="group_progress">Прогресс</string>
+    <string name="data_management">Управление данными</string>
 
     <string-array name="children_profile">
         <item>Имя: </item>
