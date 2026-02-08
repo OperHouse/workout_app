@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.example.workoutapp.Data.EncryptionTools.DatabaseExporter;
 import com.example.workoutapp.Data.EncryptionTools.DatabaseProvider;
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
@@ -57,7 +58,7 @@ public class MainActivity extends AppCompatActivity
         bindingMain.bottomNavView.setBackground(null);
 
         appDataBase = DatabaseProvider.get(this);
-        //DatabaseExporter.exportDatabase(this, "WorkoutApp_plain.db");
+        DatabaseExporter.exportDatabase(this, "WorkoutApp_plain.db");
 
 
         loadExercisesFromDb();
@@ -135,18 +136,24 @@ public class MainActivity extends AppCompatActivity
         HealthConnectReader reader = new HealthConnectReader(this);
 
         reader.readToday(data -> {
-            // Теперь DailyHealthData содержит и getSteps(), и getCalories()
-            DailyActivityTrackingModel model = new DailyActivityTrackingModel(
-                    0,
-                    java.time.LocalDate.now().toString(),
-                    data.getSteps(),
-                    data.getCalories() // ТЕПЕРЬ СОХРАНЯЕМ КАЛОРИИ
-            );
+            // Проверяем, что данные не пустые, прежде чем лезть в базу
+            if (data.getSteps() > 0 || data.getCalories() > 0) {
 
-            DailyActivityTrackingDao dao = new DailyActivityTrackingDao(appDataBase);
-            dao.insertOrUpdate(model);
+                DailyActivityTrackingModel model = new DailyActivityTrackingModel(
+                        0,
+                        java.time.LocalDate.now().toString(),
+                        data.getSteps(),
+                        data.getCalories()
+                );
 
-            Log.d("HealthConnect", "Data saved. Steps: " + data.getSteps() + ", Cals: " + data.getCalories());
+                DailyActivityTrackingDao dao = new DailyActivityTrackingDao(appDataBase);
+                dao.insertOrUpdate(model);
+
+                Log.d("HealthConnect", "Data saved. Steps: " + data.getSteps() + ", Cals: " + data.getCalories());
+            } else {
+                Log.d("HealthConnect", "Sync skipped: Steps and Calories are 0.");
+            }
+
             return Unit.INSTANCE;
         });
     }

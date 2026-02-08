@@ -197,6 +197,14 @@
                     android:gravity="start"
                     android:text="Очистить дневник питания"
                     android:textColor="#FF8A80" />
+                <Button
+                    android:id="@+id/btn_del_food_stats"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="start"
+                    android:text="Очистить статистику калорий"
+                    android:textColor="#FF8A80" />
 
                 <Button
                     android:id="@+id/btn_del_custom_dishes"
