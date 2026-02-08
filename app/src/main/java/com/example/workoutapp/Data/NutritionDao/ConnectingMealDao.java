@@ -95,4 +95,8 @@ public class ConnectingMealDao {
         );
         Log.d("ConnectingMealDao", "Deleted all connections for mealId: " + mealId);
     }
+
+    public void deleteAll() {
+        db.delete(CONNECTING_MEAL_TABLE, null, null);
+    }
 }

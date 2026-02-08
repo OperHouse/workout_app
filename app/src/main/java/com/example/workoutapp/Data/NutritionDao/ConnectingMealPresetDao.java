@@ -108,4 +108,7 @@ public class ConnectingMealPresetDao {
 
         return exists;
     }
+    public void deleteAll() {
+        db.delete(CONNECTING_MEAL_PRESET_TABLE, null, null);
+    }
 }

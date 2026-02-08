@@ -144,4 +144,8 @@ public class MealFoodDao {
         Log.d("MealFoodDao", "Deleted foods with ids: " + ids);
     }
 
+    public void deleteAll() {
+        db.delete(AppDataBase.MEAL_FOOD_TABLE, null, null);
+    }
+
 }

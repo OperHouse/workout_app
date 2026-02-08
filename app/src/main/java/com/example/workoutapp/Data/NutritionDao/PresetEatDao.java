@@ -164,4 +164,28 @@ public class PresetEatDao {
                 cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.PRESET_FOOD_MEASUREMENT_TYPE))
         );
     }
+
+    /**
+     * Полное удаление всех сохраненных продуктов для пресетов
+     */
+    public void deleteAll() {
+        db.delete(AppDataBase.PRESET_FOOD_TABLE, null, null);
+    }
+
+    /**
+     * Получение количества записей для статистики (Pie Chart)
+     */
+    public long getCount() {
+        long count = 0;
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT COUNT(*) FROM " + AppDataBase.PRESET_FOOD_TABLE, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                count = cursor.getLong(0);
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return count;
+    }
 }

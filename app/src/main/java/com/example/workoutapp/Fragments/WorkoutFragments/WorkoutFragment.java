@@ -22,7 +22,7 @@ import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.WorkoutDao.CARDIO_SET_DETAILS_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.STRENGTH_SET_DETAILS_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
-import com.example.workoutapp.Fragments.FoodEquivalentFragment;
+import com.example.workoutapp.Fragments.FoodEquivalentFragment.FoodEquivalentFragment;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;

@@ -1,4 +1,4 @@
-package com.example.workoutapp.Fragments;
+package com.example.workoutapp.Fragments.FoodEquivalentFragment;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -20,6 +20,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.example.workoutapp.Data.ProfileDao.UserProfileDao;
+import com.example.workoutapp.Fragments.ActivityStatisticFragment.ActivityStatisticFragment;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 import com.example.workoutapp.R;

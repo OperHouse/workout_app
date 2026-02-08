@@ -1,14 +1,12 @@
-package com.example.workoutapp
+package com.example.workoutapp.Fragments.ProfileFragments.HealthSettingsActivity
 
 import android.content.Context
-import android.health.connect.datatypes.ExerciseCompletionGoal
 import android.util.Log
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.request.AggregateRequest
-import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
