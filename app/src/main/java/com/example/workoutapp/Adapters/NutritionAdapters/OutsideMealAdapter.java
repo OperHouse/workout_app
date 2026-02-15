@@ -213,11 +213,13 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
         double totalCalories = 0;
 
 
-        for (FoodModel eat : mealElm.getMeal_food_list()) {
-            totalProtein += eat.getProtein();
-            totalFat += eat.getFat();
-            totalCarb += eat.getCarb();
-            totalCalories += eat.getCalories();
+        if (mealElm.getMeal_food_list() != null) {
+            for (FoodModel eat : mealElm.getMeal_food_list()) {
+                totalProtein += eat.getProtein();
+                totalFat += eat.getFat();
+                totalCarb += eat.getCarb();
+                totalCalories += eat.getCalories();
+            }
         }
 
 

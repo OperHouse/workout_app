@@ -2,11 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.health.READ_STEPS"
+    <uses-permission
+        android:name="android.permission.health.READ_STEPS"
         tools:ignore="HealthConnectPolicy" />
-    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"
+    <uses-permission
+        android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"
         tools:ignore="HealthConnectPolicy" />
-    <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"
+    <uses-permission
+        android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"
         tools:ignore="HealthConnectPolicy" />
 
     <queries>
@@ -24,6 +27,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.WorkoutApp"
         tools:targetApi="31">
+        <activity
+            android:name=".RegistrationActivity.RegistrationActivity"
+            android:exported="false"
+            android:theme="@style/Theme.WorkoutApp" />
 
         <meta-data
             android:name="androidx.health.permissions.rationale_activity"
@@ -35,10 +42,10 @@
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".Fragments.ProfileFragments.HealthSettingsActivity.HealthSettingsActivity"
             android:exported="true">
@@ -56,7 +63,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
     </application>
 
 </manifest>

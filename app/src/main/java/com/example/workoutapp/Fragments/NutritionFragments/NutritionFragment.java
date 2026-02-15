@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -207,11 +208,14 @@ public class NutritionFragment extends Fragment {
         float totalProtein = 0, totalFat = 0, totalCarbs = 0;
 
         for (MealModel meal : mealList) {
-            for (FoodModel food : meal.getMeal_food_list()) {
-                totalCalories += (int) food.getCalories();
-                totalProtein += food.getProtein();
-                totalFat += food.getFat();
-                totalCarbs += food.getCarb();
+            // Проверка: если список продуктов существует
+            if (meal.getMeal_food_list() != null) {
+                for (FoodModel food : meal.getMeal_food_list()) {
+                    totalCalories += (int) food.getCalories();
+                    totalProtein += food.getProtein();
+                    totalFat += food.getFat();
+                    totalCarbs += food.getCarb();
+                }
             }
         }
 
@@ -252,15 +256,24 @@ public class NutritionFragment extends Fragment {
 
         // История для графиков
         DailyFoodTrackingDao historyDao = new DailyFoodTrackingDao(db);
-        DailyFoodTrackingModel dailyRecord = new DailyFoodTrackingModel(
-                0,
-                totalCalories,
-                totalProtein,
-                totalFat,
-                totalCarbs,
-                currentFormattedDate
-        );
-        historyDao.insertOrUpdate(dailyRecord);
+
+        // Проверяем, есть ли хотя бы одно ненулевое значение
+        if (totalCalories > 0 || totalProtein > 0 || totalFat > 0 || totalCarbs > 0) {
+
+            DailyFoodTrackingModel dailyRecord = new DailyFoodTrackingModel(
+                    0,
+                    totalCalories,
+                    totalProtein,
+                    totalFat,
+                    totalCarbs,
+                    currentFormattedDate
+            );
+
+            historyDao.insertOrUpdate(dailyRecord);
+            Log.d("FoodSync", "Daily stats updated for: " + currentFormattedDate);
+        } else {
+            Log.d("FoodSync", "Daily stats skip: all values are zero");
+        }
     }
 
     // Вспомогательный метод для раскраски текста "30 / 50 г"

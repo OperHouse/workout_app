@@ -11,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
-import com.example.workoutapp.Data.EncryptionTools.DatabaseExporter;
 import com.example.workoutapp.Data.EncryptionTools.DatabaseProvider;
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
@@ -58,7 +57,7 @@ public class MainActivity extends AppCompatActivity
         bindingMain.bottomNavView.setBackground(null);
 
         appDataBase = DatabaseProvider.get(this);
-        DatabaseExporter.exportDatabase(this, "WorkoutApp_plain.db");
+        //DatabaseExporter.exportDatabase(this, "WorkoutApp_plain.db");
 
 
         loadExercisesFromDb();
