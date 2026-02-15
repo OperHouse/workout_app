@@ -1,4 +1,4 @@
-package com.example.workoutapp.Fragments.ProfileFragments;
+package com.example.workoutapp.Fragments.ProfileFragments.Divide;
 
 import android.annotation.SuppressLint;
 import android.content.Context;

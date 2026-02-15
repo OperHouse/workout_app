@@ -1,4 +1,4 @@
-package com.example.workoutapp.Fragments.ProfileFragments.HealthSettingsActivity
+package com.example.workoutapp.Tools.HealthSettingsActivityTools
 
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
