@@ -82,11 +82,13 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
             double totalCarb = 0;
             double totalCalories = 0;
 
-            for (FoodModel eat : preset.getMeal_food_list()) {
-                totalProtein += eat.getProtein();
-                totalFat += eat.getFat();
-                totalCarb += eat.getCarb();
-                totalCalories += eat.getCalories();
+            if (preset.getMeal_food_list() != null) {
+                for (FoodModel eat : preset.getMeal_food_list()) {
+                    totalProtein += eat.getProtein();
+                    totalFat += eat.getFat();
+                    totalCarb += eat.getCarb();
+                    totalCalories += eat.getCalories();
+                }
             }
 
             @SuppressLint("DefaultLocale") String protein = String.format("%.1f", totalProtein);

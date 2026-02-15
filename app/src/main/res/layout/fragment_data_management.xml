@@ -1,306 +1,312 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_1"
-    android:orientation="vertical"
-    android:padding="16dp"
     tools:context=".Fragments.ProfileFragments.DataManagementFragment">
 
-    <LinearLayout
+    <RelativeLayout
+        android:id="@+id/top_bar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="64dp"
+        android:background="@color/background_1"
+        android:elevation="4dp"
+        android:paddingHorizontal="16dp">
 
-        <RelativeLayout
+        <ImageView
+            android:id="@+id/data_back_btn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:src="@drawable/ic_back"
+            app:tint="@color/white" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Управление данными"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/top_bar"
+        android:clipToPadding="false"
+        android:paddingBottom="32dp">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp">
+            android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/data_back_btn"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:padding="8dp"
-                android:src="@drawable/ic_back"
-                app:tint="@color/white" />
+            <com.google.android.material.card.MaterialCardView
+                style="@style/SettingsCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardBackgroundColor="@color/black2"
+                app:cardCornerRadius="20dp"
+                app:strokeColor="@color/light_gray_stroke"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:alpha="0.7"
+                        android:text="Статистика хранилища"
+                        android:textColor="@color/white"
+                        android:textSize="14sp" />
+
+                    <com.example.workoutapp.Fragments.ProfileFragments.DataUsagePieChartView
+                        android:id="@+id/data_pie_chart"
+                        android:layout_width="180dp"
+                        android:layout_height="180dp" />
+
+                    <LinearLayout
+                        android:id="@+id/legend_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:orientation="vertical" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <TextView
-                android:layout_width="wrap_content"
+                style="@style/SettingsCategoryTitle"
+                android:text="ОБЛАЧНАЯ СИНХРОНИЗАЦИЯ" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/SettingsCard"
+                app:strokeColor="@color/light_gray_stroke">
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:layout_toStartOf="@+id/sync_switch"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Резервное копирование"
+                            android:textColor="@color/white"
+                            android:textSize="15sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:alpha="0.5"
+                            android:text="Автоматически сохранять данные на сервере"
+                            android:textColor="@color/white"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/sync_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        app:thumbTint="@color/white"
+                        app:trackTint="@color/sync_switch_track" />
+                </RelativeLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                style="@style/SettingsCategoryTitle"
+                android:text="РЕЗЕРВНОЕ КОПИРОВАНИЕ" />
+
+            <com.google.android.material.card.MaterialCardView style="@style/SettingsCard">
+                <LinearLayout style="@style/SettingsContainer">
+
+                    <Button
+                        android:id="@+id/btn_export_data"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Экспортировать данные в файл"
+                        android:textColor="@color/white"
+                        app:icon="@drawable/ic_export"
+                        app:iconTint="@color/white" />
+
+                    <View style="@style/SettingsDivider" />
+
+                    <Button
+                        android:id="@+id/btn_import_data"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Импортировать из файла"
+                        android:textColor="@color/white"
+                        app:icon="@drawable/ic_import"
+                        app:iconTint="@color/white" />
+
+                    <View style="@style/SettingsDivider" />
+
+                    <Button
+                        android:id="@+id/btn_export_pdf"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Сформировать отчет (PDF)"
+                        android:textColor="@color/white"
+                        app:icon="@drawable/ic_pdf"
+                        app:iconTint="@color/white" />
+                    <Button
+                        android:id="@+id/btn_export_db"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Выгрузить файл базы данных (.db)"
+                        android:textColor="@color/white"
+                        app:icon="@drawable/ic_storage"
+                        app:iconTint="@color/white" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                style="@style/SettingsCategoryTitle"
+                android:text="ТРЕНИРОВКИ" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/SettingsCard"
+                app:strokeColor="@color/light_gray_stroke">
+
+                <LinearLayout style="@style/SettingsContainer">
+
+                    <Button
+                        android:id="@+id/btn_del_workout_history"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Удалить историю тренировок" />
+
+                    <View style="@style/SettingsDivider" />
+
+                    <Button
+                        android:id="@+id/btn_del_exercises"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Удалить все упражнения" />
+
+                    <View style="@style/SettingsDivider" />
+
+                    <Button
+                        android:id="@+id/btn_del_workout_presets"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Удалить пресеты тренировок" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                style="@style/SettingsCategoryTitle"
+                android:text="ПИТАНИЕ" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/SettingsCard"
+                app:strokeColor="@color/light_gray_stroke">
+
+                <LinearLayout style="@style/SettingsContainer">
+
+                    <Button
+                        android:id="@+id/btn_del_food_history"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Очистить дневник питания" />
+
+                    <View style="@style/SettingsDivider" />
+
+                    <Button
+                        android:id="@+id/btn_del_food_stats"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Очистить статистику калорий" />
+
+                    <View style="@style/SettingsDivider" />
+
+                    <Button
+                        android:id="@+id/btn_del_custom_dishes"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Удалить созданные блюда" />
+
+                    <View style="@style/SettingsDivider" />
+
+                    <Button
+                        android:id="@+id/btn_del_meal_presets"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Удалить пресеты приемов пищи" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                style="@style/SettingsCategoryTitle"
+                android:text="ЦЕЛИ И ПРОФИЛЬ" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/SettingsCard"
+                app:strokeColor="@color/light_gray_stroke">
+
+                <LinearLayout style="@style/SettingsContainer">
+
+                    <Button
+                        android:id="@+id/btn_del_activity"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Удалить данные активности" />
+
+                    <View style="@style/SettingsDivider" />
+
+                    <Button
+                        android:id="@+id/btn_del_general_goals"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Сбросить общие цели" />
+
+                    <View style="@style/SettingsDivider" />
+
+                    <Button
+                        android:id="@+id/btn_del_activity_goals"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Сбросить цели активности" />
+
+                    <View style="@style/SettingsDivider" />
+
+                    <Button
+                        android:id="@+id/btn_del_food_goals"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Сбросить цели питания" />
+
+                    <View style="@style/SettingsDivider" />
+
+                    <Button
+                        android:id="@+id/btn_del_profile"
+                        style="@style/ModernDestructiveButton"
+                        android:text="Удалить профиль пользователя" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <Button
+                style="@style/BigButton"
+                android:id="@+id/btn_delete_everything"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="Управление данными"
+                android:layout_marginTop="12dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:backgroundTint="#2FFF3B30"
+                android:text="Удалить все данные приложения"
                 android:textColor="@color/white"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-        </RelativeLayout>
+                app:strokeColor="#FF3B30"
+                app:strokeWidth="1dp" />
 
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:cardBackgroundColor="@color/black2"
-            app:cardCornerRadius="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:text="Распределение данных"
-                    android:textColor="@color/white" />
-
-                <com.example.workoutapp.Fragments.ProfileFragments.DataUsagePieChartView
-                    android:id="@+id/data_pie_chart"
-                    android:layout_width="200dp"
-                    android:layout_height="200dp" />
-
-                <GridLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:columnCount="2">
-
-                </GridLayout>
-
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:cardBackgroundColor="@color/black2"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="15dp"
-            app:cardElevation="4dp">
-
-            <LinearLayout
-                android:id="@+id/legend_container"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardBackgroundColor="@color/black2"
-            app:cardCornerRadius="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Синхронизация с сервером"
-                    android:textColor="@color/white" />
-
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/sync_switch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="Тренировки"
-            android:textColor="@color/white" />
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardBackgroundColor="@color/black2"
-            app:cardCornerRadius="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <Button
-                    android:id="@+id/btn_del_workout_history"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:text="Удалить историю тренировок"
-                    android:textColor="#FF8A80" />
-
-                <Button
-                    android:id="@+id/btn_del_exercises"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:text="Удалить все упражнения"
-                    android:textColor="#FF8A80" />
-
-                <Button
-                    android:id="@+id/btn_del_workout_presets"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:text="Удалить пресеты тренировок"
-                    android:textColor="#FF8A80" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="Питание"
-            android:textColor="@color/white" />
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardBackgroundColor="@color/black2"
-            app:cardCornerRadius="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <Button
-                    android:id="@+id/btn_del_food_history"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:text="Очистить дневник питания"
-                    android:textColor="#FF8A80" />
-                <Button
-                    android:id="@+id/btn_del_food_stats"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:text="Очистить статистику калорий"
-                    android:textColor="#FF8A80" />
-
-                <Button
-                    android:id="@+id/btn_del_custom_dishes"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:text="Удалить созданные блюда"
-                    android:textColor="#FF8A80" />
-
-                <Button
-                    android:id="@+id/btn_del_meal_presets"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:text="Удалить пресеты приемов пищи"
-                    android:textColor="#FF8A80" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="Цели и профиль"
-            android:textColor="@color/white" />
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardBackgroundColor="@color/black2"
-            app:cardCornerRadius="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <Button
-                    android:id="@+id/btn_del_activity"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:text="Удалить данные активности"
-                    android:textColor="#FF8A80" />
-
-                <Button
-                    android:id="@+id/btn_del_general_goals"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:text="Сбросить общие цели"
-                    android:textColor="#FF8A80" />
-
-                <Button
-                    android:id="@+id/btn_del_activity_goals"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:text="Сбросить цели активности"
-                    android:textColor="#FF8A80" />
-
-                <Button
-                    android:id="@+id/btn_del_food_goals"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:text="Сбросить цели питания"
-                    android:textColor="#FF8A80" />
-
-                <Button
-                    android:id="@+id/btn_del_profile"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:text="Удалить профиль пользователя"
-                    android:textColor="#FF8A80" />
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <Button
-            android:id="@+id/btn_delete_everything"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:backgroundTint="#D32F2F"
-            android:text="Удалить все данные приложения"
-            android:textColor="@color/white" />
-
-    </LinearLayout>
-</ScrollView>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</RelativeLayout>
