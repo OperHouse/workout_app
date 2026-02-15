@@ -1,4 +1,4 @@
-package com.example.workoutapp.Fragments.ProfileFragments.HealthSettingsActivity
+package com.example.workoutapp.Tools.HealthSettingsActivityTools
 
 import android.content.Context
 import android.util.Log

@@ -17,7 +17,7 @@
     </queries>
 
     <application
-        android:name=".Data.EncryptionTools.App"
+        android:name=".Tools.EncryptionTools.App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -47,7 +47,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Fragments.ProfileFragments.HealthSettingsActivity.HealthSettingsActivity"
+            android:name=".HealthSettingsActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />

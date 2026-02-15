@@ -11,13 +11,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
-import com.example.workoutapp.Data.EncryptionTools.DatabaseProvider;
+import com.example.workoutapp.Tools.EncryptionTools.DatabaseProvider;
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Fragments.NutritionFragments.NutritionFragment;
-import com.example.workoutapp.Fragments.ProfileFragments.HealthSettingsActivity.HealthConnectHelper;
-import com.example.workoutapp.Fragments.ProfileFragments.HealthSettingsActivity.HealthConnectReader;
-import com.example.workoutapp.Fragments.ProfileFragments.HealthSettingsActivity.HealthPermissions;
+import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthConnectHelper;
+import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthConnectReader;
+import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthPermissions;
 import com.example.workoutapp.Fragments.ProfileFragments.ProfileFragment;
 import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutFragment;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;

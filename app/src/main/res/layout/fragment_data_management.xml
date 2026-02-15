@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_1"
-    tools:context=".Fragments.ProfileFragments.DataManagementFragment">
+    tools:context=".Fragments.ProfileFragments.Divide.DataManagementFragment">
 
     <RelativeLayout
         android:id="@+id/top_bar"
@@ -73,7 +73,7 @@
                         android:textColor="@color/white"
                         android:textSize="14sp" />
 
-                    <com.example.workoutapp.Fragments.ProfileFragments.DataUsagePieChartView
+                    <com.example.workoutapp.Tools.DataManagementTools.DataUsagePieChartView
                         android:id="@+id/data_pie_chart"
                         android:layout_width="180dp"
                         android:layout_height="180dp" />
@@ -168,6 +168,10 @@
                         android:textColor="@color/white"
                         app:icon="@drawable/ic_pdf"
                         app:iconTint="@color/white" />
+
+                    <View style="@style/SettingsDivider" />
+
+
                     <Button
                         android:id="@+id/btn_export_db"
                         style="@style/ModernDestructiveButton"

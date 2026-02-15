@@ -1,12 +1,12 @@
-package com.example.workoutapp.Fragments.ProfileFragments;
+package com.example.workoutapp.Fragments.ProfileFragments.Divide;
 
 import android.app.AlertDialog;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,7 +21,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.example.workoutapp.Data.EncryptionTools.DatabaseExporter;
+import com.example.workoutapp.Tools.DataManagementTools.DataUsagePieChartView;
+import com.example.workoutapp.Tools.EncryptionTools.DatabaseExporter;
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
@@ -29,23 +30,19 @@ import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.R;
 import com.example.workoutapp.RegistrationActivity.RegistrationActivity;
+import com.example.workoutapp.Tools.DataManagementTools.DataExportService;
+import com.example.workoutapp.Tools.DataManagementTools.DataImportService;
+import com.example.workoutapp.Tools.DataManagementTools.FileStorageManager;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
-import com.example.workoutapp.Tools.PdfReportManager;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
+import com.example.workoutapp.Tools.DataManagementTools.PdfReportManager;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 public class DataManagementFragment extends Fragment {
@@ -57,6 +54,7 @@ public class DataManagementFragment extends Fragment {
     private MealNameDao mealNameDao;
     private WORKOUT_EXERCISE_TABLE_DAO workoutExerciseDao;
     private WORKOUT_PRESET_NAME_TABLE_DAO workoutPresetDao;
+
 
     // Выносим установку слушателя в отдельный метод для удобного переподключения
     private boolean isUpdatingProgrammatically = false;
@@ -91,26 +89,42 @@ public class DataManagementFragment extends Fragment {
     }
 
     private void initViews(View view) {
+        // Кнопка назад
         view.findViewById(R.id.data_back_btn).setOnClickListener(v -> getParentFragmentManager().popBackStack());
 
-        // --- ГРУППА: ТРЕНИРОВКИ ---
+        // Инициализация групп логики
+        initWorkoutButtons(view);
+        initNutritionButtons(view);
+        initProfileButtons(view);
+        initTransferButtons(view); // Импорт, экспорт, PDF, DB
 
-        // Удалить историю тренировок
+        // СИНХРОНИЗАЦИЯ (Твой новый свитч)
+        com.google.android.material.switchmaterial.SwitchMaterial syncSwitch = view.findViewById(R.id.sync_switch);
+        if (syncSwitch != null) {
+            android.content.SharedPreferences prefs = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+
+            isUpdatingProgrammatically = true;
+            syncSwitch.setChecked(prefs.getBoolean("sync_enabled", false));
+            isUpdatingProgrammatically = false;
+
+            initSyncLogic(syncSwitch, prefs);
+        }
+
+        // ПОЛНОЕ УДАЛЕНИЕ (Оставляем тут, так как это критическая кнопка)
+        view.findViewById(R.id.btn_delete_everything).setOnClickListener(v ->
+                confirmDeletion("ВНИМАНИЕ! Это действие сотрет ВСЕ данные безвозвратно. Продолжить?", this::deleteAllData));
+    }
+
+    private void initWorkoutButtons(View view) {
         view.findViewById(R.id.btn_del_workout_history).setOnClickListener(v ->
                 confirmDeletion("Очистить историю тренировок и все сеты?", () -> clearCategoryData(1)));
-
-        // Удалить все упражнения
         view.findViewById(R.id.btn_del_exercises).setOnClickListener(v ->
                 confirmDeletion("Удалить все созданные упражнения?", () -> clearCategoryData(2)));
-
-        // Удалить пресеты тренировок
         view.findViewById(R.id.btn_del_workout_presets).setOnClickListener(v ->
                 confirmDeletion("Удалить все шаблоны тренировок?", () -> clearCategoryData(3)));
+    }
 
-
-        // --- ГРУППА: ПИТАНИЕ ---
-
-        // Очистить дневник питания
+    private void initNutritionButtons(View view) {
         view.findViewById(R.id.btn_del_food_history).setOnClickListener(v ->
                 confirmDeletion("Удалить все записи о приемах пищи?", () -> clearCategoryData(4)));
 
@@ -120,85 +134,72 @@ public class DataManagementFragment extends Fragment {
                     confirmDeletion("Очистить ежедневную статистику калорий (графики)?", () -> clearCategoryData(12)));
         }
 
-        // Удалить созданные блюда
         view.findViewById(R.id.btn_del_custom_dishes).setOnClickListener(v ->
                 confirmDeletion("Удалить все блюда из вашей библиотеки?", () -> clearCategoryData(5)));
-
-        // Удалить пресеты приемов пищи
         view.findViewById(R.id.btn_del_meal_presets).setOnClickListener(v ->
                 confirmDeletion("Удалить все шаблоны приемов пищи?", () -> clearCategoryData(6)));
+    }
 
-
-        // --- ГРУППА: ЦЕЛИ И ПРОФИЛЬ ---
-
-        // Удалить данные активности
+    private void initProfileButtons(View view) {
         view.findViewById(R.id.btn_del_activity).setOnClickListener(v ->
                 confirmDeletion("Удалить историю шагов и активности?", () -> clearCategoryData(7)));
-
-        // Сбросить общие цели
         view.findViewById(R.id.btn_del_general_goals).setOnClickListener(v ->
                 confirmDeletion("Сбросить общие цели?", () -> clearCategoryData(8)));
-
-        // Сбросить цели активности
         view.findViewById(R.id.btn_del_activity_goals).setOnClickListener(v ->
                 confirmDeletion("Сбросить цели по шагам и калориям?", () -> clearCategoryData(9)));
-
-        // Сбросить цели питания
         view.findViewById(R.id.btn_del_food_goals).setOnClickListener(v ->
                 confirmDeletion("Сбросить КБЖУ цели?", () -> clearCategoryData(10)));
-
-        // Удалить профиль пользователя
         view.findViewById(R.id.btn_del_profile).setOnClickListener(v ->
                 confirmDeletion("Удалить данные профиля и историю веса?", () -> clearCategoryData(11)));
+    }
 
+    private void initTransferButtons(View view) {
+        // JSON Экспорт и Импорт
+        view.findViewById(R.id.btn_export_data).setOnClickListener(v -> {
+            // Получаем данные из сервиса
+            DataExportService des = new DataExportService(MainActivity.getAppDataBase());
+            String json = des.generateJsonExport();
 
-        // --- ПОЛНОЕ УДАЛЕНИЕ ---
-        view.findViewById(R.id.btn_delete_everything).setOnClickListener(v ->
-                confirmDeletion("ВНИМАНИЕ! Это действие сотрет ВСЕ данные безвозвратно. Продолжить?", () -> {
-                    // Запускаем в новом потоке, чтобы не блокировать интерфейс
-                    new Thread(() -> {
-                        SQLiteDatabase db = MainActivity.getAppDataBase();
-
-                        // Проходим по всем категориям удаления
-                        for (int i = 1; i <= 12; i++) {
-                            clearCategoryDataInternal(db, i);
-                        }
-
-                        // Сжимаем файл БД после удаления всех строк
-                        db.execSQL("VACUUM");
-
-                        // Возвращаемся в главный поток для обновления UI
-                        if (isAdded()) {
-                            requireActivity().runOnUiThread(() -> {
-                                updatePieChart(); // Обновляем график (он станет "Пустым")
-                                Toast.makeText(getContext(), "Все данные стерты", Toast.LENGTH_SHORT).show();
-                            });
-                        }
-                    }).start();
-                }));
-
-        view.findViewById(R.id.btn_export_data).setOnClickListener(v -> exportDatabaseToJson());
-        view.findViewById(R.id.btn_import_data).setOnClickListener(v -> confirmImport());
-        Button btnExportDb =  view.findViewById(R.id.btn_export_db);
-
-        btnExportDb.setOnClickListener(v -> {
-            // Вызываем экспорт
-            File decryptedDb = DatabaseExporter.exportDecryptedDatabase(requireContext());
-
-            if (decryptedDb != null && decryptedDb.exists()) {
-                // Отправляем файл (используем ваш метод shareFile)
-                shareFile(decryptedDb, "application/x-sqlite3");
-            } else {
-                Toast.makeText(getContext(), "Не удалось подготовить файл базы", Toast.LENGTH_SHORT).show();
-            }
+            // Отдаем менеджеру на обработку
+            FileStorageManager.processExport(requireActivity(), json);
         });
+        view.findViewById(R.id.btn_import_data).setOnClickListener(v -> confirmImport());
 
+        // Экспорт БД
+        Button btnExportDb = view.findViewById(R.id.btn_export_db);
+        if (btnExportDb != null) {
+            btnExportDb.setOnClickListener(v -> {
+                File decryptedDb = DatabaseExporter.exportDecryptedDatabase(requireContext());
+                if (decryptedDb != null && decryptedDb.exists()) {
+                    FileStorageManager.shareFile(requireActivity(),decryptedDb, "application/x-sqlite3");
+                } else {
+                    Toast.makeText(getContext(), "Не удалось подготовить файл базы", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        // PDF Экспорт
         View btnPdf = view.findViewById(R.id.btn_export_pdf);
         if (btnPdf != null) {
             btnPdf.setOnClickListener(v -> showPdfSelectionDialog());
         }
+    }
 
-
+    // Вынес логику удаления в отдельный поток, чтобы не засорять UI метод
+    private void deleteAllData() {
+        new Thread(() -> {
+            SQLiteDatabase db = MainActivity.getAppDataBase();
+            for (int i = 1; i <= 12; i++) {
+                clearCategoryDataInternal(db, i);
+            }
+            db.execSQL("VACUUM");
+            if (isAdded()) {
+                requireActivity().runOnUiThread(() -> {
+                    updatePieChart();
+                    Toast.makeText(getContext(), "Все данные стерты", Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
     }
 
     private void confirmImport() {
@@ -226,163 +227,32 @@ public class DataManagementFragment extends Fragment {
     private void importDataFromUri(Uri uri) {
         new Thread(() -> {
             try {
+                // Читаем файл (Fragment это умеет через ContentResolver)
                 InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
                 Scanner scanner = new Scanner(inputStream).useDelimiter("\\A");
                 String jsonString = scanner.hasNext() ? scanner.next() : "";
                 inputStream.close();
 
-                if (jsonString.isEmpty()) throw new Exception("Файл пуст");
+                // Вызываем сервис
+                DataImportService importService = new DataImportService(MainActivity.getAppDataBase());
+                importService.importDataFromJson(jsonString);
 
-                TypeToken<Map<String, Object>> typeToken = new TypeToken<Map<String, Object>>(){};
-                Map<String, Object> root = new Gson().fromJson(jsonString, typeToken.getType());
-                Map<String, List<Map<String, Object>>> dataMap = (Map<String, List<Map<String, Object>>>) root.get("data");
-
-                SQLiteDatabase db = AppDataBase.getInstance(requireContext()).getWritableDatabase("");
-
-                db.beginTransaction();
-                try {
-                    for (String tableName : dataMap.keySet()) {
-                        List<Map<String, Object>> rows = dataMap.get(tableName);
-                        if (rows == null) continue;
-                        for (Map<String, Object> row : rows) {
-                            ContentValues values = new ContentValues();
-                            for (String key : row.keySet()) {
-                                Object val = row.get(key);
-                                if (val instanceof Double) values.put(key, (Double) val);
-                                else if (val instanceof Long) values.put(key, (Long) val);
-                                else values.put(key, val != null ? val.toString() : null);
-                            }
-                            db.insertWithOnConflict(tableName, null, values, SQLiteDatabase.CONFLICT_REPLACE);
-                        }
-                    }
-                    db.setTransactionSuccessful();
-                } finally {
-                    db.endTransaction();
+                // Обновляем UI
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() -> {
+                        updatePieChart(); // Твой метод обновления графиков
+                        Toast.makeText(getContext(), "Импорт завершен успешно!", Toast.LENGTH_SHORT).show();
+                    });
                 }
-
-                if (isAdded()) requireActivity().runOnUiThread(() -> {
-                    updatePieChart();
-                    Toast.makeText(getContext(), "Импорт завершен успешно!", Toast.LENGTH_SHORT).show();
-                });
             } catch (Exception e) {
-                if (isAdded()) requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Ошибка: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                Log.e("DATA_IMPORT", "Ошибка: " + e.getMessage(), e);
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() ->
+                            Toast.makeText(getContext(), "Ошибка: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                }
             }
         }).start();
     }
-
-    private void exportDatabaseToJson() {
-        new Thread(() -> {
-            try {
-                // ВАЖНО: Используем ваш AppDataBase и передаем пароль (пустая строка если нет пароля)
-                AppDataBase dbHelper = AppDataBase.getInstance(requireContext());
-                // Если вы используете пароль, впишите его вместо ""
-                net.sqlcipher.database.SQLiteDatabase db = dbHelper.getReadableDatabase("");
-
-                Map<String, Object> fullExport = new HashMap<>();
-                fullExport.put("export_date", System.currentTimeMillis());
-                fullExport.put("app_version", 3); // Ваша DB_VERSION
-
-                Map<String, Object> dataMap = new HashMap<>();
-
-                // Список всех ваших таблиц из AppDataBase
-                String[] tables = {
-                        AppDataBase.BASE_EXERCISE_TABLE, AppDataBase.WORKOUT_PRESET_NAME_TABLE,
-                        AppDataBase.CONNECTING_WORKOUT_PRESET_TABLE, AppDataBase.WORKOUT_EXERCISE_TABLE,
-                        AppDataBase.STRENGTH_SET_DETAILS_TABLE, AppDataBase.CARDIO_SET_DETAILS_TABLE,
-                        AppDataBase.BASE_FOOD_TABLE, AppDataBase.PRESET_FOOD_TABLE,
-                        AppDataBase.MEAL_PRESET_NAME_TABLE, AppDataBase.CONNECTING_MEAL_PRESET_TABLE,
-                        AppDataBase.MEAL_NAME_TABLE, AppDataBase.MEAL_FOOD_TABLE,
-                        AppDataBase.CONNECTING_MEAL_TABLE, AppDataBase.USER_PROFILE_TABLE,
-                        AppDataBase.WEIGHT_HISTORY_TABLE, AppDataBase.DAILY_ACTIVITY_TRACKING_TABLE,
-                        AppDataBase.GENERAL_GOAL_TABLE, AppDataBase.ACTIVITY_GOAL_TABLE,
-                        AppDataBase.FOOD_GAIN_GOAL_TABLE, AppDataBase.DAILY_FOOD_TRACKING_TABLE
-                };
-
-                for (String tableName : tables) {
-                    dataMap.put(tableName, getAllRowsFromTable(db, tableName));
-                }
-
-                fullExport.put("data", dataMap);
-
-                String jsonString = new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(fullExport);
-                saveAndShareFile(jsonString);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(getContext(), "Ошибка: " + e.getMessage(), Toast.LENGTH_LONG).show());
-            }
-        }).start();
-    }
-
-    private void saveAndShareFile(String jsonString) {
-        try {
-            // 1. Создаем файл во временном кэше приложения [cite: 1]
-            File cachePath = new File(requireContext().getCacheDir(), "exports");
-            cachePath.mkdirs(); // Создаем папку, если её нет
-            File tempFile = new File(cachePath, "workout_data_backup.json");
-
-            // 2. Записываем JSON в файл
-            FileOutputStream stream = new FileOutputStream(tempFile);
-            stream.write(jsonString.getBytes());
-            stream.close();
-
-            // 3. Получаем безопасный URI через FileProvider
-            Uri contentUri = androidx.core.content.FileProvider.getUriForFile(
-                    requireContext(),
-                    requireContext().getPackageName() + ".fileprovider",
-                    tempFile);
-
-            if (contentUri != null) {
-                // 4. Создаем Intent для отправки файла [cite: 1]
-                Intent shareIntent = new Intent();
-                shareIntent.setAction(Intent.ACTION_SEND);
-                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // Разрешаем чтение файла [cite: 1]
-                shareIntent.setDataAndType(contentUri, "application/json");
-                shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
-
-                // 5. Показываем системное окно выбора приложения
-                startActivity(Intent.createChooser(shareIntent, "Выгрузить данные в..."));
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            requireActivity().runOnUiThread(() ->
-                    Toast.makeText(getContext(), "Ошибка при создании файла", Toast.LENGTH_SHORT).show());
-        }
-    }
-
-    private List<Map<String, Object>> getAllRowsFromTable(net.sqlcipher.database.SQLiteDatabase db, String tableName) {
-        List<Map<String, Object>> rows = new ArrayList<>();
-        net.sqlcipher.Cursor cursor = db.rawQuery("SELECT * FROM " + tableName, null);
-
-        if (cursor.moveToFirst()) {
-            do {
-                Map<String, Object> row = new HashMap<>();
-                for (int i = 0; i < cursor.getColumnCount(); i++) {
-                    int type = cursor.getType(i);
-                    String colName = cursor.getColumnName(i);
-
-                    switch (type) {
-                        case net.sqlcipher.Cursor.FIELD_TYPE_INTEGER:
-                            row.put(colName, cursor.getLong(i));
-                            break;
-                        case net.sqlcipher.Cursor.FIELD_TYPE_FLOAT:
-                            row.put(colName, cursor.getDouble(i));
-                            break;
-                        default:
-                            row.put(colName, cursor.getString(i));
-                            break;
-                    }
-                }
-                rows.add(row);
-            } while (cursor.moveToNext());
-        }
-        cursor.close();
-        return rows;
-    }
-
-
 
     private void initSyncLogic(com.google.android.material.switchmaterial.SwitchMaterial syncSwitch, android.content.SharedPreferences prefs) {
         syncSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -644,27 +514,6 @@ public class DataManagementFragment extends Fragment {
                 .setNegativeButton("Отмена", null)
                 .show();
     }
-    private void exportFullDatabaseFile() {
-        new Thread(() -> {
-            try {
-                File dbFile = requireContext().getDatabasePath("WorkoutApp.db");
-                File cachePath = new File(requireContext().getCacheDir(), "exports");
-                cachePath.mkdirs();
-                File backupFile = new File(cachePath, "workout_backup.db");
-
-                try (FileInputStream in = new FileInputStream(dbFile);
-                     FileOutputStream out = new FileOutputStream(backupFile)) {
-                    byte[] buffer = new byte[1024];
-                    int read;
-                    while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
-                }
-
-                requireActivity().runOnUiThread(() -> shareFile(backupFile, "application/x-sqlite3"));
-            } catch (IOException e) {
-                requireActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Ошибка бэкапа", Toast.LENGTH_SHORT).show());
-            }
-        }).start();
-    }
 
     // ===================== ЭКСПОРТ PDF =====================
     private void showPdfSelectionDialog() {
@@ -705,28 +554,11 @@ public class DataManagementFragment extends Fragment {
 
         // Отправляем через ваш универсальный метод
         if (pdfFile != null) {
-            shareFile(pdfFile, "application/pdf");
+            FileStorageManager.shareFile(requireActivity(),pdfFile, "application/pdf");
         } else {
             Toast.makeText(getContext(), "Не удалось создать PDF", Toast.LENGTH_SHORT).show();
         }
     }
-
-    // ===================== УНИВЕРСАЛЬНЫЙ ШЕРИНГ =====================
-    private void shareFile(File file, String mimeType) {
-        Uri contentUri = androidx.core.content.FileProvider.getUriForFile(
-                requireContext(),
-                requireContext().getPackageName() + ".fileprovider",
-                file);
-
-        if (contentUri != null) {
-            Intent intent = new Intent(Intent.ACTION_SEND);
-            intent.setType(mimeType);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            intent.putExtra(Intent.EXTRA_STREAM, contentUri);
-            startActivity(Intent.createChooser(intent, "Поделиться через..."));
-        }
-    }
-
 
 
     @Override
