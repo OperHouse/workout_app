@@ -7,6 +7,7 @@ import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.WorkoutModels.CardioSetModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Models.WorkoutModels.StrengthSetModel;
+import com.example.workoutapp.Models.WorkoutModels.WorkoutSessionModel;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
@@ -161,5 +162,84 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
         // Также необходимо очистить таблицы сетов, чтобы не занимать место
         db.delete(AppDataBase.STRENGTH_SET_DETAILS_TABLE, null, null);
         db.delete(AppDataBase.CARDIO_SET_DETAILS_TABLE, null, null);
+    }
+
+    // =========================
+    // Получение списка СЕССИЙ (группировка по датам) с пагинацией
+    // =========================
+    public List<WorkoutSessionModel> getWorkoutHistory(int limit, int offset) {
+        List<WorkoutSessionModel> history = new ArrayList<>();
+
+        // 1. Получаем список уникальных дат завершенных тренировок
+        String dateQuery = "SELECT DISTINCT " + AppDataBase.WORKOUT_EXERCISE_DATE +
+                " FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE +
+                " WHERE " + AppDataBase.WORKOUT_EXERCISE_STATE + " = 'finished'" +
+                " ORDER BY " + AppDataBase.WORKOUT_EXERCISE_DATE + " DESC" +
+                " LIMIT ? OFFSET ?";
+
+        Cursor dateCursor = db.rawQuery(dateQuery, new String[]{String.valueOf(limit), String.valueOf(offset)});
+
+        while (dateCursor.moveToNext()) {
+            String date = dateCursor.getString(0);
+            // 2. Для каждой даты подтягиваем список упражнений
+            List<ExerciseModel> exercisesForDate = getExercisesByDate(date);
+            history.add(new WorkoutSessionModel(date, exercisesForDate));
+        }
+        dateCursor.close();
+        return history;
+    }
+
+    // =========================
+    // Получение упражнений за конкретную дату
+    // =========================
+    public List<ExerciseModel> getExercisesByDate(String date) {
+        List<ExerciseModel> exerciseList = new ArrayList<>();
+        Cursor cursor = null;
+
+        try {
+            String query = "SELECT * FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE +
+                    " WHERE " + AppDataBase.WORKOUT_EXERCISE_DATE + " = ?" +
+                    " AND " + AppDataBase.WORKOUT_EXERCISE_STATE + " = 'finished'";
+
+            cursor = db.rawQuery(query, new String[]{date});
+
+            while (cursor.moveToNext()) {
+                long id = cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_ID));
+                String name = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_NAME));
+                String type = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_TYPE));
+                String bodyType = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE));
+                String exDate = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_DATE));
+                String state = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_STATE));
+
+                List<Object> sets = new ArrayList<>();
+                if ("Кардио".equalsIgnoreCase(type) || "Время".equalsIgnoreCase(type)) {
+                    sets.addAll(cardioSetDao.getSetsForExercise(id));
+                } else {
+                    sets.addAll(strengthSetDao.getSetsForExercise(id));
+                }
+
+                exerciseList.add(new ExerciseModel(id, name, type, bodyType, exDate, state, sets));
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return exerciseList;
+    }
+
+    // =========================
+    // Получение истории за конкретную дату (для поиска)
+    // =========================
+    public List<WorkoutSessionModel> getWorkoutHistoryByDate(String date) {
+        List<WorkoutSessionModel> history = new ArrayList<>();
+
+        // Получаем список упражнений за этот день
+        List<ExerciseModel> exercisesForDate = getExercisesByDate(date);
+
+        // Если упражнения найдены, создаем одну сессию и добавляем в список
+        if (!exercisesForDate.isEmpty()) {
+            history.add(new WorkoutSessionModel(date, exercisesForDate));
+        }
+
+        return history;
     }
 }
