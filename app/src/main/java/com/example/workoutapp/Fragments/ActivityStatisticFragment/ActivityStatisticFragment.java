@@ -1,4 +1,4 @@
-package com.example.workoutapp.Fragments;
+package com.example.workoutapp.Fragments.ActivityStatisticFragment;
 
 import android.content.Context;
 import android.graphics.Color;

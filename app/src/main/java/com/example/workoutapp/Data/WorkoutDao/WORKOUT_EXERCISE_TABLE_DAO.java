@@ -3,17 +3,12 @@ package com.example.workoutapp.Data.WorkoutDao;
 import android.content.ContentValues;
 import android.database.Cursor;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.paging.PagingSource;
-import androidx.paging.PagingState;
-
-import net.sqlcipher.database.SQLiteDatabase;
-
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.WorkoutModels.CardioSetModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Models.WorkoutModels.StrengthSetModel;
+
+import net.sqlcipher.database.SQLiteDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -150,5 +145,21 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
         } finally {
             if (cursor != null) cursor.close();
         }
+    }
+
+    public long getCount() {
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE, null);
+        long count = 0;
+        if (cursor.moveToFirst()) count = cursor.getLong(0);
+        cursor.close();
+        return count;
+    }
+
+    public void deleteAllWorkouts() {
+        // Удаляем все записи из таблицы упражнений тренировок
+        db.delete(AppDataBase.WORKOUT_EXERCISE_TABLE, null, null);
+        // Также необходимо очистить таблицы сетов, чтобы не занимать место
+        db.delete(AppDataBase.STRENGTH_SET_DETAILS_TABLE, null, null);
+        db.delete(AppDataBase.CARDIO_SET_DETAILS_TABLE, null, null);
     }
 }
