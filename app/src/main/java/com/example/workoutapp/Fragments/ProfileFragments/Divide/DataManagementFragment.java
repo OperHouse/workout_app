@@ -21,8 +21,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.example.workoutapp.Tools.DataManagementTools.DataUsagePieChartView;
-import com.example.workoutapp.Tools.EncryptionTools.DatabaseExporter;
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
@@ -32,14 +30,19 @@ import com.example.workoutapp.R;
 import com.example.workoutapp.RegistrationActivity.RegistrationActivity;
 import com.example.workoutapp.Tools.DataManagementTools.DataExportService;
 import com.example.workoutapp.Tools.DataManagementTools.DataImportService;
+import com.example.workoutapp.Tools.DataManagementTools.DataUsagePieChartView;
 import com.example.workoutapp.Tools.DataManagementTools.FileStorageManager;
-import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
 import com.example.workoutapp.Tools.DataManagementTools.PdfReportManager;
+import com.example.workoutapp.Tools.EncryptionTools.DatabaseExporter;
+import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +57,7 @@ public class DataManagementFragment extends Fragment {
     private MealNameDao mealNameDao;
     private WORKOUT_EXERCISE_TABLE_DAO workoutExerciseDao;
     private WORKOUT_PRESET_NAME_TABLE_DAO workoutPresetDao;
-
+    private static final int PICK_FILE_CODE = 1001;
 
     // Выносим установку слушателя в отдельный метод для удобного переподключения
     private boolean isUpdatingProgrammatically = false;
@@ -70,6 +73,21 @@ public class DataManagementFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_data_management, container, false);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Проверяем, что это наш запрос и пользователь успешно выбрал файл
+        if (requestCode == PICK_FILE_CODE && resultCode == android.app.Activity.RESULT_OK) {
+            if (data != null && data.getData() != null) {
+                Uri selectedFileUri = data.getData();
+
+                // Вызываем твой метод импорта, который мы до этого доработали
+                importDataFromUri(selectedFileUri);
+            }
+        }
     }
 
     @Override
@@ -156,14 +174,23 @@ public class DataManagementFragment extends Fragment {
     private void initTransferButtons(View view) {
         // JSON Экспорт и Импорт
         view.findViewById(R.id.btn_export_data).setOnClickListener(v -> {
-            // Получаем данные из сервиса
+            // 1. Генерируем JSON строку
             DataExportService des = new DataExportService(MainActivity.getAppDataBase());
             String json = des.generateJsonExport();
 
-            // Отдаем менеджеру на обработку
-            FileStorageManager.processExport(requireActivity(), json);
+            if (json != null && !json.isEmpty()) {
+                // 2. Сохраняем её во временный файл
+                File jsonFile = saveJsonToTempFile(json);
+
+                // 3. Вызываем твой универсальный диалог
+                // Передаем файл, mime-тип и префикс для сохранения
+                showExportActionsDialog(jsonFile, "application/json", "Workout_Data");
+            } else {
+                Toast.makeText(getContext(), "Данные для экспорта отсутствуют", Toast.LENGTH_SHORT).show();
+            }
         });
-        view.findViewById(R.id.btn_import_data).setOnClickListener(v -> confirmImport());
+
+        view.findViewById(R.id.btn_import_data).setOnClickListener(v -> openFilePicker());
 
         // Экспорт БД
         Button btnExportDb = view.findViewById(R.id.btn_export_db);
@@ -171,7 +198,7 @@ public class DataManagementFragment extends Fragment {
             btnExportDb.setOnClickListener(v -> {
                 File decryptedDb = DatabaseExporter.exportDecryptedDatabase(requireContext());
                 if (decryptedDb != null && decryptedDb.exists()) {
-                    FileStorageManager.shareFile(requireActivity(),decryptedDb, "application/x-sqlite3");
+                    showExportActionsDialog(decryptedDb, "application/x-sqlite3", "Workout_Backup");
                 } else {
                     Toast.makeText(getContext(), "Не удалось подготовить файл базы", Toast.LENGTH_SHORT).show();
                 }
@@ -202,56 +229,86 @@ public class DataManagementFragment extends Fragment {
         }).start();
     }
 
-    private void confirmImport() {
-        View dialogView = getLayoutInflater().inflate(R.layout.confirm_dialog_layout, null);
-        AlertDialog dialog = new AlertDialog.Builder(getContext()).setView(dialogView).create();
-        if (dialog.getWindow() != null) dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
-
-        TextView titleTv = dialogView.findViewById(R.id.delete_title_D_TV);
-        TextView messageTv = dialogView.findViewById(R.id.delete_message_D_TV);
-        Button confirmBtn = dialogView.findViewById(R.id.delete_confirm_D_BTN);
-        Button cancelBtn = dialogView.findViewById(R.id.delete_cancel_D_BTN);
-
-        titleTv.setText("Импорт данных");
-        messageTv.setText("Данные из файла будут добавлены в базу. Продолжить?");
-        confirmBtn.setText("Выбрать файл");
-
-        confirmBtn.setOnClickListener(v -> {
-            importFileLauncher.launch("application/json"); // Запуск выбора файла
-            dialog.dismiss();
-        });
-        cancelBtn.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
-    }
-
     private void importDataFromUri(Uri uri) {
         new Thread(() -> {
             try {
-                // Читаем файл (Fragment это умеет через ContentResolver)
-                InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
-                Scanner scanner = new Scanner(inputStream).useDelimiter("\\A");
-                String jsonString = scanner.hasNext() ? scanner.next() : "";
-                inputStream.close();
+                Context context = requireContext();
+                String fileName = getFileName(uri); // Вспомогательный метод ниже
 
-                // Вызываем сервис
                 DataImportService importService = new DataImportService(MainActivity.getAppDataBase());
-                importService.importDataFromJson(jsonString);
+
+                if (fileName != null && fileName.endsWith(".db")) {
+                    // --- ЛОГИКА ДЛЯ .DB ФАЙЛА ---
+
+                    // 1. Создаем временный файл в кэше приложения
+                    File tempFile = new File(context.getCacheDir(), "import_temp.db");
+
+                    // 2. Копируем данные из Uri в этот файл
+                    try (InputStream is = context.getContentResolver().openInputStream(uri);
+                         FileOutputStream os = new FileOutputStream(tempFile)) {
+                        byte[] buffer = new byte[1024];
+                        int length;
+                        while ((length = is.read(buffer)) > 0) {
+                            os.write(buffer, 0, length);
+                        }
+                    }
+
+                    // 3. Вызываем метод импорта из файла
+                    importService.importDataFromDbFile(tempFile, "");
+
+                    // 4. Удаляем временный файл
+                    tempFile.delete();
+
+                } else {
+                    // --- ЛОГИКА ДЛЯ JSON ---
+                    InputStream inputStream = context.getContentResolver().openInputStream(uri);
+                    Scanner scanner = new Scanner(inputStream).useDelimiter("\\A");
+                    String jsonString = scanner.hasNext() ? scanner.next() : "";
+                    inputStream.close();
+
+                    importService.importDataFromJson(jsonString);
+                }
 
                 // Обновляем UI
                 if (isAdded()) {
                     requireActivity().runOnUiThread(() -> {
-                        updatePieChart(); // Твой метод обновления графиков
-                        Toast.makeText(getContext(), "Импорт завершен успешно!", Toast.LENGTH_SHORT).show();
+                        updatePieChart();
+                        Toast.makeText(getContext(), "Данные успешно восстановлены!", Toast.LENGTH_SHORT).show();
                     });
                 }
+
             } catch (Exception e) {
-                Log.e("DATA_IMPORT", "Ошибка: " + e.getMessage(), e);
+                Log.e("DATA_IMPORT", "Ошибка импорта: ", e);
                 if (isAdded()) {
                     requireActivity().runOnUiThread(() ->
                             Toast.makeText(getContext(), "Ошибка: " + e.getMessage(), Toast.LENGTH_LONG).show());
                 }
             }
         }).start();
+    }
+
+    // Вспомогательный метод для получения имени файла из Uri
+    private String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            // Явно указываем android.database.Cursor вместо просто Cursor
+            try (android.database.Cursor cursor = requireContext().getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    // Используем константу DISPLAY_NAME напрямую из провайдера
+                    int index = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                    if (index != -1) result = cursor.getString(index);
+                }
+            } catch (Exception e) {
+                Log.e("GET_FILE_NAME", "Ошибка при получении имени файла", e);
+            }
+        }
+
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) result = result.substring(cut + 1);
+        }
+        return result != null ? result.toLowerCase() : "unknown.db";
     }
 
     private void initSyncLogic(com.google.android.material.switchmaterial.SwitchMaterial syncSwitch, android.content.SharedPreferences prefs) {
@@ -478,22 +535,32 @@ public class DataManagementFragment extends Fragment {
             DataUsagePieChartView.DataSegment segment = segments.get(i);
             View row = getLayoutInflater().inflate(R.layout.item_data_legend, container, false);
 
+            // Инициализация UI компонентов
             androidx.cardview.widget.CardView colorCircle = row.findViewById(R.id.legend_color_card);
             TextView nameText = row.findViewById(R.id.legend_name_stats);
             TextView statsRight = row.findViewById(R.id.legend_size_right);
 
+            // Установка данных
             colorCircle.setCardBackgroundColor(segment.color);
             nameText.setText(segment.label);
 
             if (totalRecords > 0 && !segment.label.equals("Пусто")) {
                 int percent = (int) Math.round((segment.value * 100.0) / totalRecords);
                 statsRight.setText(String.format("%d%% (%d)", percent, (int)segment.value));
-            } else {
-                statsRight.setText(segment.label.equals("Пусто") ? "" : "0% (0)");
+
+                // Безопасная установка фона
+                android.util.TypedValue outValue = new android.util.TypedValue();
+                if (getContext() != null) {
+                    getContext().getTheme().resolveAttribute(android.R.attr.selectableItemBackground, outValue, true);
+                    row.setBackgroundResource(outValue.resourceId);
+                }
+
+                row.setOnClickListener(v -> handleNavigation(segment.label));
             }
 
             container.addView(row);
 
+            // Отрисовка разделителя
             if (i < segments.size() - 1) {
                 View divider = new View(getContext());
                 int height = (int) (0.8f * getResources().getDisplayMetrics().density);
@@ -503,6 +570,55 @@ public class DataManagementFragment extends Fragment {
                 divider.setBackgroundColor(Color.parseColor("#226E6E6E"));
                 container.addView(divider);
             }
+        }
+    }
+
+
+    /**
+     * Логика переходов при нажатии на элемент легенды
+     */
+    private void handleNavigation(String label) {
+        androidx.fragment.app.Fragment destination = null;
+
+        switch (label) {
+            case "История тренировок":
+                // Замени на свои реальные классы фрагментов
+                // destination = new TrainingHistoryFragment();
+                break;
+            case "Упражнения":
+                // destination = new AllExercisesFragment();
+                break;
+            case "Пресеты тренировок":
+                // destination = new WorkoutPresetsFragment();
+                break;
+            case "Дневник питания":
+                // destination = new NutritionDiaryFragment();
+                break;
+            case "Статистика калорий":
+                // destination = new CalorieStatsFragment();
+                break;
+            case "Созданные блюда":
+                // destination = new CustomFoodsFragment();
+                break;
+            case "Пресеты приемов пищи":
+                // destination = new MealPresetsFragment();
+                break;
+            case "Данные активности":
+                // destination = new ActivityDataFragment();
+                break;
+            case "Профиль и цели":
+                getParentFragmentManager().popBackStack();
+                return;
+        }
+
+        if (destination != null) {
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.frameLayout, destination)
+                    .addToBackStack(null)
+                    .commit();
+        } else {
+            // Если фрагмент еще не создан, можно вывести уведомление
+            Toast.makeText(getContext(), "Раздел '" + label + "' находится в разработке :)", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -517,9 +633,7 @@ public class DataManagementFragment extends Fragment {
 
     // ===================== ЭКСПОРТ PDF =====================
     private void showPdfSelectionDialog() {
-        // 1. Понятные пользователю названия
         String[] items = {"История тренировок", "История питания", "История активности"};
-        // Все галочки по умолчанию включены
         boolean[] checkedItems = {true, true, true};
 
         new AlertDialog.Builder(getContext(), android.R.style.Theme_DeviceDefault_Dialog_Alert)
@@ -527,10 +641,8 @@ public class DataManagementFragment extends Fragment {
                 .setMultiChoiceItems(items, checkedItems, (dialog, which, isChecked) -> {
                     checkedItems[which] = isChecked;
                 })
-                .setPositiveButton("Создать", (dialog, id) -> {
+                .setPositiveButton("Далее", (dialog, id) -> {
                     ArrayList<String> selected = new ArrayList<>();
-
-                    // 2. Сопоставляем текст с ключами, которые ждет PdfReportManager
                     if (checkedItems[0]) selected.add("workouts");
                     if (checkedItems[1]) selected.add("nutrition");
                     if (checkedItems[2]) selected.add("activity");
@@ -538,27 +650,84 @@ public class DataManagementFragment extends Fragment {
                     if (selected.isEmpty()) {
                         Toast.makeText(getContext(), "Выберите хотя бы один пункт", Toast.LENGTH_SHORT).show();
                     } else {
-                        generatePdfReport(selected);
+                        // Переходим к генерации и выбору места сохранения
+                        processPdfExport(selected);
                     }
                 })
                 .setNegativeButton("Отмена", null)
                 .show();
     }
+    private void processPdfExport(ArrayList<String> selectedCategories) {
+        // 1. Генерируем PDF файл через ваш менеджер
+        PdfReportManager pdfManager = new PdfReportManager(requireContext(), MainActivity.getAppDataBase());
+        File pdfFile = pdfManager.createReport(selectedCategories);
 
-    private void generatePdfReport(List<String> categories) {
-        // Создаем экземпляр менеджера
-        PdfReportManager reportManager = new PdfReportManager(requireContext(), MainActivity.getAppDataBase());
+        if (pdfFile == null || !pdfFile.exists()) {
+            Toast.makeText(getContext(), "Ошибка при создании PDF", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        // Генерируем файл
-        File pdfFile = reportManager.createReport(categories);
+        showExportActionsDialog(pdfFile, "application/pdf", "Workout_Report");
+    }
 
-        // Отправляем через ваш универсальный метод
-        if (pdfFile != null) {
-            FileStorageManager.shareFile(requireActivity(),pdfFile, "application/pdf");
-        } else {
-            Toast.makeText(getContext(), "Не удалось создать PDF", Toast.LENGTH_SHORT).show();
+    private void showExportActionsDialog(File file, String mimeType, String defaultPrefix) {
+        if (file == null || !file.exists()) {
+            Toast.makeText(getContext(), "Файл не найден", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        requireActivity().runOnUiThread(() -> {
+            new AlertDialog.Builder(getContext(), android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle("Файл готов")
+                    .setMessage("Выберите действие для " + file.getName() + ":")
+                    .setNeutralButton("Сохранить", (dialog, which) -> {
+                        // Генерируем имя: Префикс + Таймстемп + расширение из исходного файла
+                        String extension = file.getName().substring(file.getName().lastIndexOf("."));
+                        String fileName = defaultPrefix + "_" + System.currentTimeMillis() + extension;
+
+                        FileStorageManager.saveFileToDownloads(requireContext(), file, fileName);
+                    })
+                    .setNegativeButton("Поделиться", (dialog, which) -> {
+                        FileStorageManager.shareFile(requireActivity(), file, mimeType);
+                    })
+                    .setPositiveButton("Отмена", null)
+                    .show();
+        });
+    }
+
+    private File saveJsonToTempFile(String json) {
+        try {
+            File tempFile = new File(requireContext().getCacheDir(), "Workout_Data.json");
+            try (FileWriter writer = new FileWriter(tempFile)) {
+                writer.write(json);
+            }
+            return tempFile;
+        } catch (IOException e) {
+            Log.e("EXPORT", "Ошибка записи JSON во временный файл", e);
+            return null;
         }
     }
+
+    private void openFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+        // Ставим общий тип, чтобы фильтр по EXTRA_MIME_TYPES сработал корректно
+        intent.setType("*/*");
+
+        // Указываем конкретные типы, которые мы хотим видеть
+        String[] mimeTypes = {
+                "application/json",        // Для JSON
+                "application/x-sqlite3",   // Официальный тип SQLite
+                "application/octet-stream" // Часто файлы .db помечаются так
+        };
+
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+
+        // Запускаем (используй свой способ получения результата)
+        startActivityForResult(Intent.createChooser(intent, "Выберите файл бэкапа"), PICK_FILE_CODE);
+    }
+
 
 
     @Override

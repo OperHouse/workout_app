@@ -1,16 +1,17 @@
 package com.example.workoutapp.Tools.DataManagementTools;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
 import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.pdmodel.PDPage;
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream;
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle;
 import com.tom_roush.pdfbox.pdmodel.font.PDFont;
 import com.tom_roush.pdfbox.pdmodel.font.PDType0Font;
-import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
@@ -41,69 +42,73 @@ public class PdfReportManager {
 
     public File createReport(List<String> categories) {
         try (PDDocument document = new PDDocument()) {
-            // Загружаем шрифты (убедитесь, что имена файлов в assets совпадают)
+            // 1. Загружаем шрифты
             PDFont font = PDType0Font.load(document, context.getAssets().open("fonts/roboto-regular.ttf"));
             PDFont fontBold = PDType0Font.load(document, context.getAssets().open("fonts/roboto-bold.ttf"));
 
+            // 2. Создаем первую страницу и инициализируем обертку потока
             PDPage page = new PDPage(PDRectangle.A4);
             document.addPage(page);
-            PDPageContentStream stream = new PDPageContentStream(document, page);
 
+            // Массив из одного элемента позволяет методам внутри менять объект потока
+            PDPageContentStream[] streamWrapper = { new PDPageContentStream(document, page) };
             float y = page.getMediaBox().getHeight() - MARGIN;
 
-            // 1. Заголовок отчета
-            y = drawHeader(stream, fontBold, font, y);
+            // 3. Рисуем общий заголовок отчета
+            y = drawHeader(streamWrapper[0], fontBold, font, y);
 
+            // 4. Основной цикл по категориям
             for (String category : categories) {
-                // Проверка свободного места перед началом нового раздела
-                if (y < 300) {
-                    stream.close();
-                    page = new PDPage(PDRectangle.A4);
-                    document.addPage(page);
-                    stream = new PDPageContentStream(document, page);
-                    y = page.getMediaBox().getHeight() - MARGIN;
+
+                // Проверка: если места осталось совсем мало перед новым разделом (< 150)
+                if (y < 150) {
+                    streamWrapper[0].close();
+                    PDPage newPage = new PDPage(PDRectangle.A4);
+                    document.addPage(newPage);
+                    streamWrapper[0] = new PDPageContentStream(document, newPage);
+                    y = newPage.getMediaBox().getHeight() - MARGIN;
                 }
 
-                // 2. Отрисовка заголовка раздела (с серой подложкой)
-                y = drawSectionHeader(stream, fontBold, category, y);
+                // Отрисовка заголовка текущего раздела
+                y = drawSectionHeader(streamWrapper[0], fontBold, category, y);
 
-                // 3. Выбор метода отрисовки в зависимости от категории
+                // Выбор логики отрисовки
                 switch (category) {
                     case "activity":
-                        // Графики шагов и калорий
-                        y = drawActivitySection(stream, font, fontBold, y);
+                        // ВАЖНО: если эти методы тоже будут длинными,
+                        // их тоже стоит перевести на streamWrapper в будущем
+                        y = drawActivitySection(streamWrapper[0], font, fontBold, y);
                         break;
 
                     case "workouts":
-                        // Таблица упражнений
-                        y = drawWorkoutsTable(stream, font, y);
+                        y = drawWorkoutsTable(streamWrapper[0], font, y);
                         break;
 
                     case "nutrition":
-                        // Детальная таблица в стиле FatSecret + График БЖУ
-                        // Сначала рисуем график БЖУ
-                        y = drawNutritionSection(stream, font, fontBold, y);
+                        // Здесь используем streamWrapper, так как тут 4 графика и большая таблица
+                        y = drawNutritionSection(streamWrapper, document, font, fontBold, y);
 
-                        // Проверка места перед большой таблицей
-                        if (y < 200) {
-                            stream.close();
-                            page = new PDPage(PDRectangle.A4);
-                            document.addPage(page);
-                            stream = new PDPageContentStream(document, page);
-                            y = page.getMediaBox().getHeight() - MARGIN;
+                        // Дополнительная проверка перед таблицей (на случай, если графики съели всё место)
+                        if (y < 100) {
+                            streamWrapper[0].close();
+                            PDPage newPage = new PDPage(PDRectangle.A4);
+                            document.addPage(newPage);
+                            streamWrapper[0] = new PDPageContentStream(document, newPage);
+                            y = newPage.getMediaBox().getHeight() - MARGIN;
                         }
 
-                        // Затем рисуем детальную таблицу с JOIN-запросом
-                        y = drawDetailedNutritionTable(stream, font, fontBold, y);
+                        // Отрисовка детальной таблицы питания
+                        y = drawDetailedNutritionTable(streamWrapper, document, font, fontBold, y);
                         break;
                 }
 
                 y -= 40; // Отступ между разделами
             }
 
-            stream.close();
+            // Закрываем поток последней открытой страницы
+            streamWrapper[0].close();
 
-            // 4. Сохранение файла
+            // 5. Сохранение файла во внутренний кэш
             File cacheDir = new File(context.getCacheDir(), "exports");
             if (!cacheDir.exists()) cacheDir.mkdirs();
 
@@ -186,40 +191,59 @@ public class PdfReportManager {
 
     // ====================== WORKOUTS TABLE ======================
     private float drawWorkoutsTable(PDPageContentStream stream, PDFont font, float y) throws Exception {
-        String query = "SELECT " + AppDataBase.WORKOUT_EXERCISE_NAME + ", " + AppDataBase.WORKOUT_EXERCISE_DATE +
-                " FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE + " LIMIT 10";
+        // Запрос: Название упражнения, Дата и количество связанных сетов (подходов)
+        String query = "SELECT e." + AppDataBase.WORKOUT_EXERCISE_NAME + ", e." + AppDataBase.WORKOUT_EXERCISE_DATE + ", " +
+                "(SELECT COUNT(*) FROM " + AppDataBase.STRENGTH_SET_DETAILS_TABLE +
+                " s WHERE s." + AppDataBase.STRENGTH_SET_ID + " = e." + AppDataBase.WORKOUT_EXERCISE_ID + ") as set_count" +
+                " FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE + " e" +
+                " ORDER BY e." + AppDataBase.WORKOUT_EXERCISE_DATE + " DESC LIMIT 15";
 
         Cursor cursor = db.rawQuery(query, null);
-        // Заголовки таблицы
+
+        // Заголовки
         stream.setFont(font, 10);
-        float startX = MARGIN + 10;
+        float startX = MARGIN + 5;
         stream.beginText();
         stream.newLineAtOffset(startX, y);
         stream.showText("Упражнение");
-        stream.newLineAtOffset(300, 0);
+        stream.newLineAtOffset(220, 0);
+        stream.showText("Подходы");
+        stream.newLineAtOffset(80, 0);
         stream.showText("Дата");
         stream.endText();
+
         y -= 5;
+        stream.setLineWidth(1f);
         stream.moveTo(MARGIN, y);
         stream.lineTo(PAGE_WIDTH - MARGIN, y);
         stream.stroke();
         y -= 15;
 
         while (cursor.moveToNext()) {
+            String name = cursor.getString(0);
+            String date = cursor.getString(1);
+            int sets = cursor.getInt(2);
+
             stream.beginText();
+            stream.setFont(font, 9);
             stream.newLineAtOffset(startX, y);
-            stream.showText(cursor.getString(0));
-            stream.newLineAtOffset(300, 0);
-            stream.showText(cursor.getString(1));
+            stream.showText(name.length() > 30 ? name.substring(0, 28) + ".." : name);
+            stream.newLineAtOffset(220, 0);
+            stream.showText(sets > 0 ? String.valueOf(sets) : "—");
+            stream.newLineAtOffset(80, 0);
+            stream.showText(date);
             stream.endText();
+
             y -= 15;
+            if (y < MARGIN + 30) break;
         }
         cursor.close();
         return y;
     }
 
     // ====================== NUTRITION SECTION (Cals, BJU) ======================
-    private float drawNutritionSection(PDPageContentStream stream, PDFont font, PDFont bold, float y) throws Exception {
+    private float drawNutritionSection(PDPageContentStream[] streamWrapper, PDDocument document, PDFont font, PDFont bold, float y) throws Exception {
+        // 1. Получение данных из БД
         String query = "SELECT " +
                 AppDataBase.DAILY_FOOD_TRACKING_DATE + ", " +
                 AppDataBase.TRACKING_CALORIES + ", " +
@@ -231,18 +255,167 @@ public class PdfReportManager {
         Cursor cursor = db.rawQuery(query, null);
         List<String> dates = new ArrayList<>();
         List<Float> cals = new ArrayList<>();
+        List<Float> pro = new ArrayList<>();
+        List<Float> fat = new ArrayList<>();
+        List<Float> carb = new ArrayList<>();
 
         while (cursor.moveToNext()) {
-            dates.add(cursor.getString(0));
-            cals.add((float) cursor.getInt(1));
+            String rawDate = cursor.getString(0);
+
+            try {
+                SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                Date parsed = dbFormat.parse(rawDate);
+
+                SimpleDateFormat outFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+                dates.add(outFormat.format(parsed));
+
+            } catch (Exception e) {
+                dates.add(rawDate); // если вдруг формат другой
+            }
+            cals.add(cursor.getFloat(1));
+            pro.add(cursor.getFloat(2));
+            fat.add(cursor.getFloat(3));
+            carb.add(cursor.getFloat(4));
         }
         cursor.close();
 
-        if (!cals.isEmpty()) {
-            y = drawMiniBarChart(stream, font, "Потребление калорий", dates, cals, 4000f, y);
+        if (dates.isEmpty()) return y;
+
+        // Данные для цикличной отрисовки 4-х графиков
+        String[] titles = {"Калории", "Белки (г)", "Жиры (г)", "Углеводы (г)"};
+        List<List<Float>> allValues = new ArrayList<>();
+        allValues.add(cals);
+        allValues.add(pro);
+        allValues.add(fat);
+        allValues.add(carb);
+
+        // Замени эти значения на реальное получение целей из твоего профиля/настроек
+        float[] goals = {2500f, 150f, 80f, 300f};
+
+        int[] colors = {
+                Color.parseColor("#00BCD4"), // Циан
+                Color.parseColor("#4CAF50"), // Зеленый
+                Color.parseColor("#FFC107"), // Желтый
+                Color.parseColor("#9C27B0")  // Фиолетовый
+        };
+
+        // 2. Отрисовка графиков
+        for (int i = 0; i < titles.length; i++) {
+
+            // ПРОВЕРКА МЕСТА: Если до конца страницы меньше 180 единиц, создаем новую
+            if (y < 180) {
+                streamWrapper[0].close();
+                PDPage newPage = new PDPage(PDRectangle.A4);
+                document.addPage(newPage);
+                streamWrapper[0] = new PDPageContentStream(document, newPage);
+                y = newPage.getMediaBox().getHeight() - MARGIN;
+
+                // Вместо drawSectionHeader пишем простой понятный заголовок
+                streamWrapper[0].beginText();
+                streamWrapper[0].setFont(bold, 12);
+                streamWrapper[0].setNonStrokingColor(100, 100, 100);
+                streamWrapper[0].newLineAtOffset(MARGIN, y);
+                streamWrapper[0].showText("История питания (продолжение)");
+                streamWrapper[0].endText();
+                y -= 30;
+            }
+
+            // Рисуем сам график
+            y = drawBarChartWithGoal(streamWrapper[0], font, bold, titles[i], dates, allValues.get(i), goals[i], colors[i], y);
+
+            y -= 40; // Отступ после каждого графика
         }
+
         return y;
     }
+    private float drawBarChartWithGoal(PDPageContentStream stream, PDFont font, PDFont bold,
+                                       String title, List<String> labels, List<Float> values,
+                                       float goal, int color, float y) throws Exception {
+        float chartHeight = 100f;
+        float chartWidth = PAGE_WIDTH - (2 * MARGIN) - 40f;
+        float leftAxisPadding = 40f;
+        float chartLeft = MARGIN + leftAxisPadding;
+
+        // 1. Заголовок
+        stream.beginText();
+        stream.setFont(bold, 10);
+        stream.setNonStrokingColor(0, 0, 0);
+        stream.newLineAtOffset(MARGIN, y);
+        stream.showText(title + " (Цель: " + (int)goal + ")");
+        stream.endText();
+
+        y -= 15;
+        float chartBottom = y - chartHeight;
+
+        // Расчет максимума
+        float maxVal = goal;
+        for (float v : values) if (v > maxVal) maxVal = v;
+        float maxValueOnChart = maxVal * 1.2f;
+
+        // 2. Сетка и шкала Y
+        stream.setLineWidth(0.5f);
+        stream.setStrokingColor(220, 220, 220);
+        stream.setLineDashPattern(new float[]{2, 2}, 0);
+
+        int divisions = 4;
+        for (int i = 0; i <= divisions; i++) {
+            float val = (maxValueOnChart / divisions) * i;
+            float currentY = chartBottom + (chartHeight * (val / maxValueOnChart));
+
+            stream.moveTo(chartLeft, currentY);
+            stream.lineTo(chartLeft + chartWidth, currentY);
+            stream.stroke();
+
+            stream.beginText();
+            stream.setFont(font, 7);
+            stream.setNonStrokingColor(120, 120, 120);
+            stream.newLineAtOffset(MARGIN, currentY - 2);
+            stream.showText(String.valueOf((int)val));
+            stream.endText();
+        }
+
+        // 3. Линия цели (Цветная)
+        float goalY = chartBottom + (chartHeight * (goal / maxValueOnChart));
+        stream.setLineWidth(1.2f);
+        stream.setLineDashPattern(new float[]{4, 2}, 0);
+        stream.setStrokingColor((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF);
+        stream.moveTo(chartLeft, goalY);
+        stream.lineTo(chartLeft + chartWidth, goalY);
+        stream.stroke();
+        stream.setLineDashPattern(new float[]{}, 0);
+
+        // 4. Столбики и даты
+        float spacing = chartWidth / 7f;
+        float barWidth = spacing * 0.5f;
+
+        for (int i = 0; i < values.size(); i++) {
+            float barH = (values.get(i) / maxValueOnChart) * chartHeight;
+            float x = chartLeft + (i * spacing) + (spacing - barWidth) / 2;
+
+            // Столбик
+            stream.setNonStrokingColor((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF);
+            stream.addRect(x, chartBottom, barWidth, barH);
+            stream.fill();
+
+            // ПОДПИСЬ ДАТЫ (Исправлено)
+            String dateText = labels.get(i);
+            stream.beginText();
+            stream.setFont(font, 7);
+            stream.setNonStrokingColor(50, 50, 50);
+
+            // Рассчитываем точное центрирование по горизонтали
+            // (Ширина символа в PDFBox делится на 1000 и умножается на размер шрифта)
+            float textWidth = font.getStringWidth(dateText) / 1000f * 7f;
+            float textX = x + (barWidth / 2f) - (textWidth / 2f);
+
+            stream.newLineAtOffset(textX, chartBottom - 12);
+            stream.showText(dateText); // ТУТ БОЛЬШЕ НЕТ ПРОВЕРОК НА LENGTH И ТОЧЕК
+            stream.endText();
+        }
+
+        return chartBottom - 20;
+    }
+
 
     // ====================== УНИВЕРСАЛЬНЫЙ ГРАФИК (BAR CHART) ======================
     private float drawMiniBarChart(PDPageContentStream stream, PDFont font, String title,
@@ -296,93 +469,134 @@ public class PdfReportManager {
         }
     }
 
-    private float drawDetailedNutritionTable(PDPageContentStream stream, PDFont font, PDFont bold, float y) throws Exception {
+    private float drawDetailedNutritionTable(PDPageContentStream[] streamWrapper,
+                                             PDDocument document,
+                                             PDFont font,
+                                             PDFont bold,
+                                             float y) throws Exception {
         float startX = MARGIN;
         float tableWidth = PAGE_WIDTH - (2 * MARGIN);
         float rowHeight = 18f;
 
-        // Колонки: Продукт, Кал, Жир, Угл, Белк
-        float[] colWidths = {180f, 40f, 40f, 40f, 40f};
-        String[] headers = {"Продукт/Прием пищи", "Ккал", "Жир", "Угл", "Белк"};
+        float[] colWidths = {210f, 40f, 40f, 40f, 40f};
+        String[] headers = {"Продукт / Дата", "Ккал", "Жир", "Угл", "Белк"};
 
-        // 1. Рисуем шапку таблицы (как в FoodDiary_260214_foods.pdf )
-        stream.setNonStrokingColor(240, 240, 240);
-        stream.addRect(startX, y - rowHeight, tableWidth, rowHeight);
-        stream.fill();
-        stream.setNonStrokingColor(0, 0, 0);
-
-        drawRowText(stream, bold, 9, startX + 5, y - 13, headers, colWidths);
+        // 1. Шапка таблицы
+        streamWrapper[0].setNonStrokingColor(240, 240, 240);
+        streamWrapper[0].addRect(startX, y - rowHeight, tableWidth, rowHeight);
+        streamWrapper[0].fill();
+        streamWrapper[0].setNonStrokingColor(0, 0, 0);
+        drawRowText(streamWrapper[0], bold, 9, startX + 5, y - 13, headers, colWidths);
         y -= rowHeight;
 
-        // 2. SQL запрос для получения приемов пищи и продуктов
         String query = "SELECT mn." + AppDataBase.MEAL_NAME + ", mn." + AppDataBase.MEAL_DATA + ", " +
                 "mf." + AppDataBase.MEAL_FOOD_NAME + ", mf." + AppDataBase.MEAL_FOOD_CALORIES + ", " +
                 "mf." + AppDataBase.MEAL_FOOD_FAT + ", mf." + AppDataBase.MEAL_FOOD_CARB + ", " +
-                "mf." + AppDataBase.MEAL_FOOD_PROTEIN + ", mf." + AppDataBase.MEAL_FOOD_AMOUNT +
+                "mf." + AppDataBase.MEAL_FOOD_PROTEIN +
                 " FROM " + AppDataBase.MEAL_NAME_TABLE + " mn " +
                 " JOIN " + AppDataBase.CONNECTING_MEAL_TABLE + " c ON mn." + AppDataBase.MEAL_NAME_ID + " = c." + AppDataBase.CONNECTING_MEAL_NAME_ID +
                 " JOIN " + AppDataBase.MEAL_FOOD_TABLE + " mf ON c." + AppDataBase.CONNECTING_MEAL_FOOD_ID + " = mf." + AppDataBase.MEAL_FOOD_ID +
                 " ORDER BY mn." + AppDataBase.MEAL_DATA + " DESC, mn." + AppDataBase.MEAL_NAME_ID;
 
         Cursor cursor = db.rawQuery(query, null);
-        String lastMealName = "";
-        float dayCals = 0, dayFat = 0, dayCarb = 0, dayProt = 0;
+
+        String lastMealGroup = "";
+        float mealCals = 0, mealFat = 0, mealCarb = 0, mealProt = 0;
+        boolean isFirst = true;
 
         while (cursor.moveToNext()) {
-            String currentMeal = cursor.getString(0); // Завтрак/Обед
+            // ПРОВЕРКА МЕСТА: Если места мало, создаем новую страницу
+            if (y < MARGIN + 60) {
+                streamWrapper[0].close();
+                PDPage newPage = new PDPage(PDRectangle.A4);
+                document.addPage(newPage);
+                streamWrapper[0] = new PDPageContentStream(document, newPage);
+                y = newPage.getMediaBox().getHeight() - MARGIN;
+
+                // Повторно рисуем шапку таблицы на новой странице для наглядности
+                streamWrapper[0].setNonStrokingColor(240, 240, 240);
+                streamWrapper[0].addRect(startX, y - rowHeight, tableWidth, rowHeight);
+                streamWrapper[0].fill();
+                streamWrapper[0].setNonStrokingColor(0, 0, 0);
+                drawRowText(streamWrapper[0], bold, 9, startX + 5, y - 13, headers, colWidths);
+                y -= rowHeight;
+            }
+
+            String mealName = cursor.getString(0);
+            String mealDate = cursor.getString(1);
             String foodName = cursor.getString(2);
             float cal = cursor.getFloat(3);
             float fat = cursor.getFloat(4);
             float carb = cursor.getFloat(5);
             float prot = cursor.getFloat(6);
 
-            // Если начался новый прием пищи, рисуем подзаголовок (Завтрак, Обед...)
-            if (!currentMeal.equals(lastMealName)) {
-                stream.setFont(bold, 9);
-                y -= rowHeight;
-                stream.beginText();
-                stream.newLineAtOffset(startX + 5, y + 5);
-                stream.showText(currentMeal);
-                stream.endText();
-                lastMealName = currentMeal;
+            String currentMealGroup = mealName + " (" + mealDate + ")";
+
+            // Итог предыдущего приема
+            if (!currentMealGroup.equals(lastMealGroup) && !isFirst) {
+                y = drawMealTotalRow(streamWrapper[0], bold, startX, y, tableWidth, rowHeight, colWidths, "Итого", mealCals, mealFat, mealCarb, mealProt);
+                mealCals = 0; mealFat = 0; mealCarb = 0; mealProt = 0;
             }
 
-            // Рисуем строку продукта
+            // Заголовок группы (Завтрак/Обед)
+            if (!currentMealGroup.equals(lastMealGroup)) {
+                y -= rowHeight;
+                streamWrapper[0].setNonStrokingColor(250, 250, 250);
+                streamWrapper[0].addRect(startX, y, tableWidth, rowHeight);
+                streamWrapper[0].fill();
+                streamWrapper[0].setNonStrokingColor(0, 0, 0);
+                streamWrapper[0].setFont(bold, 9);
+                streamWrapper[0].beginText();
+                streamWrapper[0].newLineAtOffset(startX + 5, y + 5);
+                streamWrapper[0].showText(currentMealGroup);
+                streamWrapper[0].endText();
+                lastMealGroup = currentMealGroup;
+                isFirst = false;
+            }
+
+            // Строка продукта
             y -= rowHeight;
-            String[] rowData = {
-                    foodName,
-                    String.valueOf((int)cal),
-                    String.format("%.1f", fat),
-                    String.format("%.1f", carb),
-                    String.format("%.1f", prot)
-            };
-            drawRowText(stream, font, 8, startX + 15, y + 5, rowData, colWidths);
+            String[] rowData = { foodName, String.valueOf((int)cal), String.format("%.1f", fat), String.format("%.1f", carb), String.format("%.1f", prot) };
+            drawRowText(streamWrapper[0], font, 8, startX + 5, y + 5, rowData, colWidths);
 
-            // Суммируем итоги
-            dayCals += cal; dayFat += fat; dayCarb += carb; dayProt += prot;
+            mealCals += cal; mealFat += fat; mealCarb += carb; mealProt += prot;
 
-            // Тонкая линия между продуктами
-            stream.setStrokingColor(220, 220, 220);
-            stream.setLineWidth(0.5f);
-            stream.moveTo(startX, y);
-            stream.lineTo(startX + tableWidth, y);
-            stream.stroke();
-
-            if (y < MARGIN + 40) break; // Проверка конца страницы
+            // Линия разделитель
+            streamWrapper[0].setStrokingColor(230, 230, 230);
+            streamWrapper[0].setLineWidth(0.5f);
+            streamWrapper[0].moveTo(startX, y);
+            streamWrapper[0].lineTo(startX + tableWidth, y);
+            streamWrapper[0].stroke();
         }
-        cursor.close();
 
-        // 3. Итоговая строка (Всего)
+        // Финальный итог
+        if (!isFirst) {
+            y = drawMealTotalRow(streamWrapper[0], bold, startX, y, tableWidth, rowHeight, colWidths, "Итого", mealCals, mealFat, mealCarb, mealProt);
+        }
+
+        cursor.close();
+        return y;
+    }
+
+    /**
+     * Вспомогательный метод для отрисовки строки "Итого"
+     */
+    private float drawMealTotalRow(PDPageContentStream stream, PDFont bold, float startX, float y, float tableWidth, float rowHeight, float[] colWidths, String label, float c, float f, float carb, float p) throws Exception {
         y -= rowHeight;
-        stream.setNonStrokingColor(245, 245, 245);
+        stream.setNonStrokingColor(245, 245, 255); // Нежно-голубой фон для итогов
         stream.addRect(startX, y, tableWidth, rowHeight);
         stream.fill();
         stream.setNonStrokingColor(0, 0, 0);
 
-        String[] totals = {"ВСЕГО", (int)dayCals + "", String.format("%.1f", dayFat), String.format("%.1f", dayCarb), String.format("%.1f", dayProt)};
-        drawRowText(stream, bold, 9, startX + 5, y + 5, totals, colWidths);
-
-        return y - 20;
+        String[] totals = {
+                "ВСЕГО:",
+                String.valueOf((int)c),
+                String.format("%.1f", f),
+                String.format("%.1f", carb),
+                String.format("%.1f", p)
+        };
+        drawRowText(stream, bold, 8, startX + 5, y + 5, totals, colWidths);
+        return y - 5; // Небольшой отступ после итога
     }
 
     private void drawRowText(PDPageContentStream stream, PDFont font, float size, float x, float y, String[] data, float[] widths) throws Exception {

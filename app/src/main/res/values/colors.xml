@@ -8,6 +8,7 @@
     <color name="light_gray2">#43516C</color>
     <color name="light_gray3">#2E3A4D</color>
     <color name="light_gray_stroke">#6E6E6E</color>
+    <color name="divider">#226E6E6E</color>
     <color name="grey">#808080</color>
     <color name="background_1">#2E3042</color>
     <color name="active_color">#FF5722</color>

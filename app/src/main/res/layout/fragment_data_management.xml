@@ -144,7 +144,7 @@
                     <Button
                         android:id="@+id/btn_export_data"
                         style="@style/ModernDestructiveButton"
-                        android:text="Экспортировать данные в файл"
+                        android:text="Экспортировать данные в (JSON)"
                         android:textColor="@color/white"
                         app:icon="@drawable/ic_export"
                         app:iconTint="@color/white" />
