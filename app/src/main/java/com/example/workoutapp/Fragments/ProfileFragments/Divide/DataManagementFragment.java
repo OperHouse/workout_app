@@ -25,6 +25,7 @@ import com.example.workoutapp.Data.NutritionDao.MealNameDao;
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
+import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutHistory.WorkoutHistoryFragment;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.R;
 import com.example.workoutapp.RegistrationActivity.RegistrationActivity;
@@ -582,8 +583,7 @@ public class DataManagementFragment extends Fragment {
 
         switch (label) {
             case "История тренировок":
-                // Замени на свои реальные классы фрагментов
-                // destination = new TrainingHistoryFragment();
+                destination = new WorkoutHistoryFragment();
                 break;
             case "Упражнения":
                 // destination = new AllExercisesFragment();

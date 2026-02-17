@@ -72,6 +72,7 @@ dependencies {
 
     implementation("com.google.code.gson:gson:2.13.2")
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+    implementation("com.airbnb.android:lottie:6.7.1")
 
 
     implementation("androidx.paging:paging-common:3.3.6")
