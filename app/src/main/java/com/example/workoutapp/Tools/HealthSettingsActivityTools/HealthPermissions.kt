@@ -1,9 +1,8 @@
-package com.example.workoutapp
+package com.example.workoutapp.Tools.HealthSettingsActivityTools
 
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.StepsRecord
-import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 
 object HealthPermissions {
 

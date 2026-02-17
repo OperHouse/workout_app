@@ -27,6 +27,12 @@ import com.example.workoutapp.Data.ProfileDao.GeneralGoalDao;
 import com.example.workoutapp.Data.ProfileDao.UserProfileDao;
 import com.example.workoutapp.Data.ProfileDao.WeightHistoryDao;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
+import com.example.workoutapp.Fragments.ProfileFragments.Divide.ActivityGoalFragment;
+import com.example.workoutapp.Fragments.ProfileFragments.Divide.DataManagementFragment;
+import com.example.workoutapp.Fragments.ProfileFragments.Divide.FoodGoalFragment;
+import com.example.workoutapp.Fragments.ProfileFragments.Divide.GeneralGoalFragment;
+import com.example.workoutapp.Fragments.ProfileFragments.Divide.ProfileSettingsFragment;
+import com.example.workoutapp.HealthSettingsActivity;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
@@ -228,7 +234,7 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
         groupNames.add(res.getString(R.string.group_general_goal));
         groupNames.add(res.getString(R.string.group_activity_goal));
         groupNames.add(res.getString(R.string.group_food_goal));
-        groupNames.add("Управление данными");
+        groupNames.add(res.getString(R.string.data_management));
         groupNames.add(res.getString(R.string.Permissions));
 
         Map<String, Integer> childListResIdMap = new HashMap<>();
@@ -414,6 +420,18 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
 
     @Override
     public void onGroupItemClick(int flatPosition, String title) {
+        if (title != null && (title.equals(getString(R.string.Permissions)) || title.equals("Данные"))) {
+            startActivity(new Intent(getContext(), HealthSettingsActivity.class));
+        }
+        if (title != null && title.equals(getString(R.string.data_management))) {
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.frameLayout, new DataManagementFragment())
+                    .addToBackStack(null)
+                    .commit();
+            return;
+        }
+
+        // Ваша старая логика для HealthSettings
         if (title != null && (title.equals(getString(R.string.Permissions)) || title.equals("Данные"))) {
             startActivity(new Intent(getContext(), HealthSettingsActivity.class));
         }

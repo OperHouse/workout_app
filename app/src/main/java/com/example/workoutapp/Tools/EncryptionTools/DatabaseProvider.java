@@ -1,4 +1,4 @@
-package com.example.workoutapp.Data.EncryptionTools;
+package com.example.workoutapp.Tools.EncryptionTools;
 import android.content.Context;
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import net.sqlcipher.database.SQLiteDatabase;

@@ -1,4 +1,4 @@
-package com.example.workoutapp.Fragments;
+package com.example.workoutapp.Fragments.ActivityStatisticFragment;
 
 public class DayStepModel {
     private String dayName;

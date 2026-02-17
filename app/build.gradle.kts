@@ -28,11 +28,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
 }
 
@@ -46,6 +46,10 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.google.material)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.annotation)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+    implementation(libs.androidx.navigation.fragment)
+    implementation(libs.androidx.navigation.ui)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -65,6 +69,9 @@ dependencies {
     implementation("com.google.android.material:material:1.13.0")
 
     implementation("com.google.android.flexbox:flexbox:3.0.0")
+
+    implementation("com.google.code.gson:gson:2.13.2")
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
 
 
     implementation("androidx.paging:paging-common:3.3.6")

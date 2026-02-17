@@ -142,4 +142,16 @@ public class BaseEatDao {
 
         return new FoodModel(id, name, protein, fat, carb, calories, amount, measurementType);
     }
+
+    public void deleteAll() {
+        db.delete(BASE_FOOD_TABLE, null, null);
+    }
+
+    public long getCount() {
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + BASE_FOOD_TABLE, null);
+        long count = 0;
+        if (cursor.moveToFirst()) count = cursor.getLong(0);
+        cursor.close();
+        return count;
+    }
 }

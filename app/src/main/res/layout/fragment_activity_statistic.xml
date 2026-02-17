@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/background_1"
     android:orientation="vertical"
-    tools:context=".Fragments.ActivityStatisticFragment">
+    tools:context=".Fragments.ActivityStatisticFragment.ActivityStatisticFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -128,7 +128,7 @@
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
-                    <com.example.workoutapp.Fragments.CustomBarChartView
+                    <com.example.workoutapp.Fragments.ActivityStatisticFragment.CustomBarChartView
                         android:id="@+id/chart_steps"
                         android:layout_width="match_parent"
                         android:layout_height="220dp"
@@ -162,7 +162,7 @@
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
-                    <com.example.workoutapp.Fragments.CustomBarChartView
+                    <com.example.workoutapp.Fragments.ActivityStatisticFragment.CustomBarChartView
                         android:id="@+id/chart_calories"
                         android:layout_width="match_parent"
                         android:layout_height="220dp"
@@ -196,7 +196,7 @@
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
-                    <com.example.workoutapp.Fragments.CustomBarChartView
+                    <com.example.workoutapp.Fragments.ActivityStatisticFragment.CustomBarChartView
                         android:id="@+id/chart_distance"
                         android:layout_width="match_parent"
                         android:layout_height="220dp"

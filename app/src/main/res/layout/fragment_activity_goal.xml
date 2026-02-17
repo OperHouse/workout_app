@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_1"
-    tools:context=".Fragments.ProfileFragments.ActivityGoalFragment">
+    tools:context=".Fragments.ProfileFragments.Divide.ActivityGoalFragment">
 
     <!-- Заголовок -->
     <androidx.constraintlayout.widget.ConstraintLayout

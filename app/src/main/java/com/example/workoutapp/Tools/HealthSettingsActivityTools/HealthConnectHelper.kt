@@ -1,4 +1,4 @@
-package com.example.workoutapp
+package com.example.workoutapp.Tools.HealthSettingsActivityTools
 
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient

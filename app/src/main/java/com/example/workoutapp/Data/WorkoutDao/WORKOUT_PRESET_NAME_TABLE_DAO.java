@@ -116,4 +116,9 @@ public class WORKOUT_PRESET_NAME_TABLE_DAO {
                 new String[]{String.valueOf(presetId)}
         );
     }
+
+    public void deleteAllPresets() {
+        db.delete(AppDataBase.WORKOUT_PRESET_NAME_TABLE, null, null);
+        db.delete(AppDataBase.CONNECTING_WORKOUT_PRESET_TABLE, null, null);
+    }
 }

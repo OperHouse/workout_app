@@ -1,4 +1,4 @@
-package com.example.workoutapp.Data.EncryptionTools;
+package com.example.workoutapp.Tools.EncryptionTools;
 
 import android.content.Context;
 import android.util.Log;
@@ -43,6 +43,37 @@ public class DatabaseExporter {
             Log.d("DatabaseExporter", "База успешно экспортирована: " + exportFile.getAbsolutePath());
         } catch (Exception e) {
             Log.e("DatabaseExporter", "Ошибка при экспорте базы", e);
+        }
+    }
+    public static File exportDecryptedDatabase(Context context) {
+        String exportName = "Workout_Backup_Plain.db";
+        File exportFile = new File(context.getCacheDir(), "exports/" + exportName);
+
+        try {
+            // Создаем папку если её нет
+            if (exportFile.getParentFile() != null && !exportFile.getParentFile().exists()) {
+                exportFile.getParentFile().mkdirs();
+            }
+            if (exportFile.exists()) exportFile.delete();
+
+            // Получаем доступ к текущей зашифрованной базе
+            // Используем ваш DatabaseProvider
+            SQLiteDatabase encryptedDb = DatabaseProvider.get(context);
+
+            // Выполняем экспорт:
+            // 1. Прикрепляем пустую базу без пароля
+            // 2. Копируем туда структуру и данные
+            // 3. Отключаем базу
+            encryptedDb.rawExecSQL("ATTACH DATABASE '" + exportFile.getAbsolutePath() + "' AS plaintext KEY '';");
+            encryptedDb.rawExecSQL("SELECT sqlcipher_export('plaintext');");
+            encryptedDb.rawExecSQL("DETACH DATABASE plaintext;");
+
+            Log.d("DatabaseExporter", "Расшифрованная база готова: " + exportFile.getAbsolutePath());
+            return exportFile;
+
+        } catch (Exception e) {
+            Log.e("DatabaseExporter", "Ошибка экспорта: ", e);
+            return null;
         }
     }
 }

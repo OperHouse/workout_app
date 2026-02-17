@@ -124,4 +124,16 @@ public class PresetMealNameDao {
 
         return presetMeals;
     }
+
+    public void deleteAll() {
+        db.delete(AppDataBase.MEAL_PRESET_NAME_TABLE, null, null);
+    }
+
+    public long getCount() {
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + AppDataBase.MEAL_PRESET_NAME_TABLE, null);
+        long count = 0;
+        if (cursor.moveToFirst()) count = cursor.getLong(0);
+        cursor.close();
+        return count;
+    }
 }

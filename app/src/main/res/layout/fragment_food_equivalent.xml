@@ -6,7 +6,7 @@
     android:id="@+id/FoodEquivalentFragment_rootConstraintLayout"
     android:layout_height="match_parent"
     android:background="@color/background_1"
-    tools:context=".Fragments.FoodEquivalentFragment">
+    tools:context=".Fragments.FoodEquivalentFragment.FoodEquivalentFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/stats_toolbar"

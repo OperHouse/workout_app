@@ -1,7 +1,5 @@
 package com.example.workoutapp.Models.NutritionModels;
 
-import android.os.Build;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -17,38 +15,46 @@ public class MealModel {
         this.meal_name_id = meal_name_id;
         this.meal_name = meal_name;
 
-        // Копируем список FoodModel через копирующий конструктор каждого элемента
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            this.meal_food_list = meal_food_list.stream()
-                    .map(FoodModel::new) // требуется копирующий конструктор в FoodModel
-                    .toList(); // можно заменить на collect(Collectors.toList()) для совместимости с Java <16
+        // Универсальный способ копирования для всех версий Android
+        if (meal_food_list != null) {
+            this.meal_food_list = new ArrayList<>();
+            for (FoodModel food : meal_food_list) {
+                this.meal_food_list.add(new FoodModel(food));
+            }
+        } else {
+            this.meal_food_list = new ArrayList<>();
         }
     };
-    public MealModel(MealModel other) {
-        this.meal_name_id = other.meal_name_id;
-        this.meal_name = other.meal_name;
-        this.mealData = other.mealData;
-
-        // Копируем список FoodModel через копирующий конструктор каждого элемента
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            this.meal_food_list = other.meal_food_list.stream()
-                    .map(FoodModel::new) // требуется копирующий конструктор в FoodModel
-                    .toList(); // можно заменить на collect(Collectors.toList()) для совместимости с Java <16
-        }
-    }
-
     public MealModel(int meal_name_id, String meal_name, String mealData, List<FoodModel> meal_food_list){
         this.meal_name_id = meal_name_id;
         this.meal_name = meal_name;
         this.mealData = mealData;
 
-        // Копируем список FoodModel через копирующий конструктор каждого элемента
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            this.meal_food_list = meal_food_list.stream()
-                    .map(FoodModel::new) // требуется копирующий конструктор в FoodModel
-                    .toList(); // можно заменить на collect(Collectors.toList()) для совместимости с Java <16
+        // Универсальный способ копирования для всех версий Android
+        if (meal_food_list != null) {
+            this.meal_food_list = new ArrayList<>();
+            for (FoodModel food : meal_food_list) {
+                this.meal_food_list.add(new FoodModel(food));
+            }
+        } else {
+            this.meal_food_list = new ArrayList<>();
         }
-    };
+    }
+
+    public MealModel(MealModel other) {
+        this.meal_name_id = other.meal_name_id;
+        this.meal_name = other.meal_name;
+        this.mealData = other.mealData;
+
+        if (other.meal_food_list != null) {
+            this.meal_food_list = new ArrayList<>();
+            for (FoodModel food : other.meal_food_list) {
+                this.meal_food_list.add(new FoodModel(food));
+            }
+        } else {
+            this.meal_food_list = new ArrayList<>();
+        }
+    }
 
 
 
