@@ -17,6 +17,9 @@ import com.example.workoutapp.Models.WorkoutModels.StrengthSetModel;
 import com.example.workoutapp.Models.WorkoutModels.WorkoutSessionModel;
 import com.example.workoutapp.R;
 
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+
 
 public class WorkoutDetailsFragment extends Fragment {
 
@@ -65,18 +68,42 @@ public class WorkoutDetailsFragment extends Fragment {
         TextView tvDate = view.findViewById(R.id.stat_date);
 
         tvExCount.setText(String.valueOf(session.getExercises().size()));
-        tvDate.setText(session.getWorkoutDate());
 
-        // Считаем суммарный вес всех упражнений
+        // --- ОБРАБОТКА ДАТЫ ---
+        try {
+            String rawDate = session.getWorkoutDate(); // Предполагаем формат "yyyy-MM-dd"
+            // Создаем форматтер для чтения даты из сессии
+            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            // Создаем форматтер для вывода (только день и месяц)
+            SimpleDateFormat outputFormat = new SimpleDateFormat("dd.MM", Locale.getDefault());
+
+            java.util.Date date = inputFormat.parse(rawDate);
+            if (date != null) {
+                tvDate.setText(outputFormat.format(date));
+            }
+        } catch (Exception e) {
+            // Если что-то пошло не так (неверный формат), выводим как есть или заглушку
+            tvDate.setText(session.getWorkoutDate());
+        }
+
+        // --- ПОДСЧЕТ ВЕСА ---
         double totalWeight = 0;
         for (ExerciseModel ex : session.getExercises()) {
-            for (Object set : ex.getSets()) {
-                if (set instanceof StrengthSetModel) {
-                    StrengthSetModel s = (StrengthSetModel) set;
-                    totalWeight += (s.getWeight() * s.getRep());
+            if (ex.getSets() != null) {
+                for (Object set : ex.getSets()) {
+                    if (set instanceof StrengthSetModel) {
+                        StrengthSetModel s = (StrengthSetModel) set;
+                        totalWeight += (s.getWeight() * s.getRep());
+                    }
                 }
             }
         }
-        tvTotalWeight.setText(String.format("%.1f", totalWeight));
+
+        // Если вес целый, убираем лишние нули после запятой для экономии места
+        if (totalWeight % 1 == 0) {
+            tvTotalWeight.setText(String.format(Locale.getDefault(), "%.0f", totalWeight));
+        } else {
+            tvTotalWeight.setText(String.format(Locale.getDefault(), "%.1f", totalWeight));
+        }
     }
 }
