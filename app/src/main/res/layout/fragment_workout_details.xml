@@ -49,17 +49,22 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginVertical="8dp"
                 app:cardBackgroundColor="@color/black2"
-                app:cardCornerRadius="20dp"
+                app:cardCornerRadius="24dp"
+                app:strokeWidth="1dp"
                 app:strokeColor="@color/light_gray_stroke"
-                app:strokeWidth="1dp">
+                app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:padding="20dp"
-                    android:weightSum="3">
+                    android:weightSum="3"
+                    android:divider="@drawable/vertical_divider"
+                    android:showDividers="middle"
+                    android:dividerPadding="8dp">
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -67,21 +72,32 @@
                         android:layout_weight="1"
                         android:gravity="center"
                         android:orientation="vertical">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_amount"
+                            app:tint="@color/accent_color"
+                            android:layout_marginBottom="4dp"/>
+
                         <TextView
                             android:id="@+id/stat_exercises_count"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="12"
                             android:textColor="@color/white"
                             android:textSize="18sp"
                             android:textStyle="bold" />
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:alpha="0.7"
-                            android:textColor="@color/white"
                             android:text="Упр."
-                            android:textSize="12sp" />
+                            android:alpha="0.5"
+                            android:textAllCaps="true"
+                            android:textColor="@color/white"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -90,21 +106,32 @@
                         android:layout_weight="1"
                         android:gravity="center"
                         android:orientation="vertical">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_weight"
+                            app:tint="@color/accent_color"
+                            android:layout_marginBottom="4dp"/>
+
                         <TextView
                             android:id="@+id/stat_total_weight"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="0"
+                            android:text="4500"
                             android:textColor="@color/white"
                             android:textSize="18sp"
                             android:textStyle="bold" />
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="КГ всего"
-                            android:alpha="0.7"
+                            android:text="кг всего"
+                            android:alpha="0.5"
+                            android:textAllCaps="true"
                             android:textColor="@color/white"
-                            android:textSize="12sp" />
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
 
                     <LinearLayout
@@ -113,21 +140,32 @@
                         android:layout_weight="1"
                         android:gravity="center"
                         android:orientation="vertical">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_calendar"
+                            app:tint="@color/accent_color"
+                            android:layout_marginBottom="4dp"/>
+
                         <TextView
                             android:id="@+id/stat_date"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="--"
+                            android:text="17.02"
                             android:textColor="@color/white"
                             android:textSize="18sp"
                             android:textStyle="bold" />
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Дата"
-                            android:alpha="0.7"
+                            android:text="февраля"
+                            android:alpha="0.5"
+                            android:textAllCaps="true"
                             android:textColor="@color/white"
-                            android:textSize="12sp" />
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -146,7 +184,8 @@
                 android:id="@+id/rv_details_exercises"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false" />
+                android:nestedScrollingEnabled="false"
+                tools:listitem="@layout/item_details_exercise"/>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
