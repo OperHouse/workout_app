@@ -51,10 +51,10 @@ public class ExerciseDetailsAdapter extends RecyclerView.Adapter<ExerciseDetails
             String setText = "";
             if (set instanceof StrengthSetModel) {
                 StrengthSetModel s = (StrengthSetModel) set;
-                setText = setNumber + ". " + s.getWeight() + " кг x " + s.getRep();
+                setText = setNumber + "-й подход - " + s.getWeight() + " кг x " + s.getRep();
             } else if (set instanceof CardioSetModel) {
                 CardioSetModel c = (CardioSetModel) set;
-                setText = setNumber + ". " + c.getTime() + " мин | " + c.getDistance() + " км";
+                setText = setNumber + "-й подход - " + c.getTime() + " мин | " + c.getDistance() + " км";
             }
 
             tvSet.setText(setText);

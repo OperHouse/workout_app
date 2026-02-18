@@ -25,6 +25,7 @@ import com.example.workoutapp.Data.NutritionDao.MealNameDao;
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
+import com.example.workoutapp.Fragments.NutritionFragments.NutritionHistory.NutritionHistoryFragment;
 import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutHistory.WorkoutHistoryFragment;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.R;
@@ -592,7 +593,7 @@ public class DataManagementFragment extends Fragment {
                 // destination = new WorkoutPresetsFragment();
                 break;
             case "Дневник питания":
-                // destination = new NutritionDiaryFragment();
+                destination = new NutritionHistoryFragment();
                 break;
             case "Статистика калорий":
                 // destination = new CalorieStatsFragment();
