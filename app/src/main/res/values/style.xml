@@ -144,11 +144,12 @@
     </style>
 
     <style name="CustomTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-        <item name="boxStrokeColor">@color/white</item> <!-- Цвет обводки -->
         <item name="boxBackgroundMode">outline</item> <!-- Режим фона: только обводка -->
         <item name="android:focusable">true</item> <!-- Фокусируемость -->
-        <item name="hintTextColor">@color/white</item> <!-- Цвет подсказки -->
-        <item name="android:textColorHint">@color/light_gray2</item> <!-- Цвет текста подсказки -->
+        <item name="boxStrokeColor">@color/text_input_stroke_color</item>
+        <item name="hintTextColor">@color/white</item>
+        <item name="passwordToggleTint">@color/text_input_stroke_color</item>
+        <item name="android:textColorHint">@color/light_gray_stroke</item>>
     </style>
 
     <!-- Стиль для TextInputEditText -->
