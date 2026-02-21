@@ -1,0 +1,47 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="80dp"
+    android:height="80dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+  <path
+      android:pathData="M50,53m-35,0a35,35 0,1 1,70 0a35,35 0,1 1,-70 0"
+      android:fillColor="#262836"/>
+
+  <!-- КРУГ -->
+  <path
+      android:strokeWidth="1"
+      android:pathData="M50,50m-35,0a35,35 0,1 1,70 0a35,35 0,1 1,-70 0"
+      android:fillColor="#00000000"
+      android:strokeColor="#43516C"/>
+
+  <!-- СИНЯЯ ПОДЛОЖКА -->
+
+
+  <group
+      android:translateY="8">
+
+    <!-- GOOGLE LOGO -->
+    <path
+        android:pathData="M65.66,42.36C65.66,41.23 65.56,40.14 65.37,39.09H50.3V45.28H58.91C58.54,47.28 57.41,48.97 55.72,50.11V54.12H60.89C63.91,51.34 65.66,47.24 65.66,42.36Z"
+        android:fillColor="#4285F4"
+        android:fillType="evenOdd"/>
+
+    <path
+        android:pathData="M50.3,58C54.62,58 58.24,56.57 60.89,54.12L55.72,50.11C54.28,51.07 52.45,51.64 50.3,51.64C46.13,51.64 42.6,48.82 41.35,45.04H36V49.19C38.63,54.41 44.04,58 50.3,58Z"
+        android:fillColor="#34A853"
+        android:fillType="evenOdd"/>
+
+    <path
+        android:pathData="M41.35,45.04C41.03,44.08 40.85,43.05 40.85,42C40.85,40.95 41.03,39.92 41.35,38.96V34.81H36C34.92,36.97 34.3,39.42 34.3,42C34.3,44.58 34.92,47.03 36,49.19L41.35,45.04Z"
+        android:fillColor="#FBBC05"
+        android:fillType="evenOdd"/>
+
+    <path
+        android:pathData="M50.3,32.36C52.65,32.36 54.76,33.17 56.42,34.76L61,30.17C58.23,27.59 54.61,26 50.3,26C44.04,26 38.63,29.59 36,34.81L41.35,38.96C42.6,35.18 46.13,32.36 50.3,32.36Z"
+        android:fillColor="#EA4335"
+        android:fillType="evenOdd"/>
+
+  </group>
+
+</vector>
