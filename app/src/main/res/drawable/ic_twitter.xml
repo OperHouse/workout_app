@@ -1,0 +1,28 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="80dp"
+    android:height="80dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+  <path
+      android:pathData="M50,53m-35,0a35,35 0,1 1,70 0a35,35 0,1 1,-70 0"
+      android:fillColor="#262836"/>
+
+  <!-- КРУГ -->
+  <path
+      android:strokeWidth="1"
+      android:pathData="M50,50m-35,0a35,35 0,1 1,70 0a35,35 0,1 1,-70 0"
+      android:fillColor="#00000000"
+      android:strokeColor="#43516C"/>
+
+  <!-- ЛОГО -->
+  <group
+      android:translateY="8">
+
+    <path
+        android:pathData="M53.04,39.55L64.96,26H62.13L51.79,37.77L43.53,26H34L46.49,43.79L34,58H36.82L47.75,45.58L56.47,58H66L53.04,39.55H53.04ZM49.18,43.95L47.91,42.18L37.84,28.08H42.18L50.3,39.46L51.57,41.23L62.14,56.02H57.8L49.18,43.95V43.95Z"
+        android:fillColor="#ffffff"/>
+
+  </group>
+
+</vector>

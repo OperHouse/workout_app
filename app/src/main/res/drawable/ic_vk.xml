@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="80dp"
+    android:height="80dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+  <path
+      android:pathData="M50,53m-35,0a35,35 0,1 1,70 0a35,35 0,1 1,-70 0"
+      android:fillColor="#262836"/>
+
+  <!-- КРУГ -->
+  <path
+      android:strokeWidth="1"
+      android:pathData="M50,50m-35,0a35,35 0,1 1,70 0a35,35 0,1 1,-70 0"
+      android:fillColor="#00000000"
+      android:strokeColor="#43516C"/>
+
+  <!-- СИНЯЯ ПОДЛОЖКА -->
+  <group
+      android:translateY="6">
+  <path
+      android:pathData="M34,42c0,-7.24 0,-10.86 2.24,-13.12c2.27,-2.24 5.89,-2.24 13.12,-2.24h1.28c7.24,0 10.86,0 13.12,2.24c2.24,2.27 2.24,5.89 2.24,13.12v1.28c0,7.24 0,10.86 -2.24,13.12c-2.27,2.24 -5.89,2.24 -13.12,2.24h-1.28c-7.24,0 -10.86,0 -13.12,-2.24c-2.24,-2.27 -2.24,-5.89 -2.24,-13.12z"
+      android:fillColor="#0077FF"/>
+  </group>
+
+  <!-- ЛОГО -->
+  <group
+      android:translateY="6">
+
+    <path
+        android:pathData="M51.02,51.05c-7.29,0 -11.45,-4.99 -11.62,-13.31h3.67c0.11,6.1 2.8,8.68 4.94,9.21V37.74h3.44V43c2.1,-0.23 4.32,-2.63 5.07,-5.27h3.43c-0.28,1.37 -0.84,2.66 -1.64,3.81c-0.81,1.14 -1.84,2.11 -3.03,2.83c1.33,0.67 2.51,1.6 3.45,2.76c0.95,1.15 1.63,2.48 2.02,3.92h-3.78c-0.82,-2.53 -2.84,-4.49 -5.52,-4.76v4.76h-0.42z"
+        android:fillColor="#ffffff"/>
+
+  </group>
+
+</vector>
