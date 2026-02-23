@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.workoutapp.R;
+import com.google.firebase.FirebaseApp;
 
 public class RegistrationActivity extends AppCompatActivity {
 
@@ -16,6 +17,8 @@ public class RegistrationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_registration);
+
+        FirebaseApp.initializeApp(this);
 
         // При первом запуске загружаем фрагмент регистрации
         if (savedInstanceState == null) {
