@@ -32,8 +32,12 @@ import androidx.fragment.app.Fragment;
 
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.R;
+import com.example.workoutapp.Tools.MailHelper;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 
 public class RegistrationFragment extends Fragment {
 
@@ -42,30 +46,25 @@ public class RegistrationFragment extends Fragment {
     private Button btnRegister;
     private TextView tvLoginLink, btnSkip;
 
+    private FirebaseAuth mAuth;
+
     public RegistrationFragment() {
         // Required empty public constructor
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Инфлейтим макет фрагмента
         return inflater.inflate(R.layout.fragment_registration, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        mAuth = FirebaseAuth.getInstance();
 
-        // 1. Инициализация View
         initViews(view);
-
-        // 2. Настройка отступов и фокуса
         rootViewSetup(view);
-
-        // 3. Настройка слушателей
         setupListeners();
-
-        // 4. Настройка текста соглашений
         setupAgreementText(view);
     }
 
@@ -81,6 +80,14 @@ public class RegistrationFragment extends Fragment {
         btnSkip = view.findViewById(R.id.btn_skip_registration);
         tvLoginLink = view.findViewById(R.id.tv_login_link);
         btnRegister = view.findViewById(R.id.btn_register);
+
+        nameInput.addTextChangedListener(new TextWatcher() {
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                nameLayout.setError(null);
+            }
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void afterTextChanged(Editable s) {}
+        });
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -102,17 +109,8 @@ public class RegistrationFragment extends Fragment {
     }
 
     private void setupListeners() {
-        // Переход на авторизацию
-        tvLoginLink.setOnClickListener(v -> {
-            hideKeyboard(v);
-            getParentFragmentManager().beginTransaction()
-                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out, android.R.anim.fade_in, android.R.anim.fade_out)
-                    .replace(R.id.fragment_container, new AuthorizationFragment())
-                    .addToBackStack("Authorization")
-                    .commit();
-        });
+        tvLoginLink.setOnClickListener(v -> openLoginFragment());
 
-        // Пропустить регистрацию
         btnSkip.setOnClickListener(v -> {
             Intent intent = new Intent(requireActivity(), MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -121,7 +119,6 @@ public class RegistrationFragment extends Fragment {
             requireActivity().finish();
         });
 
-        // Клавиатура Done
         TextInputEditText[] inputs = {nameInput, emailInput, passwordInput};
         for (TextInputEditText input : inputs) {
             input.setOnEditorActionListener((v, actionId, event) -> {
@@ -134,7 +131,6 @@ public class RegistrationFragment extends Fragment {
             });
         }
 
-        // Проверка пароля
         passwordInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -143,8 +139,78 @@ public class RegistrationFragment extends Fragment {
             @Override public void afterTextChanged(Editable s) {}
         });
 
-        // Кнопка регистрации
         btnRegister.setOnClickListener(v -> performRegistration());
+    }
+
+    private void performRegistration() {
+        String name = nameInput.getText().toString().trim();
+        String email = emailInput.getText().toString().trim();
+        String password = passwordInput.getText().toString().trim();
+
+        // 1. Валидация
+        boolean isAllValid = true;
+        if (name.isEmpty()) { nameLayout.setError("Введите имя"); isAllValid = false; } else nameLayout.setError(null);
+        if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailLayout.setError("Некорректная почта"); isAllValid = false;
+        } else emailLayout.setError(null);
+        if (password.length() < 6) {
+            passwordLayout.setError("Минимум 6 символов"); isAllValid = false;
+        } else passwordLayout.setError(null);
+
+        if (!isAllValid) return;
+
+        btnRegister.setEnabled(false);
+        hideKeyboard(getView());
+
+        // 2. Создание пользователя в Firebase
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(requireActivity(), task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+
+                            // 3. Устанавливаем отображаемое имя (DisplayName)
+                            UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                    .setDisplayName(name)
+                                    .build();
+
+                            user.updateProfile(profileUpdates).addOnCompleteListener(profileTask -> {
+
+                                // 4. Отправляем письмо для подтверждения почты
+                                user.sendEmailVerification().addOnCompleteListener(verifyTask -> {
+                                    if (verifyTask.isSuccessful()) {
+
+                                        // 5. Отправляем ТВОЁ приветственное письмо (через MailHelper)
+                                        MailHelper.sendWelcomeEmail(email, name);
+
+                                        // 6. Переходим на фрагмент ожидания подтверждения
+                                        getParentFragmentManager().beginTransaction()
+                                                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                                                .replace(R.id.fragment_container, EmailVerificationFragment.newInstance(email))
+                                                .addToBackStack(null)
+                                                .commit();
+
+                                    } else {
+                                        btnRegister.setEnabled(true);
+                                        String error = verifyTask.getException() != null ? verifyTask.getException().getLocalizedMessage() : "Ошибка отправки письма";
+                                        Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            });
+                        }
+                    } else {
+                        btnRegister.setEnabled(true);
+                        String error = task.getException() != null ? task.getException().getLocalizedMessage() : "Ошибка регистрации";
+                        Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    private void openLoginFragment() {
+        getParentFragmentManager().beginTransaction()
+                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out, android.R.anim.fade_in, android.R.anim.fade_out)
+                .replace(R.id.fragment_container, new AuthorizationFragment())
+                .commit();
     }
 
     private void validatePasswordStrength(String pass) {
@@ -163,33 +229,6 @@ public class RegistrationFragment extends Fragment {
         }
     }
 
-    private void performRegistration() {
-        String name = nameInput.getText().toString().trim();
-        String email = emailInput.getText().toString().trim();
-        String password = passwordInput.getText().toString().trim();
-
-        boolean isAllValid = true;
-
-        if (name.isEmpty()) { nameLayout.setError("Введите имя"); isAllValid = false; } else nameLayout.setError(null);
-
-        if (email.isEmpty()) {
-            emailLayout.setError("Введите почту");
-            isAllValid = false;
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailLayout.setError("Некорректный формат");
-            isAllValid = false;
-        } else emailLayout.setError(null);
-
-        if (password.isEmpty() || password.length() < 6) {
-            passwordLayout.setError("Минимум 6 символов");
-            isAllValid = false;
-        } else passwordLayout.setError(null);
-
-        if (isAllValid) {
-            Toast.makeText(requireContext(), "Регистрация успешна!", Toast.LENGTH_SHORT).show();
-        }
-    }
-
     private void clearAllFocus() {
         if (requireActivity().getCurrentFocus() != null) {
             requireActivity().getCurrentFocus().clearFocus();
@@ -198,15 +237,14 @@ public class RegistrationFragment extends Fragment {
 
     private void setupAgreementText(View view) {
         TextView agreementText = view.findViewById(R.id.agreement_text);
-        String fullText = getString(R.string.agreement_full_text_placeholder); // Рекомендую вынести в strings.xml
-        if (fullText == null) fullText = "Регистрируясь, вы принимаете условия Пользовательского соглашения и даете согласие на обработку Персональных данных";
+        String fullText = "Регистрируясь, вы принимаете условия Пользовательского соглашения и даете согласие на обработку Персональных данных";
 
         SpannableString ss = new SpannableString(fullText);
         int highlightColor = ContextCompat.getColor(requireContext(), R.color.light_blue_A200);
 
         ClickableSpan agreementClick = new ClickableSpan() {
             @Override public void onClick(@NonNull View widget) {
-                showAgreementDialog("Соглашение", getString(R.string.agreement_text_content));
+                showAgreementDialog("Соглашение", "Текст соглашения...");
             }
             @Override public void updateDrawState(@NonNull TextPaint ds) {
                 super.updateDrawState(ds);
@@ -215,7 +253,6 @@ public class RegistrationFragment extends Fragment {
             }
         };
 
-        // Примени спаны (индексы должны соответствовать твоей строке)
         int start1 = fullText.indexOf("Пользовательского соглашения");
         if (start1 != -1) ss.setSpan(agreementClick, start1, start1 + 28, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
@@ -239,5 +276,12 @@ public class RegistrationFragment extends Fragment {
     private void hideKeyboard(View view) {
         InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
+    private void navigateToMain() {
+        Intent intent = new Intent(requireActivity(), MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        requireActivity().finish();
     }
 }
