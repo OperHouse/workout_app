@@ -13,6 +13,8 @@ public class CardioSetModel {
     private String state;
     private int order;
 
+    public CardioSetModel() { }
+
     public CardioSetModel(long id, double temp, int time, double distance, String state, int order) {
         this.cardio_set_id = id;
         this.temp = temp;

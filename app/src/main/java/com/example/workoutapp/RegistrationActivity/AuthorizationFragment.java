@@ -29,12 +29,18 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
+import com.example.workoutapp.Data.ProfileDao.UserProfileDao;
+import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
+import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
+import com.example.workoutapp.Tools.FirestoreSyncManager;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+
+import java.util.List;
 
 public class AuthorizationFragment extends Fragment {
 
@@ -161,6 +167,15 @@ public class AuthorizationFragment extends Fragment {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
                             if (user.isEmailVerified()) {
+                                UserProfileDao profileDao = new UserProfileDao(MainActivity.getAppDataBase());
+                                profileDao.updateFirebaseId(user.getUid());
+
+                                // 2. Запускаем полную синхронизацию тренировок
+                                WORKOUT_EXERCISE_TABLE_DAO workoutDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
+                                List<ExerciseModel> localExercises = workoutDao.getAllExercisesForSync();
+
+                                FirestoreSyncManager syncManager = new FirestoreSyncManager();
+                                syncManager.startFullSynchronization(localExercises);
                                 navigateToMain();
                             } else {
                                 // Почта не подтверждена - отправляем на экран верификации
@@ -191,6 +206,11 @@ public class AuthorizationFragment extends Fragment {
                         }
                     }
                 });
+    }
+    private void updateLocalUserId(String uid) {
+        UserProfileDao profileDao = new UserProfileDao(MainActivity.getAppDataBase());
+        // Используем ваш метод, который мы обсудили ранее (добавив поле firebase_id)
+        profileDao.updateFirebaseId(uid);
     }
 
     private void showVerificationFragment(String email) {

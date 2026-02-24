@@ -11,6 +11,8 @@ public class StrengthSetModel {
     private String state;
     private int order;
 
+    public StrengthSetModel() { }
+
     public StrengthSetModel(long id, double weight, int rep, String state, int order) {
         this.strength_set_id = id;
         this.weight = weight;

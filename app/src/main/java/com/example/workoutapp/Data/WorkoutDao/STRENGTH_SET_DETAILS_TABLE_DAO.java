@@ -27,15 +27,7 @@ public class STRENGTH_SET_DETAILS_TABLE_DAO {
         Cursor cursor = null;
 
         try {
-            String query = "SELECT " +
-                    AppDataBase.STRENGTH_SET_ID + ", " +
-                    AppDataBase.STRENGTH_SET_WEIGHT + ", " +
-                    AppDataBase.STRENGTH_SET_REP + ", " +
-                    AppDataBase.STRENGTH_SET_STATE + ", " +
-                    AppDataBase.STRENGTH_SET_ORDER +
-                    " FROM " + AppDataBase.STRENGTH_SET_DETAILS_TABLE +
-                    " WHERE " + AppDataBase.STRENGTH_SET_FOREIGN_KEY_EXERCISE + " = ?" +
-                    " ORDER BY " + AppDataBase.STRENGTH_SET_ORDER;
+            String query = "SELECT " + AppDataBase.STRENGTH_SET_ID + ", " + AppDataBase.STRENGTH_SET_WEIGHT + ", " + AppDataBase.STRENGTH_SET_REP + ", " + AppDataBase.STRENGTH_SET_STATE + ", " + AppDataBase.STRENGTH_SET_ORDER + " FROM " + AppDataBase.STRENGTH_SET_DETAILS_TABLE + " WHERE " + AppDataBase.STRENGTH_SET_FOREIGN_KEY_EXERCISE + " = ?" + " ORDER BY " + AppDataBase.STRENGTH_SET_ORDER;
 
             cursor = db.rawQuery(query, new String[]{String.valueOf(exerciseId)});
 
@@ -83,9 +75,7 @@ public class STRENGTH_SET_DETAILS_TABLE_DAO {
     public StrengthSetModel getLastStrengthSet(long exerciseId) {
         Cursor cursor = null;
         try {
-            String query = "SELECT * FROM " + AppDataBase.STRENGTH_SET_DETAILS_TABLE +
-                    " WHERE " + AppDataBase.STRENGTH_SET_FOREIGN_KEY_EXERCISE + " = ?" +
-                    " ORDER BY " + AppDataBase.STRENGTH_SET_ID + " DESC LIMIT 1";
+            String query = "SELECT * FROM " + AppDataBase.STRENGTH_SET_DETAILS_TABLE + " WHERE " + AppDataBase.STRENGTH_SET_FOREIGN_KEY_EXERCISE + " = ?" + " ORDER BY " + AppDataBase.STRENGTH_SET_ID + " DESC LIMIT 1";
 
             cursor = db.rawQuery(query, new String[]{String.valueOf(exerciseId)});
 
@@ -113,10 +103,7 @@ public class STRENGTH_SET_DETAILS_TABLE_DAO {
         values.put(AppDataBase.STRENGTH_SET_REP, set.getRep());
         values.put(AppDataBase.STRENGTH_SET_STATE, set.getState());
 
-        db.update(AppDataBase.STRENGTH_SET_DETAILS_TABLE,
-                values,
-                AppDataBase.STRENGTH_SET_ID + " = ?",
-                new String[]{String.valueOf(set.getStrength_set_id())});
+        db.update(AppDataBase.STRENGTH_SET_DETAILS_TABLE, values, AppDataBase.STRENGTH_SET_ID + " = ?", new String[]{String.valueOf(set.getStrength_set_id())});
     }
 
     // =========================
@@ -124,18 +111,14 @@ public class STRENGTH_SET_DETAILS_TABLE_DAO {
     // =========================
     public void deleteStrengthSet(StrengthSetModel set) {
         if (set == null) return;
-        db.delete(AppDataBase.STRENGTH_SET_DETAILS_TABLE,
-                AppDataBase.STRENGTH_SET_ID + " = ?",
-                new String[]{String.valueOf(set.getStrength_set_id())});
+        db.delete(AppDataBase.STRENGTH_SET_DETAILS_TABLE, AppDataBase.STRENGTH_SET_ID + " = ?", new String[]{String.valueOf(set.getStrength_set_id())});
     }
 
     // =========================
     // Удаление всех силовых сетов для упражнения
     // =========================
     public void deleteSetsForExercise(long exerciseId) {
-        db.delete(AppDataBase.STRENGTH_SET_DETAILS_TABLE,
-                AppDataBase.STRENGTH_SET_FOREIGN_KEY_EXERCISE + " = ?",
-                new String[]{String.valueOf(exerciseId)});
+        db.delete(AppDataBase.STRENGTH_SET_DETAILS_TABLE, AppDataBase.STRENGTH_SET_FOREIGN_KEY_EXERCISE + " = ?", new String[]{String.valueOf(exerciseId)});
     }
 
     // =========================
@@ -145,9 +128,20 @@ public class STRENGTH_SET_DETAILS_TABLE_DAO {
         ContentValues values = new ContentValues();
         values.put(AppDataBase.STRENGTH_SET_ORDER, set.getOrder());
 
-        db.update(AppDataBase.STRENGTH_SET_DETAILS_TABLE,
-                values,
-                AppDataBase.STRENGTH_SET_ID + " = ?",
-                new String[]{String.valueOf(set.getStrength_set_id())});
+        db.update(AppDataBase.STRENGTH_SET_DETAILS_TABLE, values, AppDataBase.STRENGTH_SET_ID + " = ?", new String[]{String.valueOf(set.getStrength_set_id())});
+    }
+
+    // =========================
+    // Добавление силового сета с параметрами (для синхронизации из облака)
+    // =========================
+    public void addStrengthSet(long exerciseId, double weight, int rep, int order, String state) {
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.STRENGTH_SET_FOREIGN_KEY_EXERCISE, exerciseId);
+        values.put(AppDataBase.STRENGTH_SET_WEIGHT, weight);
+        values.put(AppDataBase.STRENGTH_SET_REP, rep);
+        values.put(AppDataBase.STRENGTH_SET_STATE, state);
+        values.put(AppDataBase.STRENGTH_SET_ORDER, order);
+
+        db.insert(AppDataBase.STRENGTH_SET_DETAILS_TABLE, null, values);
     }
 }

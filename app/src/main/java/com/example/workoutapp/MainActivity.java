@@ -19,12 +19,14 @@ import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutFragment;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Tools.EncryptionTools.DatabaseProvider;
+import com.example.workoutapp.Tools.FirestoreSyncManager;
 import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthConnectHelper;
 import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthConnectReader;
 import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthPermissions;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
 import com.example.workoutapp.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
@@ -62,6 +64,10 @@ public class MainActivity extends AppCompatActivity
 
         loadExercisesFromDb();
         setInitialActiveButton();
+
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            //syncDataWithCloud();
+        }
 
         // ---------- Health Connect permission launcher ----------
         healthPermissionLauncher =
@@ -215,6 +221,40 @@ public class MainActivity extends AppCompatActivity
             bottomNavigationView.setVisibility(
                     isVisible ? View.VISIBLE : View.GONE
             );
+        }
+    }
+
+
+    private void syncDataWithCloud() {
+        // 1. Создаем DAO для доступа к SQLite
+        WORKOUT_EXERCISE_TABLE_DAO dao = new WORKOUT_EXERCISE_TABLE_DAO(appDataBase);
+
+        // 2. Выгружаем все данные из локальной базы
+        List<ExerciseModel> allLocalExercises = dao.getAllExercisesForSync();
+
+        if (allLocalExercises != null && !allLocalExercises.isEmpty()) {
+            // 3. Создаем объект менеджера
+            FirestoreSyncManager syncManager = new FirestoreSyncManager();
+
+            // 4. ВЫЗЫВАЕМ ТОЛЬКО ЭТОТ МЕТОД
+            // Он внутри себя сам всё сгруппирует и вызовет uploadWorkoutSession
+            syncManager.syncAllWorkouts(allLocalExercises);
+
+            Log.d("CloudSync", "Запущена синхронизация для " + allLocalExercises.size() + " записей");
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Если пользователь авторизован — синхронизируем данные
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            WORKOUT_EXERCISE_TABLE_DAO workoutDao = new WORKOUT_EXERCISE_TABLE_DAO(getAppDataBase());
+            List<ExerciseModel> localExercises = workoutDao.getAllExercisesForSync();
+
+            FirestoreSyncManager syncManager = new FirestoreSyncManager();
+            syncManager.startFullSynchronization(localExercises);
         }
     }
 }

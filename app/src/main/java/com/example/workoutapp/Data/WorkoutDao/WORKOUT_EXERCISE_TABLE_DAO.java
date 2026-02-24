@@ -2,6 +2,7 @@ package com.example.workoutapp.Data.WorkoutDao;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.WorkoutModels.CardioSetModel;
@@ -241,5 +242,120 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
         }
 
         return history;
+    }
+
+    public List<ExerciseModel> getAllExercisesForSync() {
+        List<ExerciseModel> exerciseList = new ArrayList<>();
+        Cursor cursor = null;
+
+        try {
+            // Выбираем абсолютно все упражнения без фильтрации по state
+            String query = "SELECT * FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE;
+            cursor = db.rawQuery(query, null);
+
+            while (cursor.moveToNext()) {
+                long id = cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_ID));
+                String name = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_NAME));
+                String type = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_TYPE));
+                String bodyType = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE));
+                String date = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_DATE));
+                String state = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_STATE));
+
+                List<Object> sets = new ArrayList<>();
+                // Проверяем тип и подтягиваем сеты через существующие DAO сетов
+                if ("Кардио".equalsIgnoreCase(type) || "Время".equalsIgnoreCase(type)) {
+                    sets.addAll(cardioSetDao.getSetsForExercise(id));
+                } else {
+                    sets.addAll(strengthSetDao.getSetsForExercise(id));
+                }
+
+                exerciseList.add(new ExerciseModel(id, name, type, bodyType, date, state, sets));
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return exerciseList;
+    }
+
+    private void saveCloudSessionToSQLite(WorkoutSessionModel session) {
+        if (session == null || session.getExercises() == null) return;
+
+        // Нам нужен доступ к базе. В вашем случае можно взять через MainActivity
+        net.sqlcipher.database.SQLiteDatabase db = com.example.workoutapp.MainActivity.getAppDataBase();
+        com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO dao =
+                new com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO(db);
+
+        // Логика сохранения сессии из облака
+        // ВАЖНО: В вашем DAO должен быть метод, который принимает готовый ExerciseModel
+        // и сохраняет его вместе с вложенными сетами.
+        for (ExerciseModel ex : session.getExercises()) {
+            // Устанавливаем дату из сессии, если в самом упражнении она вдруг пустая
+            if (ex.getEx_Data() == null || ex.getEx_Data().isEmpty()) {
+                ex.setEx_Data(session.getWorkoutDate());
+            }
+
+            // Вызываем сохранение в базу (нужно реализовать метод addFullExercise в DAO)
+            dao.addFullExerciseFromCloud(ex);
+        }
+        Log.d("FirestoreSync", "Данные за " + session.getWorkoutDate() + " скачаны и сохранены локально");
+    }
+
+    public void addFullExerciseFromCloud(ExerciseModel ex) {
+        if (ex == null) return;
+
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.WORKOUT_EXERCISE_NAME, ex.getExerciseName());
+        values.put(AppDataBase.WORKOUT_EXERCISE_TYPE, ex.getExerciseType());
+        values.put(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE, ex.getExerciseBodyType());
+        values.put(AppDataBase.WORKOUT_EXERCISE_DATE, ex.getEx_Data());
+        values.put(AppDataBase.WORKOUT_EXERCISE_STATE, ex.getState());
+
+        long newExId = db.insert(AppDataBase.WORKOUT_EXERCISE_TABLE, null, values);
+
+        if (ex.getSets() != null && newExId != -1) {
+            for (Object setObj : ex.getSets()) {
+
+                // ЕСЛИ ПРИШЛА MAP (из Firebase)
+                if (setObj instanceof java.util.Map) {
+                    java.util.Map<String, Object> map = (java.util.Map<String, Object>) setObj;
+                    String type = (String) map.get("type");
+
+                    if ("strength".equals(type)) {
+                        double weight = getDouble(map.get("weight"));
+                        int rep = getInt(map.get("rep"));
+                        int order = getInt(map.get("order"));
+                        String state = (String) map.get("state");
+                        strengthSetDao.addStrengthSet(newExId, weight, rep, order, state);
+
+                    } else if ("cardio".equals(type)) {
+                        double temp = getDouble(map.get("temp"));
+                        int time = getInt(map.get("time"));
+                        double distance = getDouble(map.get("distance"));
+                        int order = getInt(map.get("order"));
+                        String state = (String) map.get("state");
+                        cardioSetDao.addCardioSet(newExId, temp, time, distance, order, state);
+                    }
+                }
+                // ЕСЛИ ПРИШЕЛ ОБЪЕКТ (локально)
+                else if (setObj instanceof StrengthSetModel) {
+                    StrengthSetModel s = (StrengthSetModel) setObj;
+                    strengthSetDao.addStrengthSet(newExId, s.getWeight(), s.getRep(), s.getOrder(), s.getState());
+                } else if (setObj instanceof CardioSetModel) {
+                    CardioSetModel c = (CardioSetModel) setObj;
+                    cardioSetDao.addCardioSet(newExId, c.getTemp(), c.getTime(), c.getDistance(), c.getOrder(), c.getState());
+                }
+            }
+        }
+    }
+
+    // Вспомогательные методы для безопасного извлечения чисел из Map
+    private double getDouble(Object val) {
+        if (val instanceof Number) return ((Number) val).doubleValue();
+        return 0.0;
+    }
+
+    private int getInt(Object val) {
+        if (val instanceof Number) return ((Number) val).intValue();
+        return 0;
     }
 }

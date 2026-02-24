@@ -13,7 +13,7 @@ public class AppDataBase extends SQLiteOpenHelper {
     private SQLiteDatabase database;
 
     private static final String DB_NAME = "WorkoutApp.db";
-    private static final int DB_VERSION = 3;
+    private static final int DB_VERSION = 4;
     private static AppDataBase instance;
 
     // Конструктор private для реализации Singleton
@@ -136,6 +136,7 @@ public class AppDataBase extends SQLiteOpenHelper {
     // Профиль и трекинг
     public static final String USER_PROFILE_TABLE = "user_profile_table";
     public static final String USER_ID = "user_id";
+    public static final String USER_FIREBASE_ID = "user_firebase_id";
     public static final String USER_NAME = "user_name";
     public static final String USER_HEIGHT = "user_height";
     public static final String USER_AGE = "user_age";
@@ -206,7 +207,7 @@ public class AppDataBase extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE " + CONNECTING_MEAL_TABLE + " (" + CONNECTING_MEAL_NAME_ID + " INTEGER NOT NULL, " + CONNECTING_MEAL_FOOD_ID + " INTEGER NOT NULL, PRIMARY KEY(" + CONNECTING_MEAL_NAME_ID + ", " + CONNECTING_MEAL_FOOD_ID + "), FOREIGN KEY(" + CONNECTING_MEAL_NAME_ID + ") REFERENCES " + MEAL_NAME_TABLE + "(" + MEAL_NAME_ID + ") ON DELETE CASCADE, FOREIGN KEY(" + CONNECTING_MEAL_FOOD_ID + ") REFERENCES " + MEAL_FOOD_TABLE + "(" + MEAL_FOOD_ID + ") ON DELETE CASCADE);");
 
         // Профиль и трекинг
-        db.execSQL("CREATE TABLE " + USER_PROFILE_TABLE + " (" + USER_ID + " INTEGER PRIMARY KEY, " + USER_NAME + " TEXT NOT NULL, " + USER_HEIGHT + " REAL, " + USER_AGE + " INTEGER, " + USER_IMAGE_PATH + " TEXT);");
+        db.execSQL("CREATE TABLE " + USER_PROFILE_TABLE + " (" + USER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + USER_FIREBASE_ID + " TEXT, " + USER_NAME + " TEXT NOT NULL, " + USER_HEIGHT + " REAL, " + USER_AGE + " INTEGER, " + USER_IMAGE_PATH + " TEXT);");
         db.execSQL("CREATE TABLE " + WEIGHT_HISTORY_TABLE + " (" + WEIGHT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + WEIGHT_MEASUREMENT_DATE + " TEXT NOT NULL, " + WEIGHT_VALUE + " REAL NOT NULL);");
         db.execSQL("CREATE TABLE " + DAILY_ACTIVITY_TRACKING_TABLE + " (" + DAILY_ACTIVITY_TRACKING_ACTIVITY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE + " TEXT NOT NULL, " + DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS + " INTEGER, " + DAILY_ACTIVITY_TRACKING_ACTIVITY_DISTANCE + " REAL, " + DAILY_ACTIVITY_TRACKING_CALORIES_BURN + " REAL);");
         db.execSQL("CREATE TABLE " + GENERAL_GOAL_TABLE + " (" + GENERAL_GOAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + GENERAL_GLOBAL_GOAL_TEXT + " TEXT, " + GENERAL_GOAL_WORKOUTS_WEEKLY + " INTEGER, " + GENERAL_GOAL_FOOD_TRACKING_WEEKLY + " INTEGER, " + GENERAL_GOAL_DATE + " TEXT NOT NULL);");

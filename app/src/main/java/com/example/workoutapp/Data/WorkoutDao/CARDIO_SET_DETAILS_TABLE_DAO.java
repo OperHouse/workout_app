@@ -170,4 +170,19 @@ public class CARDIO_SET_DETAILS_TABLE_DAO {
                 new String[]{String.valueOf(set.getCardio_set_id())}
         );
     }
+
+    // =========================
+    // Добавление кардио-сета с параметрами (для синхронизации из облака)
+    // =========================
+    public void addCardioSet(long exerciseId, double temp, int time, double distance, int order, String state) {
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.CARDIO_SET_FOREIGN_KEY_EXERCISE, exerciseId);
+        values.put(AppDataBase.CARDIO_SET_TEMP, temp);
+        values.put(AppDataBase.CARDIO_SET_TIME, time);
+        values.put(AppDataBase.CARDIO_SET_DISTANCE, distance);
+        values.put(AppDataBase.CARDIO_SET_ORDER, order);
+        values.put(AppDataBase.CARDIO_SET_STATE, state);
+
+        db.insert(AppDataBase.CARDIO_SET_DETAILS_TABLE, null, values);
+    }
 }

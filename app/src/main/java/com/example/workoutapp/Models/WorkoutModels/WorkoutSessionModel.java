@@ -1,11 +1,17 @@
 package com.example.workoutapp.Models.WorkoutModels;
 
+import com.google.firebase.firestore.PropertyName;
+
 import java.util.List;
 
 public class WorkoutSessionModel {
+    @PropertyName("date")
     private String workoutDate; // "2026-02-17"
     private String workoutTitle;
     private List<ExerciseModel> exercises;
+
+    public WorkoutSessionModel() {
+    }
 
     public WorkoutSessionModel(String workoutDate, List<ExerciseModel> exercises) {
         this.workoutDate = workoutDate;
@@ -41,7 +47,11 @@ public class WorkoutSessionModel {
     }
 
     // Геттеры
+    @PropertyName("date")
     public String getWorkoutDate() { return workoutDate; }
+    @PropertyName("date")
+    public void setWorkoutDate(String workoutDate) { this.workoutDate = workoutDate; }
+
     public String getWorkoutTitle() { return workoutTitle; }
     public List<ExerciseModel> getExercises() { return exercises; }
 

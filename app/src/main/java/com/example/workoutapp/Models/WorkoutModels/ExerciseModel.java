@@ -4,15 +4,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ExerciseModel {
+
+
     private long exercise_id;
     private String exerciseName;
     private String exerciseType;
     private String exerciseBodyType;
     private String ex_Data = "";
     private String state = "unfinished";
-
     // Единый список для сетов, который может содержать разные типы объектов
-    private final List<Object> sets;
+    private List<Object> sets;
+
+    public ExerciseModel(){
+
+    }
 
     // Конструктор для пресета
     public ExerciseModel(long id, String presetName, List<Object> sets) {
