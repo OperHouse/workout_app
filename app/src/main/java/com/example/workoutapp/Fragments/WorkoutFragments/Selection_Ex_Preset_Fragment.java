@@ -44,6 +44,7 @@ import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
+import com.example.workoutapp.Tools.FirestoreSyncManager;
 import com.example.workoutapp.Tools.WorkoutMode;
 
 import java.util.ArrayList;
@@ -67,6 +68,7 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
     private TextView textPreset;
     private TextView textEx;
     private EditText edtSearchText;
+    private FirestoreSyncManager syncManager;
 
 
     public Selection_Ex_Preset_Fragment() {
@@ -81,6 +83,7 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
         this.baseExerciseDao = new BASE_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
         this.presetNameDao = new WORKOUT_PRESET_NAME_TABLE_DAO(MainActivity.getAppDataBase());
         this.connectingPresetDao = new CONNECTING_WORKOUT_PRESET_TABLE_DAO(MainActivity.getAppDataBase());
+        this.syncManager = new FirestoreSyncManager();
     }
 
     @SuppressLint({"MissingInflatedId", "ClickableViewAccessibility", "RestrictedApi"})
@@ -534,6 +537,7 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
             String exName = etExerciseName.getText().toString().trim();
             String exType = actvExerciseType.getText().toString();
             String bodyType_new = actvBodyType.getText().toString();
+            String oldName = exerciseToChange.getExName();
 
             if (exName.isEmpty()) {
                 errorExerciseName.setVisibility(View.VISIBLE);
@@ -545,6 +549,8 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
             exerciseToChange.setBodyType(bodyType_new);
 
             baseExerciseDao.updateExercise(exerciseToChange);
+            syncManager.syncBaseExerciseChange(oldName, exerciseToChange);
+
 
             int position1 = -1;
             for (int i = 0; i < exList.size(); i++) {
@@ -597,7 +603,9 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
         });
 
         deleteBtn.setOnClickListener(v -> {
+            String nameToDelete = exerciseToDelete.getExName();
             baseExerciseDao.deleteExercise(exerciseToDelete.getBase_ex_id());
+            syncManager.syncBaseExerciseChange(nameToDelete, null);
             exList.remove(position);
             exAdapter.deleteExerciseById(exerciseToDelete.getBase_ex_id());
             exerciseVisibility(textEx, getString(R.string.hint_add_exercise), exList.isEmpty());

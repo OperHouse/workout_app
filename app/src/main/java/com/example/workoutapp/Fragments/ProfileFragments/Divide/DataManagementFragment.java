@@ -394,6 +394,7 @@ public class DataManagementFragment extends Fragment {
                     break;
                 case 2: // Упражнения
                     db.delete(AppDataBase.BASE_EXERCISE_TABLE, null, null);
+                    db.delete("sqlite_sequence", "name = ?", new String[]{AppDataBase.BASE_EXERCISE_TABLE});
                     break;
                 case 3: // Пресеты тренировок
                     workoutPresetDao.deleteAllPresets();

@@ -164,5 +164,6 @@ public class BASE_EXERCISE_TABLE_DAO {
 
     public void deleteAllExercises() {
         db.delete(AppDataBase.BASE_EXERCISE_TABLE, null, null);
+        db.delete("sqlite_sequence", "name = ?", new String[]{AppDataBase.BASE_EXERCISE_TABLE});
     }
 }

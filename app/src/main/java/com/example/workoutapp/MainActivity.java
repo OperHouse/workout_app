@@ -12,11 +12,13 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
+import com.example.workoutapp.Data.WorkoutDao.BASE_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Fragments.NutritionFragments.NutritionFragment;
 import com.example.workoutapp.Fragments.ProfileFragments.ProfileFragment;
 import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutFragment;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
+import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Tools.EncryptionTools.DatabaseProvider;
 import com.example.workoutapp.Tools.FirestoreSyncManager;
@@ -248,13 +250,28 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
 
-        // Если пользователь авторизован — синхронизируем данные
         if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            WORKOUT_EXERCISE_TABLE_DAO workoutDao = new WORKOUT_EXERCISE_TABLE_DAO(getAppDataBase());
+            // Получаем доступ к БД один раз
+            net.sqlcipher.database.SQLiteDatabase db = getAppDataBase();
+
+            // Инициализируем DAO
+            WORKOUT_EXERCISE_TABLE_DAO workoutDao = new WORKOUT_EXERCISE_TABLE_DAO(db);
+            BASE_EXERCISE_TABLE_DAO exDao = new BASE_EXERCISE_TABLE_DAO(db);
+
+            // Получаем данные для синхронизации
             List<ExerciseModel> localExercises = workoutDao.getAllExercisesForSync();
+            List<BaseExModel> baseExercises = exDao.getAllExercises();
 
             FirestoreSyncManager syncManager = new FirestoreSyncManager();
+
+            // 1. Полная синхронизация (проверка истории тренировок и восстановление справочника)
             syncManager.startFullSynchronization(localExercises);
+
+            // 2. Массовая выгрузка справочника (вызывай только если есть что выгружать)
+            if (baseExercises != null && !baseExercises.isEmpty()) {
+                // Если в менеджере нет прямого метода, добавь его или используй этот:
+                syncManager.uploadAllBaseExercises(baseExercises, true);
+            }
         }
     }
 }

@@ -148,10 +148,6 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
         }
     }
 
-    public void deleteEat(BaseExModel exerciseToDelete){
-        exListAll.remove(exerciseToDelete);
-        notifyDataSetChanged();
-    }
     public void changeFilterText(String text){
         currentFilter = text;
     }
