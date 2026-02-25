@@ -1,5 +1,7 @@
 package com.example.workoutapp.Tools;
 
+import android.util.Log;
+
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.CardioSetModel;
@@ -20,6 +22,7 @@ public class WorkoutSessionSync {
 
     private final FirebaseFirestore db;
     private final String userId;
+    private static final String TAG = "WorkoutSessionSync";
 
     public WorkoutSessionSync() {
         this.db = FirebaseFirestore.getInstance();
@@ -27,99 +30,108 @@ public class WorkoutSessionSync {
     }
 
     /**
-     * Основной метод синхронизации тренировок
+     * Точка входа для полной синхронизации.
      */
     public void startWorkoutSync(List<ExerciseModel> localExercises, Map<String, com.google.firebase.firestore.DocumentSnapshot> cloudMap) {
         if (userId == null) return;
 
-        Map<String, List<ExerciseModel>> localGrouped = groupExercisesByDate(localExercises);
+        // 1. Сначала дополняем облако локальными данными
+        syncAllWorkouts(localExercises);
 
-        // 1. Отправка/обновление локальных данных в облако
-        for (String date : localGrouped.keySet()) {
-            WorkoutSessionModel session = new WorkoutSessionModel(date, localGrouped.get(date));
-            uploadWorkoutSession(session);
-        }
-
-        // 2. Проверка данных из облака, которых нет в телефоне (или неполных)
+        // 2. Затем дополняем телефон данными из облака
         for (String cloudDate : cloudMap.keySet()) {
             WorkoutSessionModel cloudSession = cloudMap.get(cloudDate).toObject(WorkoutSessionModel.class);
-            if (cloudSession == null) continue;
-
-            if (!localGrouped.containsKey(cloudDate)) {
-                // Если даты на телефоне вообще нет - скачиваем всё
+            if (cloudSession != null) {
                 saveCloudSessionToSQLite(cloudSession);
-            } else {
-                // Если дата есть, проверяем на наличие недостающих упражнений
-                syncMissingExercisesToLocal(cloudSession, localGrouped.get(cloudDate));
             }
         }
     }
 
     /**
-     * Загрузка одной сессии в Firestore слиянием (merge) упражнений
+     * Группирует локальные упражнения и отправляет их в облако методом слияния.
+     */
+    public void syncAllWorkouts(List<ExerciseModel> allExercises) {
+        if (userId == null || allExercises == null) return;
+
+        Map<String, List<ExerciseModel>> grouped = groupExercisesByDate(allExercises);
+        for (String date : grouped.keySet()) {
+            uploadWorkoutSession(new WorkoutSessionModel(date, grouped.get(date)));
+        }
+    }
+
+    /**
+     * Загрузка тренировки: Скачивает текущие данные сервера и добавляет новые упражнения.
      */
     public void uploadWorkoutSession(WorkoutSessionModel session) {
-        if (userId == null) return;
+        if (userId == null || session == null) return;
 
         DocumentReference docRef = db.collection("users").document(userId)
                 .collection("workouts").document(session.getWorkoutDate());
 
         docRef.get().addOnSuccessListener(documentSnapshot -> {
-            List<Map<String, Object>> finalExercisesData = new ArrayList<>();
+            List<Map<String, Object>> finalExercises = new ArrayList<>();
 
+            // Если на сервере уже есть упражнения - берем их за основу
             if (documentSnapshot.exists()) {
                 List<Map<String, Object>> existing = (List<Map<String, Object>>) documentSnapshot.get("exercises");
-                if (existing != null) finalExercisesData.addAll(existing);
+                if (existing != null) finalExercises.addAll(existing);
             }
 
-            for (ExerciseModel newEx : session.getExercises()) {
-                if (!containsExercise(finalExercisesData, newEx.getExerciseName())) {
-                    finalExercisesData.add(convertExerciseToMap(newEx));
+            // Добавляем локальные, если их еще нет на сервере по имени
+            for (ExerciseModel localEx : session.getExercises()) {
+                if (!containsExercise(finalExercises, localEx.getExerciseName())) {
+                    finalExercises.add(convertExerciseToMap(localEx));
                 }
             }
 
             Map<String, Object> workoutMap = new HashMap<>();
             workoutMap.put("date", session.getWorkoutDate());
-            workoutMap.put("title", session.getWorkoutTitle());
-            workoutMap.put("exercises", finalExercisesData);
+            workoutMap.put("title", session.getWorkoutTitle() != null ? session.getWorkoutTitle() : "Тренировка");
+            workoutMap.put("exercises", finalExercises);
 
-            docRef.set(workoutMap, SetOptions.merge());
+            docRef.set(workoutMap, SetOptions.merge())
+                    .addOnSuccessListener(aVoid -> Log.d(TAG, "Облако обновлено для " + session.getWorkoutDate()));
         });
     }
 
     /**
-     * Сохранение сессии из облака в локальную БД
+     * Сохранение из облака на телефон: Только дописывает то, чего нет.
      */
     private void saveCloudSessionToSQLite(WorkoutSessionModel session) {
         if (session == null || session.getExercises() == null) return;
         WORKOUT_EXERCISE_TABLE_DAO dao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
 
-        for (ExerciseModel ex : session.getExercises()) {
-            if (ex.getEx_Data() == null || ex.getEx_Data().isEmpty()) {
-                ex.setEx_Data(session.getWorkoutDate());
-            }
-            dao.addFullExerciseFromCloud(ex);
-        }
-    }
-
-    /**
-     * Докачка упражнений, которых нет локально за конкретный день
-     */
-    private void syncMissingExercisesToLocal(WorkoutSessionModel cloudSession, List<ExerciseModel> localExercises) {
-        WORKOUT_EXERCISE_TABLE_DAO dao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
-
-        for (ExerciseModel cloudEx : cloudSession.getExercises()) {
-            boolean existsLocally = localExercises.stream()
-                    .anyMatch(l -> l.getExerciseName().equals(cloudEx.getExerciseName()));
-
-            if (!existsLocally) {
-                cloudEx.setEx_Data(cloudSession.getWorkoutDate());
+        for (ExerciseModel cloudEx : session.getExercises()) {
+            // ПРОВЕРКА: Если такого упражнения на эту дату нет локально - добавляем
+            if (!dao.isExerciseExists(cloudEx.getExerciseName(), session.getWorkoutDate())) {
+                if (cloudEx.getEx_Data() == null || cloudEx.getEx_Data().isEmpty()) {
+                    cloudEx.setEx_Data(session.getWorkoutDate());
+                }
                 dao.addFullExerciseFromCloud(cloudEx);
+                Log.d(TAG, "Добавлено новое упражнение из облака: " + cloudEx.getExerciseName());
             }
         }
     }
 
-    // --- Вспомогательные методы конвертации ---
+    // --- Вспомогательные методы ---
+
+    private boolean containsExercise(List<Map<String, Object>> list, String name) {
+        for (Map<String, Object> item : list) {
+            if (name.equals(item.get("exerciseName"))) return true;
+        }
+        return false;
+    }
+
+    private Map<String, List<ExerciseModel>> groupExercisesByDate(List<ExerciseModel> exercises) {
+        Map<String, List<ExerciseModel>> map = new HashMap<>();
+        for (ExerciseModel ex : exercises) {
+            String date = ex.getEx_Data();
+            if (date != null && !date.isEmpty()) {
+                map.computeIfAbsent(date, k -> new ArrayList<>()).add(ex);
+            }
+        }
+        return map;
+    }
 
     private Map<String, Object> convertExerciseToMap(ExerciseModel ex) {
         Map<String, Object> map = new HashMap<>();
@@ -129,11 +141,10 @@ public class WorkoutSessionSync {
         map.put("state", ex.getState());
 
         List<Map<String, Object>> setsList = new ArrayList<>();
-        for (Object set : ex.getSets()) {
-            if (set instanceof StrengthSetModel) {
-                setsList.add(convertStrengthSet((StrengthSetModel) set));
-            } else if (set instanceof CardioSetModel) {
-                setsList.add(convertCardioSet((CardioSetModel) set));
+        if (ex.getSets() != null) {
+            for (Object set : ex.getSets()) {
+                if (set instanceof StrengthSetModel) setsList.add(convertStrengthSet((StrengthSetModel) set));
+                else if (set instanceof CardioSetModel) setsList.add(convertCardioSet((CardioSetModel) set));
             }
         }
         map.put("sets", setsList);
@@ -159,47 +170,5 @@ public class WorkoutSessionSync {
         m.put("order", c.getOrder());
         m.put("state", c.getState());
         return m;
-    }
-
-    private Map<String, List<ExerciseModel>> groupExercisesByDate(List<ExerciseModel> exercises) {
-        Map<String, List<ExerciseModel>> map = new HashMap<>();
-        for (ExerciseModel ex : exercises) {
-            String date = ex.getEx_Data();
-            if (date != null && !date.isEmpty()) {
-                map.computeIfAbsent(date, k -> new ArrayList<>()).add(ex);
-            }
-        }
-        return map;
-    }
-
-    private boolean containsExercise(List<Map<String, Object>> list, String name) {
-        for (Map<String, Object> item : list) {
-            if (name.equals(item.get("exerciseName"))) return true;
-        }
-        return false;
-    }
-
-    /**
-     * Группирует плоский список упражнений из SQLite по датам
-     * и отправляет в Firestore как отдельные сессии.
-     */
-    public void syncAllWorkouts(List<ExerciseModel> allExercises) {
-        if (userId == null || allExercises == null || allExercises.isEmpty()) {
-            return;
-        }
-
-        // Группируем упражнения по датам (ex_Data)
-        Map<String, List<ExerciseModel>> groupedWorkouts = new HashMap<>();
-        for (ExerciseModel ex : allExercises) {
-            String date = ex.getEx_Data();
-            if (date == null || date.isEmpty()) continue;
-            groupedWorkouts.computeIfAbsent(date, k -> new ArrayList<>()).add(ex);
-        }
-
-        // Итерируемся и загружаем каждую дату
-        for (Map.Entry<String, List<ExerciseModel>> entry : groupedWorkouts.entrySet()) {
-            WorkoutSessionModel session = new WorkoutSessionModel(entry.getKey(), entry.getValue());
-            uploadWorkoutSession(session);
-        }
     }
 }

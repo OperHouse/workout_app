@@ -138,14 +138,18 @@ public class AuthorizationFragment extends Fragment {
     private void setupTextWatchers() {
         TextWatcher commonWatcher = new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 emailLayout.setError(null);
                 passwordLayout.setError(null);
             }
+
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         };
         emailInput.addTextChangedListener(commonWatcher);
         passwordInput.addTextChangedListener(commonWatcher);
@@ -166,47 +170,57 @@ public class AuthorizationFragment extends Fragment {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
+                            // ПРОВЕРКА ПОДТВЕРЖДЕНИЯ
                             if (user.isEmailVerified()) {
+                                // 1. Сохраняем UID
                                 UserProfileDao profileDao = new UserProfileDao(MainActivity.getAppDataBase());
                                 profileDao.updateFirebaseId(user.getUid());
 
-                                // 2. Запускаем полную синхронизацию тренировок
+                                // 2. Синхронизируем профиль
+                                profileDao.syncProfileWithCloud();
+
+                                // 3. Синхронизируем тренировки
                                 WORKOUT_EXERCISE_TABLE_DAO workoutDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
                                 List<ExerciseModel> localExercises = workoutDao.getAllExercisesForSync();
-
                                 FirestoreSyncManager syncManager = new FirestoreSyncManager();
                                 syncManager.startFullSynchronization(localExercises);
+
                                 navigateToMain();
                             } else {
-                                // Почта не подтверждена - отправляем на экран верификации
+                                // ВОТ ЭТОТ БЛОК НУЖНО ДОБАВИТЬ
+                                // Почта не подтверждена — отправляем на фрагмент верификации
                                 showVerificationFragment(email);
+
+                                // Важно: разлогиниваем пользователя, чтобы он не считался вошедшим до подтверждения
                                 mAuth.signOut();
                             }
                         }
                     } else {
-                        // ОБРАБОТКА ОШИБОК (Безопасный режим)
-                        Exception e = task.getException();
-
-                        if (e instanceof com.google.firebase.auth.FirebaseAuthInvalidUserException ||
-                                e instanceof com.google.firebase.auth.FirebaseAuthInvalidCredentialsException) {
-
-                            // Показываем общую ошибку, чтобы скрыть, что именно неверно
-                            String commonError = "Неверная почта или пароль";
-                            emailLayout.setError(commonError);
-                            passwordLayout.setError(commonError);
-
-                            // Фокус лучше оставить на пароле, так как чаще ошибаются в нем
-                            passwordInput.requestFocus();
-
-                        } else if (e instanceof com.google.firebase.FirebaseNetworkException) {
-                            Toast.makeText(getContext(), "Проблемы с интернетом", Toast.LENGTH_SHORT).show();
-                        } else {
-                            // Ошибка безопасности (например, слишком много попыток)
-                            Toast.makeText(getContext(), "Ошибка доступа. Попробуйте позже.", Toast.LENGTH_LONG).show();
-                        }
+                        // Обработка ошибок входа (неверный пароль и т.д.)
+                        handleLoginError(task.getException());
                     }
                 });
     }
+
+    private void handleLoginError(Exception exception) {
+        if (exception instanceof com.google.firebase.auth.FirebaseAuthInvalidUserException ||
+                exception instanceof com.google.firebase.auth.FirebaseAuthInvalidCredentialsException) {
+            // Показываем общую ошибку, чтобы скрыть, что именно неверно
+            String commonError = "Неверная почта или пароль";
+            emailLayout.setError(commonError);
+            passwordLayout.setError(commonError);
+            // Фокус лучше оставить на пароле, так как чаще ошибаются в нем
+            passwordInput.requestFocus();
+        } else if (exception instanceof com.google.firebase.FirebaseNetworkException) {
+            Toast.makeText(getContext(), "Проблемы с интернетом", Toast.LENGTH_SHORT).show();
+        } else {
+            // Ошибка безопасности (например, слишком много попыток)
+            Toast.makeText(getContext(), "Ошибка доступа. Попробуйте позже.", Toast.LENGTH_LONG).show();
+
+        }
+
+    }
+
     private void updateLocalUserId(String uid) {
         UserProfileDao profileDao = new UserProfileDao(MainActivity.getAppDataBase());
         // Используем ваш метод, который мы обсудили ранее (добавив поле firebase_id)
@@ -259,10 +273,13 @@ public class AuthorizationFragment extends Fragment {
         int highlightColor = ContextCompat.getColor(requireContext(), R.color.light_blue_A200);
 
         ClickableSpan agreementClick = new ClickableSpan() {
-            @Override public void onClick(@NonNull View widget) {
+            @Override
+            public void onClick(@NonNull View widget) {
                 // Логика показа диалога
             }
-            @Override public void updateDrawState(@NonNull TextPaint ds) {
+
+            @Override
+            public void updateDrawState(@NonNull TextPaint ds) {
                 super.updateDrawState(ds);
                 ds.setColor(highlightColor);
                 ds.setUnderlineText(true);
@@ -272,8 +289,10 @@ public class AuthorizationFragment extends Fragment {
         int start1 = fullText.indexOf("Пользовательского соглашения");
         int start2 = fullText.indexOf("Персональных данных");
 
-        if (start1 != -1) ss.setSpan(agreementClick, start1, start1 + 28, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        if (start2 != -1) ss.setSpan(agreementClick, start2, start2 + 19, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (start1 != -1)
+            ss.setSpan(agreementClick, start1, start1 + 28, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (start2 != -1)
+            ss.setSpan(agreementClick, start2, start2 + 19, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         agreementText.setText(ss);
         agreementText.setMovementMethod(LinkMovementMethod.getInstance());

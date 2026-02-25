@@ -22,6 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
+import com.example.workoutapp.Data.ProfileDao.UserProfileDao;
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
@@ -37,6 +38,7 @@ import com.example.workoutapp.Tools.DataManagementTools.FileStorageManager;
 import com.example.workoutapp.Tools.DataManagementTools.PdfReportManager;
 import com.example.workoutapp.Tools.EncryptionTools.DatabaseExporter;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
+import com.google.firebase.auth.FirebaseAuth;
 
 import net.sqlcipher.Cursor;
 import net.sqlcipher.database.SQLiteDatabase;
@@ -60,6 +62,7 @@ public class DataManagementFragment extends Fragment {
     private WORKOUT_EXERCISE_TABLE_DAO workoutExerciseDao;
     private WORKOUT_PRESET_NAME_TABLE_DAO workoutPresetDao;
     private static final int PICK_FILE_CODE = 1001;
+    private UserProfileDao profileDao;
 
     // Выносим установку слушателя в отдельный метод для удобного переподключения
     private boolean isUpdatingProgrammatically = false;
@@ -70,6 +73,7 @@ public class DataManagementFragment extends Fragment {
                     importDataFromUri(uri);
                 }
             });
+
 
 
     @Override
@@ -102,6 +106,8 @@ public class DataManagementFragment extends Fragment {
         mealNameDao = new MealNameDao(db);
         workoutExerciseDao = new WORKOUT_EXERCISE_TABLE_DAO(db);
         workoutPresetDao = new WORKOUT_PRESET_NAME_TABLE_DAO(db);
+
+        profileDao = new UserProfileDao(db);
 
         pieChart = view.findViewById(R.id.data_pie_chart);
         initViews(view);
@@ -314,25 +320,42 @@ public class DataManagementFragment extends Fragment {
     }
 
     private void initSyncLogic(com.google.android.material.switchmaterial.SwitchMaterial syncSwitch, android.content.SharedPreferences prefs) {
+        // 1. Сначала настраиваем начальное состояние при открытии экрана
+        String localFirebaseId = profileDao.getFirebaseId();
+        boolean isFirebaseLoggedIn = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() != null;
+
+        isUpdatingProgrammatically = true;
+        // Переключатель включен только если есть и ID в базе, и активная сессия
+        syncSwitch.setChecked(localFirebaseId != null && isFirebaseLoggedIn);
+        isUpdatingProgrammatically = false;
+
+        // 2. Слушатель изменений
         syncSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isUpdatingProgrammatically) return; // Игнорируем, если меняем код, а не пользователь
+            if (isUpdatingProgrammatically) return;
 
             if (isChecked) {
-                boolean hasAccount = false; // Твоя заглушка
-
-                if (!hasAccount) {
-                    // Если аккаунта нет, выключаем обратно
+                // Проверяем реальное наличие аккаунта в Firebase
+                if (com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() == null) {
+                    // Если аккаунта нет, возвращаем в OFF и просим войти
                     isUpdatingProgrammatically = true;
                     syncSwitch.setChecked(false);
                     isUpdatingProgrammatically = false;
-
-                    // Показываем твой красивый кастомный диалог
-                    showAuthDialog();
+                    showAuthDialog(); // Ваш кастомный диалог
                 } else {
                     prefs.edit().putBoolean("sync_enabled", true).apply();
                 }
             } else {
+                // ЛОГИКА ОТКЛЮЧЕНИЯ (Ваш запрос):
+                // 1. Удаляем firebase_id из локальной таблицы профиля
+                profileDao.updateFirebaseId(null);
+
+                // 2. Выходим из Firebase Auth (опционально, но рекомендуется)
+                com.google.firebase.auth.FirebaseAuth.getInstance().signOut();
+
+                // 3. Обновляем настройки
                 prefs.edit().putBoolean("sync_enabled", false).apply();
+
+                android.widget.Toast.makeText(getContext(), "Синхронизация отключена, ID удален", android.widget.Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -359,12 +382,25 @@ public class DataManagementFragment extends Fragment {
         loginBtn.setText("Войти"); // Заменяем "Да" на "Войти"
         cancelBtn.setText("Позже"); // Заменяем "Нет" на "Позже"
 
+        cancelBtn.setOnClickListener(v -> {
+            // Если пользователь нажал "Позже", проверяем, не остался ли старый ID
+            String existingId = profileDao.getFirebaseId();
+            if (existingId != null) {
+                // Стираем ID из таблицы профиля
+                profileDao.updateFirebaseId(null);
+                // Выходим из системы Firebase, если там кто-то был
+                FirebaseAuth.getInstance().signOut();
+                Toast.makeText(getContext(), "Синхронизация отключена", Toast.LENGTH_SHORT).show();
+            }
+            dialog.dismiss();
+        });
+
         loginBtn.setOnClickListener(v -> {
-            // Тут будет переход на экран логина
             Intent intent = new Intent(requireContext(), RegistrationActivity.class);
             startActivity(intent);
             Toast.makeText(getContext(), "Переход к регистрации...", Toast.LENGTH_SHORT).show();
             dialog.dismiss();
+
         });
 
         cancelBtn.setOnClickListener(v -> dialog.dismiss());

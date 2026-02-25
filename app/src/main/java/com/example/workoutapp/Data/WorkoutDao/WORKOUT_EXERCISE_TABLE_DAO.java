@@ -160,6 +160,7 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
     public void deleteAllWorkouts() {
         // Удаляем все записи из таблицы упражнений тренировок
         db.delete(AppDataBase.WORKOUT_EXERCISE_TABLE, null, null);
+        db.delete("sqlite_sequence", "name = ?", new String[]{AppDataBase.WORKOUT_EXERCISE_TABLE});
         // Также необходимо очистить таблицы сетов, чтобы не занимать место
         db.delete(AppDataBase.STRENGTH_SET_DETAILS_TABLE, null, null);
         db.delete(AppDataBase.CARDIO_SET_DETAILS_TABLE, null, null);
@@ -357,5 +358,31 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
     private int getInt(Object val) {
         if (val instanceof Number) return ((Number) val).intValue();
         return 0;
+    }
+
+    /**
+     * Удаляет все упражнения за конкретную дату.
+     * Используется для предотвращения дублирования данных при синхронизации.
+     * @param date Дата в формате String (например, "2026-02-24")
+     */
+    public void deleteExercisesByDate(String date) {
+        if (date == null || date.isEmpty()) return;
+
+        try {
+            // Замени WORKOUT_EXERCISE_TABLE и ex_Data на свои константы,
+            // если они называются иначе в твоем классе AppDataBase
+            db.delete("WORKOUT_EXERCISE_TABLE", "ex_Data = ?", new String[]{date});
+        } catch (Exception e) {
+            android.util.Log.e("SQL_ERROR", "Ошибка при удалении упражнений за дату: " + date, e);
+        }
+    }
+
+    public boolean isExerciseExists(String exerciseName, String date) {
+        // Используй свои имена колонок (из CSV видно: workout_exercise_name и workout_exercise_data)
+        String query = "SELECT 1 FROM WORKOUT_EXERCISE_TABLE WHERE workout_exercise_name = ? AND workout_exercise_data = ?";
+        Cursor cursor = db.rawQuery(query, new String[]{exerciseName, date});
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
     }
 }

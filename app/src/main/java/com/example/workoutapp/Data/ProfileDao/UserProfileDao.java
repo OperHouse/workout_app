@@ -198,4 +198,23 @@ public class UserProfileDao {
                     }
                 });
     }
+
+    // Добавляем метод для проверки наличия привязанного ID
+    public String getFirebaseId() {
+        String fbId = null;
+        Cursor cursor = null;
+        try {
+            // Запрашиваем только колонку с ID
+            cursor = db.query(USER_PROFILE_TABLE, new String[]{USER_FIREBASE_ID}, null, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                int index = cursor.getColumnIndex(USER_FIREBASE_ID);
+                if (index != -1) {
+                    fbId = cursor.getString(index);
+                }
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return fbId;
+    }
 }

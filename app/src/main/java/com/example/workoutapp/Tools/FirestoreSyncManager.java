@@ -1,5 +1,6 @@
 package com.example.workoutapp.Tools;
 
+import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.google.firebase.auth.FirebaseAuth;
@@ -13,6 +14,7 @@ import java.util.Map;
 public class FirestoreSyncManager {
     private final BaseExerciseSync baseExerciseSync;
     private final WorkoutSessionSync workoutSessionSync;
+    private final ProfileSync profileSync;
     private final FirebaseFirestore db;
     private final String userId;
 
@@ -21,6 +23,7 @@ public class FirestoreSyncManager {
         this.userId = FirebaseAuth.getInstance().getUid();
         this.baseExerciseSync = new BaseExerciseSync();
         this.workoutSessionSync = new WorkoutSessionSync();
+        this.profileSync = new ProfileSync();
     }
 
     public void startFullSynchronization(List<ExerciseModel> localExercises) {
@@ -28,6 +31,7 @@ public class FirestoreSyncManager {
 
         // Восстановление справочника
         baseExerciseSync.restoreUserCustomExercises();
+        profileSync.syncProfile();
 
         // Синхронизация тренировок (2 аргумента)
         db.collection("users").document(userId).collection("workouts")
@@ -52,5 +56,9 @@ public class FirestoreSyncManager {
 
     public void uploadAllBaseExercises(List<BaseExModel> list, boolean isPublic) {
         baseExerciseSync.syncBaseExercises(list, isPublic);
+    }
+
+    public void syncProfileUpdate(UserProfileModel profile) {
+        profileSync.uploadProfile(profile);
     }
 }
