@@ -154,18 +154,18 @@ public class FoodGoalFragment extends Fragment {
         FoodGainGoalModel lastGoal = foodGainGoalDao.getLatestGoal();
 
         if (lastGoal != null) {
-            if (lastGoal.getCaloriesGoal() > 0) {
-                caloriesGoalEdit.setText(String.valueOf(lastGoal.getCaloriesGoal()));
+            if (lastGoal.getFood_gain_goal_calories() > 0) {
+                caloriesGoalEdit.setText(String.valueOf(lastGoal.getFood_gain_goal_calories()));
             }
-            if (lastGoal.getProteinGoal() > 0) {
+            if (lastGoal.getFood_gain_goal_protein() > 0) {
                 // Используем Locale.getDefault() для корректного форматирования float
-                proteinGoalEdit.setText(String.format(Locale.getDefault(), "%.0f", lastGoal.getProteinGoal()));
+                proteinGoalEdit.setText(String.format(Locale.getDefault(), "%.0f", lastGoal.getFood_gain_goal_protein()));
             }
-            if (lastGoal.getFatGoal() > 0) {
-                fatGoalEdit.setText(String.format(Locale.getDefault(), "%.0f", lastGoal.getFatGoal()));
+            if (lastGoal.getFood_gain_goal_fat() > 0) {
+                fatGoalEdit.setText(String.format(Locale.getDefault(), "%.0f", lastGoal.getFood_gain_goal_fat()));
             }
-            if (lastGoal.getCarbGoal() > 0) {
-                carbGoalEdit.setText(String.format(Locale.getDefault(), "%.0f", lastGoal.getCarbGoal()));
+            if (lastGoal.getFood_gain_goal_carb() > 0) {
+                carbGoalEdit.setText(String.format(Locale.getDefault(), "%.0f", lastGoal.getFood_gain_goal_carb()));
             }
         }
     }

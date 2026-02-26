@@ -30,11 +30,11 @@ public class DailyFoodTrackingDao {
         if (entry == null) return;
 
         ContentValues values = new ContentValues();
-        values.put(TRACKING_CALORIES, entry.getCalories());
-        values.put(TRACKING_PROTEIN, entry.getProtein());
-        values.put(TRACKING_FAT, entry.getFat());
-        values.put(TRACKING_CARB, entry.getCarb());
-        values.put(DAILY_FOOD_TRACKING_DATE, entry.getDate());
+        values.put(TRACKING_CALORIES, entry.getDaily_food_tracking_calories());
+        values.put(TRACKING_PROTEIN, entry.getDaily_food_tracking_protein());
+        values.put(TRACKING_FAT, entry.getDaily_food_tracking_fat());
+        values.put(TRACKING_CARB, entry.getDaily_food_tracking_carb());
+        values.put(DAILY_FOOD_TRACKING_DATE, entry.getDaily_food_tracking_date());
 
         Cursor cursor = null;
         try {
@@ -42,7 +42,7 @@ public class DailyFoodTrackingDao {
                     DAILY_FOOD_TRACKING_TABLE,
                     null,
                     DAILY_FOOD_TRACKING_DATE + "=?",
-                    new String[]{entry.getDate()},
+                    new String[]{entry.getDaily_food_tracking_date()},
                     null, null, null
             );
 
@@ -51,7 +51,7 @@ public class DailyFoodTrackingDao {
                         DAILY_FOOD_TRACKING_TABLE,
                         values,
                         DAILY_FOOD_TRACKING_DATE + "=?",
-                        new String[]{entry.getDate()}
+                        new String[]{entry.getDaily_food_tracking_date()}
                 );
             } else {
                 db.insert(DAILY_FOOD_TRACKING_TABLE, null, values);

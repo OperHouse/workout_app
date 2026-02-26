@@ -1,17 +1,21 @@
 package com.example.workoutapp.Models.NutritionModels;
 
 public class FoodModel {
-    int food_id;
-    String food_name;
-    double protein;
-    double fat;
-    double carb;
-    double calories;
-    int amount;
-    String measurement_type;
+    private int food_id;
+    private String food_name;
+    private double protein;
+    private double fat;
+    private double carb;
+    private double calories;
+    private int amount;
+    private String measurement_type;
+    private String food_uid;
 
 
-    boolean isSelected = false;
+
+    private boolean isSelected = false;
+
+    public FoodModel() {}
 
 
     public FoodModel(int food_id, String food_name, double protein, double fat, double carb, double calories, int amount, String measurement_type) {
@@ -23,6 +27,17 @@ public class FoodModel {
         this.calories = calories;
         this.amount = amount;
         this.measurement_type = measurement_type;
+    }
+    public FoodModel(int food_id, String food_name, double protein, double fat, double carb, double calories, int amount, String measurement_type, String food_uid) {
+        this.food_id = food_id;
+        this.food_name = food_name;
+        this.protein = protein;
+        this.fat = fat;
+        this.carb = carb;
+        this.calories = calories;
+        this.amount = amount;
+        this.measurement_type = measurement_type;
+        this.food_uid = food_uid;
     }
     public FoodModel(int food_id, String food_name, double protein, double fat, double carb, double calories, int amount, String measurement_type, boolean isSelected) {
         this.food_id = food_id;
@@ -46,10 +61,6 @@ public class FoodModel {
         this.amount = other.amount;
         this.measurement_type = other.measurement_type;
         this.isSelected = other.isSelected;
-    }
-
-    public int getFood_id() {
-        return food_id;
     }
 
     public void setFood_id(int food_id) {
@@ -107,6 +118,12 @@ public class FoodModel {
     public String getMeasurement_type() {
         return measurement_type;
     }
+
+    public String getFood_uid() { return food_uid; }
+    public void setFood_uid(String food_uid) { this.food_uid = food_uid; }
+
+    @com.google.firebase.firestore.Exclude
+    public int getFood_id() { return food_id; }
 
     public void setMeasurement_type(String measurement_type) {
         this.measurement_type = measurement_type;

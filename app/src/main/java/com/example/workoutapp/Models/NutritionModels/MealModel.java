@@ -5,10 +5,11 @@ import java.util.List;
 import java.util.Objects;
 
 public class MealModel {
-    int meal_name_id;
-    String meal_name;
-    String mealData = "";
-    List<FoodModel> meal_food_list;
+    private int meal_name_id;
+    private String meal_name;
+    private String meal_uid;
+    private String mealData = "";
+    private List<FoodModel> meal_food_list;
 
 
     public MealModel(int meal_name_id, String meal_name, List<FoodModel> meal_food_list){
@@ -40,6 +41,22 @@ public class MealModel {
             this.meal_food_list = new ArrayList<>();
         }
     }
+    public MealModel(int meal_name_id, String meal_name, String mealData, List<FoodModel> meal_food_list, String meal_uid){
+        this.meal_name_id = meal_name_id;
+        this.meal_name = meal_name;
+        this.mealData = mealData;
+        this.meal_uid = meal_uid;
+
+        // Универсальный способ копирования для всех версий Android
+        if (meal_food_list != null) {
+            this.meal_food_list = new ArrayList<>();
+            for (FoodModel food : meal_food_list) {
+                this.meal_food_list.add(new FoodModel(food));
+            }
+        } else {
+            this.meal_food_list = new ArrayList<>();
+        }
+    }
 
     public MealModel(MealModel other) {
         this.meal_name_id = other.meal_name_id;
@@ -57,7 +74,7 @@ public class MealModel {
     }
 
 
-
+    @com.google.firebase.firestore.Exclude
     public int getMeal_name_id() {
         return meal_name_id;
     }

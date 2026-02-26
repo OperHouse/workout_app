@@ -72,9 +72,9 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsAdapter.MyViewHo
         for (Long baseExId : baseExIds) {
             BaseExModel exercise = baseExerciseDao.getExerciseById(baseExId);
             if (exercise != null) {
-                exercisesListText.append(exercise.getExName())
+                exercisesListText.append(exercise.getBase_ex_name())
                         .append(" (")
-                        .append(exercise.getExType())
+                        .append(exercise.getBase_ex_type())
                         .append("), ");
             }
         }
@@ -94,9 +94,9 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsAdapter.MyViewHo
                     WORKOUT_EXERCISE_TABLE_DAO workoutExerciseDao =
                             new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
                     workoutExerciseDao.addExercise(
-                            baseExerciseDao.getExerciseById(baseExId).getExName(),
-                            baseExerciseDao.getExerciseById(baseExId).getExType(),
-                            baseExerciseDao.getExerciseById(baseExId).getBodyType()
+                            baseExerciseDao.getExerciseById(baseExId).getBase_ex_name(),
+                            baseExerciseDao.getExerciseById(baseExId).getBase_ex_type(),
+                            baseExerciseDao.getExerciseById(baseExId).getBase_ex_bodyType()
                     );
                 }
 

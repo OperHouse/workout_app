@@ -1,52 +1,69 @@
 package com.example.workoutapp.Models.ProfileModels;
 
 public class ActivityGoalModel {
-    private int id;
-    private String date;          // activity_goal_date
-    private int stepsGoal;        // activity_goal_steps
-    private int caloriesToBurn;   // activity_goal_calories_to_burn
+    private int activity_goal_id;
+    private String activity_goal_date;
+    private String activity_goal_uid;
+    private int activity_goal_steps;
+    private int activity_goal_caloriesToBurn;
 
-    public ActivityGoalModel(int id, String date, int stepsGoal, int caloriesToBurn) {
-        this.id = id;
-        this.date = date;
-        this.stepsGoal = stepsGoal;
-        this.caloriesToBurn = caloriesToBurn;
+    public ActivityGoalModel(int activity_goal_id, String activity_goal_date, int activity_goal_steps, int activity_goal_caloriesToBurn) {
+        this.activity_goal_id = activity_goal_id;
+        this.activity_goal_date = activity_goal_date;
+        this.activity_goal_steps = activity_goal_steps;
+        this.activity_goal_caloriesToBurn = activity_goal_caloriesToBurn;
+    }
+    public ActivityGoalModel(int activity_goal_id, String activity_goal_date, int activity_goal_steps, int activity_goal_caloriesToBurn, String activity_goal_uid) {
+        this.activity_goal_id = activity_goal_id;
+        this.activity_goal_date = activity_goal_date;
+        this.activity_goal_steps = activity_goal_steps;
+        this.activity_goal_caloriesToBurn = activity_goal_caloriesToBurn;
+        this.activity_goal_uid = activity_goal_uid;
     }
 
     public ActivityGoalModel() {
     }
 
     // Getters
-    public int getId() {
-        return id;
+    @com.google.firebase.firestore.Exclude
+    public int getActivity_goal_id() {
+        return activity_goal_id;
     }
 
-    public String getDate() {
-        return date;
+    public String getActivity_goal_date() {
+        return activity_goal_date;
     }
 
-    public int getStepsGoal() {
-        return stepsGoal;
+    public int getActivity_goal_steps() {
+        return activity_goal_steps;
     }
 
-    public int getCaloriesToBurn() {
-        return caloriesToBurn;
+    public int getActivity_goal_caloriesToBurn() {
+        return activity_goal_caloriesToBurn;
     }
 
     // Setters
-    public void setId(int id) {
-        this.id = id;
+    public void setActivity_goal_id(int activity_goal_id) {
+        this.activity_goal_id = activity_goal_id;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public void setActivity_goal_date(String activity_goal_date) {
+        this.activity_goal_date = activity_goal_date;
     }
 
-    public void setStepsGoal(int stepsGoal) {
-        this.stepsGoal = stepsGoal;
+    public void setActivity_goal_steps(int activity_goal_steps) {
+        this.activity_goal_steps = activity_goal_steps;
     }
 
-    public void setCaloriesToBurn(int caloriesToBurn) {
-        this.caloriesToBurn = caloriesToBurn;
+    public void setActivity_goal_caloriesToBurn(int activity_goal_caloriesToBurn) {
+        this.activity_goal_caloriesToBurn = activity_goal_caloriesToBurn;
+    }
+
+    public String getActivity_goal_uid() {
+        return activity_goal_uid;
+    }
+
+    public void setActivity_goal_uid(String activity_goal_uid) {
+        this.activity_goal_uid = activity_goal_uid;
     }
 }

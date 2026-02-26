@@ -48,7 +48,7 @@ public class GeneralGoalDao {
     // Обновление существующей цели по ID
     // =========================
     public int updateGoal(GeneralGoalModel goal) {
-        if (goal == null || goal.getId() <= 0) return 0;
+        if (goal == null || goal.getGeneral_goal_id() <= 0) return 0;
 
         ContentValues values = getContentValues(goal);
 
@@ -56,7 +56,7 @@ public class GeneralGoalDao {
                 GENERAL_GOAL_TABLE,
                 values,
                 GENERAL_GOAL_ID + " = ?",
-                new String[]{String.valueOf(goal.getId())}
+                new String[]{String.valueOf(goal.getGeneral_goal_id())}
         );
     }
 
@@ -108,17 +108,17 @@ public class GeneralGoalDao {
     private ContentValues getContentValues(GeneralGoalModel goal) {
         ContentValues values = new ContentValues();
 
-        if (goal.getGoalText() != null && !goal.getGoalText().isEmpty())
-            values.put(GENERAL_GLOBAL_GOAL_TEXT, goal.getGoalText());
+        if (goal.getGeneral_goal_Text() != null && !goal.getGeneral_goal_Text().isEmpty())
+            values.put(GENERAL_GLOBAL_GOAL_TEXT, goal.getGeneral_goal_Text());
 
-        if (goal.getWorkoutsWeekly() >= 0)
-            values.put(GENERAL_GOAL_WORKOUTS_WEEKLY, goal.getWorkoutsWeekly());
+        if (goal.getGeneral_goal_workoutsWeekly() >= 0)
+            values.put(GENERAL_GOAL_WORKOUTS_WEEKLY, goal.getGeneral_goal_workoutsWeekly());
 
-        if (goal.getFoodTrackingWeekly() >= 0)
-            values.put(GENERAL_GOAL_FOOD_TRACKING_WEEKLY, goal.getFoodTrackingWeekly());
+        if (goal.getGeneral_goal_foodTrackingWeekly() >= 0)
+            values.put(GENERAL_GOAL_FOOD_TRACKING_WEEKLY, goal.getGeneral_goal_foodTrackingWeekly());
 
-        if (goal.getDate() != null && !goal.getDate().isEmpty())
-            values.put(GENERAL_GOAL_DATE, goal.getDate());
+        if (goal.getGeneral_goal_date() != null && !goal.getGeneral_goal_date().isEmpty())
+            values.put(GENERAL_GOAL_DATE, goal.getGeneral_goal_date());
 
         return values;
     }

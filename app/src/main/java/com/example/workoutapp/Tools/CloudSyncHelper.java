@@ -24,13 +24,13 @@ public class CloudSyncHelper {
 
         for (DailyActivityTrackingModel model : localData) {
             Map<String, Object> map = new HashMap<>();
-            map.put("date", model.getDate());
-            map.put("steps", model.getTrackingActivitySteps());
-            map.put("calories", model.getTrackingCaloriesBurned());
+            map.put("date", model.getDaily_activity_tracking_date());
+            map.put("steps", model.getDaily_activity_tracking_steps());
+            map.put("calories", model.getDaily_activity_tracking_caloriesBurned());
 
             db.collection("users").document(uid)
                     .collection("daily_activity")
-                    .document(model.getDate()) // Используем дату как ID, чтобы не плодить дубликаты
+                    .document(model.getDaily_activity_tracking_date()) // Используем дату как ID, чтобы не плодить дубликаты
                     .set(map, SetOptions.merge());
         }
     }

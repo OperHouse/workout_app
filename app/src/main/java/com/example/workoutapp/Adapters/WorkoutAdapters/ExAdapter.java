@@ -66,8 +66,8 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
             }else{
                 exercise = exListAll.get(position);
             }
-            holder.name.setText(exercise.getExName() + "\u00A0" + "(" + exercise.getExType() + ")");
-            holder.bodyPart.setText(exercise.getBodyType());
+            holder.name.setText(exercise.getBase_ex_name() + "\u00A0" + "(" + exercise.getBase_ex_type() + ")");
+            holder.bodyPart.setText(exercise.getBase_ex_bodyType());
 
 
             if (exercise.getIsPressed()) {
@@ -86,9 +86,9 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
                             new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
 
                     workoutExerciseDao.addExercise(
-                            exercise.getExName(),
-                            exercise.getExType(),
-                            exercise.getBodyType()
+                            exercise.getBase_ex_name(),
+                            exercise.getBase_ex_type(),
+                            exercise.getBase_ex_bodyType()
                     );
 
                     // Обновляем кэш
@@ -157,7 +157,7 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
         currentFilter = text;
         exListFiltered.clear();
         for (BaseExModel elm:exListAll) {
-            if(elm.getExName().toLowerCase().contains(currentFilter)){
+            if(elm.getBase_ex_name().toLowerCase().contains(currentFilter)){
                 exListFiltered.add(elm);
             }
         }
@@ -212,7 +212,7 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
 
         if (!currentFilter.isEmpty()) {
             // Подходит ли под фильтр?
-            if (copied.getExName().toLowerCase().contains(currentFilter.toLowerCase())) {
+            if (copied.getBase_ex_name().toLowerCase().contains(currentFilter.toLowerCase())) {
                 exListFiltered.add(copied);
                 notifyItemInserted(exListFiltered.size() - 1);
             }

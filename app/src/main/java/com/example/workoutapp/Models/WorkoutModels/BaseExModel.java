@@ -2,38 +2,47 @@ package com.example.workoutapp.Models.WorkoutModels;
 
 public class BaseExModel {
     private long base_ex_id;
-    private String exName;
-    private String exType;
-    private String bodyType;
+    private String base_ex_name;
+    private String base_ex_type;
+    private String base_ex_bodyType;
+    private String base_ex_uid;
     private boolean isPressed = false;
 
-    public BaseExModel(long id, String exName, String exType, String bodyType, boolean isPressed) {
+    public BaseExModel(long id, String base_ex_name, String base_ex_type, String base_ex_bodyType, boolean isPressed) {
         this.base_ex_id = id;
-        this.exName = exName;
-        this.exType = exType;
-        this.bodyType = bodyType;
+        this.base_ex_name = base_ex_name;
+        this.base_ex_type = base_ex_type;
+        this.base_ex_bodyType = base_ex_bodyType;
         this.isPressed = isPressed;
     }
 
-    public BaseExModel(long id, String exName, String exType, String bodyType) {
+    public BaseExModel(long id, String base_ex_name, String base_ex_type, String base_ex_bodyType,String base_ex_uid) {
         this.base_ex_id = id;
-        this.exName = exName;
-        this.exType = exType;
-        this.bodyType = bodyType;
+        this.base_ex_name = base_ex_name;
+        this.base_ex_type = base_ex_type;
+        this.base_ex_bodyType = base_ex_bodyType;
+        this.base_ex_uid = base_ex_uid;
+    }
+
+    public BaseExModel(long id, String base_ex_name, String base_ex_type, String base_ex_bodyType) {
+        this.base_ex_id = id;
+        this.base_ex_name = base_ex_name;
+        this.base_ex_type = base_ex_type;
+        this.base_ex_bodyType = base_ex_bodyType;
     }
 
     public BaseExModel(BaseExModel other) {
         this.base_ex_id = other.base_ex_id;
-        this.exName = other.exName;
-        this.exType = other.exType;
-        this.bodyType = other.bodyType;
+        this.base_ex_name = other.base_ex_name;
+        this.base_ex_type = other.base_ex_type;
+        this.base_ex_bodyType = other.base_ex_bodyType;
         this.isPressed = other.isPressed;
     }
     public BaseExModel(BaseExModel other, boolean state) {
         this.base_ex_id = other.base_ex_id;
-        this.exName = other.exName;
-        this.exType = other.exType;
-        this.bodyType = other.bodyType;
+        this.base_ex_name = other.base_ex_name;
+        this.base_ex_type = other.base_ex_type;
+        this.base_ex_bodyType = other.base_ex_bodyType;
         this.isPressed = state;
     }
 
@@ -41,6 +50,7 @@ public class BaseExModel {
 
     }
 
+    @com.google.firebase.firestore.Exclude
     public long getBase_ex_id() {
         return base_ex_id;
     }
@@ -58,29 +68,31 @@ public class BaseExModel {
     }
 
 
-    public String getExName() {
-        return exName;
+    public String getBase_ex_name() {
+        return base_ex_name;
     }
-    public void setExName(String exName) {
-        this.exName = exName;
+    public void setBase_ex_name(String base_ex_name) {
+        this.base_ex_name = base_ex_name;
     }
-    public String getExType() {
-        return exType;
+    public String getBase_ex_type() {
+        return base_ex_type;
     }
-    public void setExType(String exType) {
-        this.exType = exType;
+    public void setBase_ex_type(String base_ex_type) {
+        this.base_ex_type = base_ex_type;
     }
-    public String getBodyType() {
-        return bodyType;
+    public String getBase_ex_bodyType() {
+        return base_ex_bodyType;
     }
-    public void setBodyType(String bodyType) {
-        this.bodyType = bodyType;
+    public void setBase_ex_bodyType(String base_ex_bodyType) {
+        this.base_ex_bodyType = base_ex_bodyType;
     }
 
 
+    public String getBase_ex_uid() {
+        return base_ex_uid;
+    }
 
-
-
-
-
+    public void setBase_ex_uid(String base_ex_uid) {
+        this.base_ex_uid = base_ex_uid;
+    }
 }

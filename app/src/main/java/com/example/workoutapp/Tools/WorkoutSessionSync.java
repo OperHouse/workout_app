@@ -7,7 +7,7 @@ import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.CardioSetModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Models.WorkoutModels.StrengthSetModel;
-import com.example.workoutapp.Models.WorkoutModels.WorkoutSessionModel;
+import com.example.workoutapp.Models.Helpers.WorkoutSessionModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -154,21 +154,21 @@ public class WorkoutSessionSync {
     private Map<String, Object> convertStrengthSet(StrengthSetModel s) {
         Map<String, Object> m = new HashMap<>();
         m.put("type", "strength");
-        m.put("weight", s.getWeight());
-        m.put("rep", s.getRep());
-        m.put("order", s.getOrder());
-        m.put("state", s.getState());
+        m.put("weight", s.getStrength_set_weight());
+        m.put("rep", s.getStrength_set_rep());
+        m.put("order", s.getStrength_set_order());
+        m.put("state", s.getStrength_set_state());
         return m;
     }
 
     private Map<String, Object> convertCardioSet(CardioSetModel c) {
         Map<String, Object> m = new HashMap<>();
         m.put("type", "cardio");
-        m.put("temp", c.getTemp());
-        m.put("time", c.getTime());
-        m.put("distance", c.getDistance());
-        m.put("order", c.getOrder());
-        m.put("state", c.getState());
+        m.put("temp", c.getCardio_set_temp());
+        m.put("time", c.getCardio_set_time());
+        m.put("distance", c.getCardio_set_distance());
+        m.put("order", c.getCardio_set_order());
+        m.put("state", c.getCardio_set_state());
         return m;
     }
 }

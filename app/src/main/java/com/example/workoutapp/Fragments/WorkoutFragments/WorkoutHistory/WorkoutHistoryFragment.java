@@ -18,7 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.airbnb.lottie.LottieAnimationView;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.Models.WorkoutModels.WorkoutSessionModel;
+import com.example.workoutapp.Models.Helpers.WorkoutSessionModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
 import com.google.android.material.datepicker.CalendarConstraints;

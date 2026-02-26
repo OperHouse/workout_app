@@ -30,11 +30,11 @@ public class FoodGainGoalDao {
         if (goal == null) return;
 
         ContentValues values = new ContentValues();
-        values.put(FOOD_GAIN_GOAL_CALORIES, goal.getCaloriesGoal());
-        values.put(FOOD_GAIN_GOAL_PROTEIN, goal.getProteinGoal());
-        values.put(FOOD_GAIN_GOAL_FAT, goal.getFatGoal());
-        values.put(FOOD_GAIN_GOAL_CARB, goal.getCarbGoal());
-        values.put(FOOD_GAIN_GOAL_DATE, goal.getDate());
+        values.put(FOOD_GAIN_GOAL_CALORIES, goal.getFood_gain_goal_calories());
+        values.put(FOOD_GAIN_GOAL_PROTEIN, goal.getFood_gain_goal_protein());
+        values.put(FOOD_GAIN_GOAL_FAT, goal.getFood_gain_goal_fat());
+        values.put(FOOD_GAIN_GOAL_CARB, goal.getFood_gain_goal_carb());
+        values.put(FOOD_GAIN_GOAL_DATE, goal.getFood_gain_goal_date());
 
         db.insert(FOOD_GAIN_GOAL_TABLE, null, values);
     }

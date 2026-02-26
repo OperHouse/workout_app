@@ -167,8 +167,8 @@ public class ProfileSettingsFragment extends Fragment {
 
         WeightHistoryDao weightDao = new WeightHistoryDao(MainActivity.getAppDataBase());
         WeightHistoryModel lastWeight = weightDao.getLatestWeight();
-        if (lastWeight != null && lastWeight.getWeightValue() > 0) {
-            weightEdit.setText(String.valueOf(lastWeight.getWeightValue()));
+        if (lastWeight != null && lastWeight.getWeight_history_value() > 0) {
+            weightEdit.setText(String.valueOf(lastWeight.getWeight_history_value()));
         }
     }
 

@@ -4,6 +4,7 @@ public class UserProfileModel {
 
     private long userId;
     private String userName;
+    private String fire_base_id;
     private float userHeight;
     private int userAge;
     private String userImagePath; // Поле для хранения пути к изображению
@@ -24,11 +25,19 @@ public class UserProfileModel {
         this.userHeight = userHeight;
         this.userAge = userAge;
     }
+    public UserProfileModel(long userId, String fire_base_id, String userName, float userHeight, int userAge) {
+        this.userId = userId;
+        this.userName = userName;
+        this.userHeight = userHeight;
+        this.userAge = userAge;
+        this.fire_base_id = fire_base_id;
+    }
 
     public UserProfileModel() {
     }
 
     // Геттеры и сеттеры
+    @com.google.firebase.firestore.Exclude
     public long getUserId() {
         return userId;
     }
@@ -67,5 +76,13 @@ public class UserProfileModel {
 
     public void setUserImagePath(String userImagePath) {
         this.userImagePath = userImagePath;
+    }
+
+    public String getFire_base_id() {
+        return fire_base_id;
+    }
+
+    public void setFire_base_id(String fire_base_id) {
+        this.fire_base_id = fire_base_id;
     }
 }

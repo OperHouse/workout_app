@@ -74,4 +74,5 @@ public class FirestoreSyncManager {
             weightSync.uploadWeightEntry(weightEntry);
         }
     }
+
 }

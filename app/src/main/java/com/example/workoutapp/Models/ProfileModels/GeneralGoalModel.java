@@ -4,67 +4,79 @@ package com.example.workoutapp.Models.ProfileModels;
 
 public class GeneralGoalModel {
 
-    private int id;                     // GENERAL_GOAL_ID
-    private String goalText;            // GENERAL_GLOBAL_GOAL_TEXT
-    private int workoutsWeekly;         // GENERAL_GOAL_WORKOUTS_WEEKLY
-    private int foodTrackingWeekly;     // GENERAL_GOAL_FOOD_TRACKING_WEEKLY
-    private String date;                // GENERAL_GOAL_DATE (формат yyyy-MM-dd)
+    private int general_goal_id;
+    private String general_goal_Text;
+    private int general_goal_workoutsWeekly;
+    private int general_goal_foodTrackingWeekly;
+    private String general_goal_date;
+    private String general_goal_uid;
 
     // Конструктор для полной модели
-    public GeneralGoalModel(int id, String goalText, int workoutsWeekly, int foodTrackingWeekly, String date) {
-        this.id = id;
-        this.goalText = goalText;
-        this.workoutsWeekly = workoutsWeekly;
-        this.foodTrackingWeekly = foodTrackingWeekly;
-        this.date = date;
+    public GeneralGoalModel(int general_goal_id, String general_goal_Text, int general_goal_workoutsWeekly, int general_goal_foodTrackingWeekly, String general_goal_date) {
+        this.general_goal_id = general_goal_id;
+        this.general_goal_Text = general_goal_Text;
+        this.general_goal_workoutsWeekly = general_goal_workoutsWeekly;
+        this.general_goal_foodTrackingWeekly = general_goal_foodTrackingWeekly;
+        this.general_goal_date = general_goal_date;
     }
+    public GeneralGoalModel(int general_goal_id, String general_goal_Text, int general_goal_workoutsWeekly, int general_goal_foodTrackingWeekly, String general_goal_date, String general_goal_uid) {
+        this.general_goal_id = general_goal_id;
+        this.general_goal_Text = general_goal_Text;
+        this.general_goal_workoutsWeekly = general_goal_workoutsWeekly;
+        this.general_goal_foodTrackingWeekly = general_goal_foodTrackingWeekly;
+        this.general_goal_date = general_goal_date;
+        this.general_goal_uid = general_goal_uid;
+    }
+    public  GeneralGoalModel(){}
 
-    // Конструктор без ID (для вставки новой записи)
-    public GeneralGoalModel(String goalText, int workoutsWeekly, int foodTrackingWeekly, String date) {
-        this.goalText = goalText;
-        this.workoutsWeekly = workoutsWeekly;
-        this.foodTrackingWeekly = foodTrackingWeekly;
-        this.date = date;
-    }
 
     // Геттеры и сеттеры
-    public int getId() {
-        return id;
+    @com.google.firebase.firestore.Exclude
+    public int getGeneral_goal_id() {
+        return general_goal_id;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setGeneral_goal_id(int general_goal_id) {
+        this.general_goal_id = general_goal_id;
     }
 
-    public String getGoalText() {
-        return goalText;
+    public String getGeneral_goal_Text() {
+        return general_goal_Text;
     }
 
-    public void setGoalText(String goalText) {
-        this.goalText = goalText;
+    public void setGeneral_goal_Text(String general_goal_Text) {
+        this.general_goal_Text = general_goal_Text;
     }
 
-    public int getWorkoutsWeekly() {
-        return workoutsWeekly;
+    public int getGeneral_goal_workoutsWeekly() {
+        return general_goal_workoutsWeekly;
     }
 
-    public void setWorkoutsWeekly(int workoutsWeekly) {
-        this.workoutsWeekly = workoutsWeekly;
+    public void setGeneral_goal_workoutsWeekly(int general_goal_workoutsWeekly) {
+        this.general_goal_workoutsWeekly = general_goal_workoutsWeekly;
     }
 
-    public int getFoodTrackingWeekly() {
-        return foodTrackingWeekly;
+    public int getGeneral_goal_foodTrackingWeekly() {
+        return general_goal_foodTrackingWeekly;
     }
 
-    public void setFoodTrackingWeekly(int foodTrackingWeekly) {
-        this.foodTrackingWeekly = foodTrackingWeekly;
+    public void setGeneral_goal_foodTrackingWeekly(int general_goal_foodTrackingWeekly) {
+        this.general_goal_foodTrackingWeekly = general_goal_foodTrackingWeekly;
     }
 
-    public String getDate() {
-        return date;
+    public String getGeneral_goal_date() {
+        return general_goal_date;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public void setGeneral_goal_date(String general_goal_date) {
+        this.general_goal_date = general_goal_date;
+    }
+
+    public String getGeneral_goal_uid() {
+        return general_goal_uid;
+    }
+
+    public void setGeneral_goal_uid(String general_goal_uid) {
+        this.general_goal_uid = general_goal_uid;
     }
 }

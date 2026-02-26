@@ -39,8 +39,8 @@ import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
 import com.example.workoutapp.Models.ProfileModels.DailyFoodTrackingModel;
 import com.example.workoutapp.Models.ProfileModels.FoodGainGoalModel;
 import com.example.workoutapp.Models.ProfileModels.GeneralGoalModel;
-import com.example.workoutapp.Models.ProfileModels.ProfileItemModel;
-import com.example.workoutapp.Models.ProfileModels.ProfileViewModel;
+import com.example.workoutapp.Models.Helpers.ProfileItemModel;
+import com.example.workoutapp.Models.Helpers.ProfileViewModel;
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
 import com.example.workoutapp.R;
@@ -275,32 +275,32 @@ public class ProfileFragment extends Fragment implements ProfileAdapter.OnChildI
             switch (index) {
                 case 0: value = " " + data.user.getUserName(); break;
                 case 1: value = " " + String.format(Locale.getDefault(), "%.1f", data.user.getUserHeight()); unit = " см"; break;
-                case 2: if (data.latestWeight != null) { value = " " + String.format(Locale.getDefault(), "%.1f", data.latestWeight.getWeightValue()); unit = " кг"; } break;
+                case 2: if (data.latestWeight != null) { value = " " + String.format(Locale.getDefault(), "%.1f", data.latestWeight.getWeight_history_value()); unit = " кг"; } break;
                 case 3: value = " " + data.user.getUserAge(); break;
             }
         } else if (groupName.equals(res.getString(R.string.group_general_goal)) && data.generalGoalModel != null) {
             switch (index) {
-                case 0: value = " " + data.generalGoalModel.getGoalText(); break;
-                case 1: int w = data.generalGoalModel.getWorkoutsWeekly(); value = " " + w; unit = " " + getTimesDeclension(w); break;
-                case 2: int d = data.generalGoalModel.getFoodTrackingWeekly(); value = " " + d; unit = " " + getDaysDeclension(d); break;
+                case 0: value = " " + data.generalGoalModel.getGeneral_goal_Text(); break;
+                case 1: int w = data.generalGoalModel.getGeneral_goal_workoutsWeekly(); value = " " + w; unit = " " + getTimesDeclension(w); break;
+                case 2: int d = data.generalGoalModel.getGeneral_goal_foodTrackingWeekly(); value = " " + d; unit = " " + getDaysDeclension(d); break;
             }
         } else if (groupName.equals(res.getString(R.string.group_activity_goal)) && data.activityGoal != null) {
             switch (index) {
-                case 0: value = " " + data.activityGoal.getCaloriesToBurn(); unit = " ккал"; break;
-                case 1: value = " " + data.activityGoal.getStepsGoal(); unit = " шагов"; break;
+                case 0: value = " " + data.activityGoal.getActivity_goal_caloriesToBurn(); unit = " ккал"; break;
+                case 1: value = " " + data.activityGoal.getActivity_goal_steps(); unit = " шагов"; break;
             }
         } else if (groupName.equals(res.getString(R.string.group_food_goal)) && data.foodGoal != null) {
             switch (index) {
-                case 0: value = " " + data.foodGoal.getCaloriesGoal(); unit = " ккал"; break;
-                case 1: value = " " + String.format(Locale.getDefault(), "%.0f", data.foodGoal.getProteinGoal()); unit = " г"; break;
-                case 2: value = " " + String.format(Locale.getDefault(), "%.0f", data.foodGoal.getFatGoal()); unit = " г"; break;
-                case 3: value = " " + String.format(Locale.getDefault(), "%.0f", data.foodGoal.getCarbGoal()); unit = " г"; break;
+                case 0: value = " " + data.foodGoal.getFood_gain_goal_calories(); unit = " ккал"; break;
+                case 1: value = " " + String.format(Locale.getDefault(), "%.0f", data.foodGoal.getFood_gain_goal_protein()); unit = " г"; break;
+                case 2: value = " " + String.format(Locale.getDefault(), "%.0f", data.foodGoal.getFood_gain_goal_fat()); unit = " г"; break;
+                case 3: value = " " + String.format(Locale.getDefault(), "%.0f", data.foodGoal.getFood_gain_goal_carb()); unit = " г"; break;
             }
         } else if (groupName.equals(res.getString(R.string.group_progress))) {
             switch (index) {
-                case 0: if (data.latestWeight != null) { value = " " + String.format(Locale.getDefault(), "%.1f", data.latestWeight.getWeightValue()); unit = " кг"; } break;
-                case 1: if (data.todayActivity != null) value = " " + getRelativeDate(data.todayActivity.getDate()); break;
-                case 2: if (data.todayFood != null) value = " " + getRelativeDate(data.todayFood.getDate()); break;
+                case 0: if (data.latestWeight != null) { value = " " + String.format(Locale.getDefault(), "%.1f", data.latestWeight.getWeight_history_value()); unit = " кг"; } break;
+                case 1: if (data.todayActivity != null) value = " " + getRelativeDate(data.todayActivity.getDaily_activity_tracking_date()); break;
+                case 2: if (data.todayFood != null) value = " " + getRelativeDate(data.todayFood.getDaily_food_tracking_date()); break;
                 case 3: if (data.latestWorkout != null) value = " " + getRelativeDate(data.latestWorkout); break;
             }
         }

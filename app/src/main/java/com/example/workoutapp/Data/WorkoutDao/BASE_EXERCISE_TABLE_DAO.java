@@ -1,6 +1,7 @@
 package com.example.workoutapp.Data.WorkoutDao;
 
 import static com.example.workoutapp.Data.Tables.AppDataBase.BASE_EXERCISE_TABLE;
+import static com.example.workoutapp.Data.Tables.AppDataBase.BASE_EXERCISE_UID;
 
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
@@ -18,25 +19,27 @@ public class BASE_EXERCISE_TABLE_DAO {
 
     private final SQLiteDatabase db;
 
-    // DAO получает ГОТОВУЮ открытую БД
     public BASE_EXERCISE_TABLE_DAO(SQLiteDatabase db) {
         this.db = db;
     }
 
     // =========================
-    // Добавление упражнения
+    // Добавление упражнения (ОБНОВЛЕНО: добавлен UID)
     // =========================
     public long addExercise(BaseExModel exercise) {
         ContentValues values = new ContentValues();
-        values.put(AppDataBase.BASE_EXERCISE_NAME, exercise.getExName());
-        values.put(AppDataBase.BASE_EXERCISE_TYPE, exercise.getExType());
-        values.put(AppDataBase.BASE_EXERCISE_BODY_TYPE, exercise.getBodyType());
+        values.put(AppDataBase.BASE_EXERCISE_NAME, exercise.getBase_ex_name());
+        values.put(AppDataBase.BASE_EXERCISE_TYPE, exercise.getBase_ex_type());
+        values.put(AppDataBase.BASE_EXERCISE_BODY_TYPE, exercise.getBase_ex_bodyType());
+
+        // Записываем UID в базу
+        values.put(BASE_EXERCISE_UID, exercise.getBase_ex_uid());
 
         return db.insert(BASE_EXERCISE_TABLE, null, values);
     }
 
     // =========================
-    // Получение упражнения по ID
+    // Получение упражнения по ID (ОБНОВЛЕНО: читаем UID)
     // =========================
     public BaseExModel getExerciseById(long baseExId) {
         BaseExModel exercise = null;
@@ -47,7 +50,8 @@ public class BASE_EXERCISE_TABLE_DAO {
                     AppDataBase.BASE_EXERCISE_ID,
                     AppDataBase.BASE_EXERCISE_NAME,
                     AppDataBase.BASE_EXERCISE_TYPE,
-                    AppDataBase.BASE_EXERCISE_BODY_TYPE
+                    AppDataBase.BASE_EXERCISE_BODY_TYPE,
+                    BASE_EXERCISE_UID // Добавили колонку
             };
 
             cursor = db.query(
@@ -69,8 +73,11 @@ public class BASE_EXERCISE_TABLE_DAO {
                 String type = cursor.getString(cursor.getColumnIndex(AppDataBase.BASE_EXERCISE_TYPE));
                 @SuppressLint("Range")
                 String bodyType = cursor.getString(cursor.getColumnIndex(AppDataBase.BASE_EXERCISE_BODY_TYPE));
+                @SuppressLint("Range")
+                String uid = cursor.getString(cursor.getColumnIndex(BASE_EXERCISE_UID)); // Читаем UID
 
-                exercise = new BaseExModel(id, name, type, bodyType);
+                // Используем конструктор с UID (создай его в модели, если еще нет, или используй сеттер)
+                exercise = new BaseExModel(id, name, type, bodyType, uid);
             }
         } finally {
             if (cursor != null) cursor.close();
@@ -80,7 +87,7 @@ public class BASE_EXERCISE_TABLE_DAO {
     }
 
     // =========================
-    // Получение всех упражнений
+    // Получение всех упражнений (ОБНОВЛЕНО: читаем UID)
     // =========================
     public List<BaseExModel> getAllExercises() {
         List<BaseExModel> exercises = new ArrayList<>();
@@ -91,30 +98,29 @@ public class BASE_EXERCISE_TABLE_DAO {
                     AppDataBase.BASE_EXERCISE_ID,
                     AppDataBase.BASE_EXERCISE_NAME,
                     AppDataBase.BASE_EXERCISE_TYPE,
-                    AppDataBase.BASE_EXERCISE_BODY_TYPE
+                    AppDataBase.BASE_EXERCISE_BODY_TYPE,
+                    BASE_EXERCISE_UID // Добавили колонку
             };
 
             cursor = db.query(
                     BASE_EXERCISE_TABLE,
                     columns,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
+                    null, null, null, null, null
             );
 
             int idIndex = cursor.getColumnIndex(AppDataBase.BASE_EXERCISE_ID);
             int nameIndex = cursor.getColumnIndex(AppDataBase.BASE_EXERCISE_NAME);
             int typeIndex = cursor.getColumnIndex(AppDataBase.BASE_EXERCISE_TYPE);
             int bodyTypeIndex = cursor.getColumnIndex(AppDataBase.BASE_EXERCISE_BODY_TYPE);
+            int uidIndex = cursor.getColumnIndex(BASE_EXERCISE_UID); // Индекс UID
 
             while (cursor.moveToNext()) {
                 BaseExModel exercise = new BaseExModel(
                         cursor.getLong(idIndex),
                         cursor.getString(nameIndex),
                         cursor.getString(typeIndex),
-                        cursor.getString(bodyTypeIndex)
+                        cursor.getString(bodyTypeIndex),
+                        cursor.getString(uidIndex) // Передаем UID в конструктор
                 );
                 exercises.add(exercise);
             }
@@ -126,24 +132,14 @@ public class BASE_EXERCISE_TABLE_DAO {
     }
 
     // =========================
-    // Удаление упражнения
-    // =========================
-    public void deleteExercise(long id) {
-        db.delete(
-                BASE_EXERCISE_TABLE,
-                AppDataBase.BASE_EXERCISE_ID + " = ?",
-                new String[]{String.valueOf(id)}
-        );
-    }
-
-    // =========================
-    // Обновление упражнения
+    // Обновление упражнения (ОБНОВЛЕНО: добавлен UID)
     // =========================
     public void updateExercise(BaseExModel exercise) {
         ContentValues values = new ContentValues();
-        values.put(AppDataBase.BASE_EXERCISE_NAME, exercise.getExName());
-        values.put(AppDataBase.BASE_EXERCISE_TYPE, exercise.getExType());
-        values.put(AppDataBase.BASE_EXERCISE_BODY_TYPE, exercise.getBodyType());
+        values.put(AppDataBase.BASE_EXERCISE_NAME, exercise.getBase_ex_name());
+        values.put(AppDataBase.BASE_EXERCISE_TYPE, exercise.getBase_ex_type());
+        values.put(AppDataBase.BASE_EXERCISE_BODY_TYPE, exercise.getBase_ex_bodyType());
+        values.put(BASE_EXERCISE_UID, exercise.getBase_ex_uid()); // Обновляем UID
 
         db.update(
                 BASE_EXERCISE_TABLE,
@@ -153,6 +149,10 @@ public class BASE_EXERCISE_TABLE_DAO {
         );
     }
 
+    // Остальные методы (delete, getCount, isExerciseUidExists, deleteAll) остаются без изменений
+    public void deleteExercise(long id) {
+        db.delete(BASE_EXERCISE_TABLE, AppDataBase.BASE_EXERCISE_ID + " = ?", new String[]{String.valueOf(id)});
+    }
 
     public long getCount() {
         Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + BASE_EXERCISE_TABLE, null);
@@ -160,6 +160,17 @@ public class BASE_EXERCISE_TABLE_DAO {
         if (cursor.moveToFirst()) count = cursor.getLong(0);
         cursor.close();
         return count;
+    }
+
+    public boolean isExerciseUidExists(String uid) {
+        if (uid == null || uid.isEmpty()) return false;
+        Cursor cursor = null;
+        try {
+            cursor = db.query(BASE_EXERCISE_TABLE, new String[]{BASE_EXERCISE_UID}, BASE_EXERCISE_UID + " = ?", new String[]{uid}, null, null, null);
+            return cursor != null && cursor.getCount() > 0;
+        } finally {
+            if (cursor != null) cursor.close();
+        }
     }
 
     public void deleteAllExercises() {

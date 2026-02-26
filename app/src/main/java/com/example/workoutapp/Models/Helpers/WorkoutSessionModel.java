@@ -1,5 +1,6 @@
-package com.example.workoutapp.Models.WorkoutModels;
+package com.example.workoutapp.Models.Helpers;
 
+import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.google.firebase.firestore.PropertyName;
 
 import java.util.List;

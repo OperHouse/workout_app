@@ -8,7 +8,7 @@ import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.WorkoutModels.CardioSetModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Models.WorkoutModels.StrengthSetModel;
-import com.example.workoutapp.Models.WorkoutModels.WorkoutSessionModel;
+import com.example.workoutapp.Models.Helpers.WorkoutSessionModel;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
@@ -340,10 +340,10 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
                 // ЕСЛИ ПРИШЕЛ ОБЪЕКТ (локально)
                 else if (setObj instanceof StrengthSetModel) {
                     StrengthSetModel s = (StrengthSetModel) setObj;
-                    strengthSetDao.addStrengthSet(newExId, s.getWeight(), s.getRep(), s.getOrder(), s.getState());
+                    strengthSetDao.addStrengthSet(newExId, s.getStrength_set_weight(), s.getStrength_set_rep(), s.getStrength_set_order(), s.getStrength_set_state());
                 } else if (setObj instanceof CardioSetModel) {
                     CardioSetModel c = (CardioSetModel) setObj;
-                    cardioSetDao.addCardioSet(newExId, c.getTemp(), c.getTime(), c.getDistance(), c.getOrder(), c.getState());
+                    cardioSetDao.addCardioSet(newExId, c.getCardio_set_temp(), c.getCardio_set_time(), c.getCardio_set_distance(), c.getCardio_set_order(), c.getCardio_set_state());
                 }
             }
         }

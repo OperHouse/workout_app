@@ -225,10 +225,10 @@ public class NutritionFragment extends Fragment {
         boolean isDefaultGoals;
 
         if (goalModel != null) {
-            gCal = goalModel.getCaloriesGoal();
-            gProt = (int) goalModel.getProteinGoal();
-            gFat = (int) goalModel.getFatGoal();
-            gCarb = (int) goalModel.getCarbGoal();
+            gCal = goalModel.getFood_gain_goal_calories();
+            gProt = (int) goalModel.getFood_gain_goal_protein();
+            gFat = (int) goalModel.getFood_gain_goal_fat();
+            gCarb = (int) goalModel.getFood_gain_goal_carb();
             isDefaultGoals = false;
         } else {
             gCal = 2800;

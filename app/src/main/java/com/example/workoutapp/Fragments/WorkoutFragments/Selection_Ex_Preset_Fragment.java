@@ -45,6 +45,7 @@ import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.FirestoreSyncManager;
+import com.example.workoutapp.Tools.UidGenerator;
 import com.example.workoutapp.Tools.WorkoutMode;
 
 import java.util.ArrayList;
@@ -401,14 +402,26 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
                 return;
             }
 
+            // Создаем модель
             BaseExModel newExercise = new BaseExModel();
-            newExercise.setExName(exName);
-            newExercise.setExType(exType);
-            newExercise.setBodyType(bodyPart);
+            newExercise.setBase_ex_name(exName);
+            newExercise.setBase_ex_type(exType);
+            newExercise.setBase_ex_bodyType(bodyPart);
 
-            baseExerciseDao.addExercise(newExercise);
-            exList.add(new BaseExModel(newExercise));
+            // ГЕНЕРИРУЕМ UID ЗДЕСЬ
+            newExercise.setBase_ex_uid(UidGenerator.generateExUid());
+
+            // Сохраняем в локальную БД (убедись, что addExercise учитывает поле UID)
+            long id = baseExerciseDao.addExercise(newExercise);
+            newExercise.setBase_ex_id((int) id); // Устанавливаем полученный ID от SQLite
+
+            // Добавляем в списки и адаптер
+            exList.add(new BaseExModel(newExercise)); // Конструктор копирования должен копировать и UID
             exAdapter.addExercise(newExercise);
+
+            // Сразу отправляем в облако (если нужно автоматическое сохранение)
+            syncManager.syncBaseExerciseChange(null, newExercise);
+
             exerciseVisibility(textEx, getString(R.string.hint_add_exercise), exList.isEmpty());
             exRecycler.requestLayout();
 
@@ -463,11 +476,11 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
                 bodyParts
         );
 
-        etExerciseName.setText(exerciseToChange.getExName());
+        etExerciseName.setText(exerciseToChange.getBase_ex_name());
         dialogTitle.setText(getString(R.string.change_exercise_title));
         btnChangeExercise.setText(getString(R.string.change_exercise_hint));
-        actvExerciseType.setText(exerciseToChange.getExType(), false);
-        actvBodyType.setText(exerciseToChange.getBodyType(), false);
+        actvExerciseType.setText(exerciseToChange.getBase_ex_type(), false);
+        actvBodyType.setText(exerciseToChange.getBase_ex_bodyType(), false);
 
         actvExerciseType.setAdapter(adapterExerciseTypes);
         actvBodyType.setAdapter(adapterBodyParts);
@@ -537,16 +550,16 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
             String exName = etExerciseName.getText().toString().trim();
             String exType = actvExerciseType.getText().toString();
             String bodyType_new = actvBodyType.getText().toString();
-            String oldName = exerciseToChange.getExName();
+            String oldName = exerciseToChange.getBase_ex_name();
 
             if (exName.isEmpty()) {
                 errorExerciseName.setVisibility(View.VISIBLE);
                 return;
             }
 
-            exerciseToChange.setExName(exName);
-            exerciseToChange.setExType(exType);
-            exerciseToChange.setBodyType(bodyType_new);
+            exerciseToChange.setBase_ex_name(exName);
+            exerciseToChange.setBase_ex_type(exType);
+            exerciseToChange.setBase_ex_bodyType(bodyType_new);
 
             baseExerciseDao.updateExercise(exerciseToChange);
             syncManager.syncBaseExerciseChange(oldName, exerciseToChange);
@@ -603,7 +616,7 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
         });
 
         deleteBtn.setOnClickListener(v -> {
-            String nameToDelete = exerciseToDelete.getExName();
+            String nameToDelete = exerciseToDelete.getBase_ex_name();
             baseExerciseDao.deleteExercise(exerciseToDelete.getBase_ex_id());
             syncManager.syncBaseExerciseChange(nameToDelete, null);
             exList.remove(position);
@@ -747,7 +760,7 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
     private void filterExerciseList(String text) {
         List<BaseExModel> filteredList = new ArrayList<>();
         for (BaseExModel ex : exList) {
-            if (ex.getExName().toLowerCase().contains(text.toLowerCase())) {
+            if (ex.getBase_ex_name().toLowerCase().contains(text.toLowerCase())) {
                 filteredList.add(ex);
 
             }

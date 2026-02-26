@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Models.WorkoutModels.StrengthSetModel;
-import com.example.workoutapp.Models.WorkoutModels.WorkoutSessionModel;
+import com.example.workoutapp.Models.Helpers.WorkoutSessionModel;
 import com.example.workoutapp.R;
 
 import java.text.SimpleDateFormat;
@@ -93,7 +93,7 @@ public class WorkoutDetailsFragment extends Fragment {
                 for (Object set : ex.getSets()) {
                     if (set instanceof StrengthSetModel) {
                         StrengthSetModel s = (StrengthSetModel) set;
-                        totalWeight += (s.getWeight() * s.getRep());
+                        totalWeight += (s.getStrength_set_weight() * s.getStrength_set_rep());
                     }
                 }
             }

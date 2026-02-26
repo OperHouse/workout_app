@@ -31,21 +31,21 @@ public class DailyActivityTrackingDao {
                 DAILY_ACTIVITY_TRACKING_TABLE,
                 null,
                 DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE + " = ?",
-                new String[]{model.getDate()},
+                new String[]{model.getDaily_activity_tracking_date()},
                 null, null, null
         );
 
         ContentValues values = new ContentValues();
-        values.put(DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS, model.getTrackingActivitySteps());
-        values.put(DAILY_ACTIVITY_TRACKING_CALORIES_BURN, model.getTrackingCaloriesBurned());
-        values.put(DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE, model.getDate());
+        values.put(DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS, model.getDaily_activity_tracking_steps());
+        values.put(DAILY_ACTIVITY_TRACKING_CALORIES_BURN, model.getDaily_activity_tracking_caloriesBurned());
+        values.put(DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE, model.getDaily_activity_tracking_date());
 
         if (cursor.moveToFirst()) {
             db.update(
                     DAILY_ACTIVITY_TRACKING_TABLE,
                     values,
                     DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE + " = ?",
-                    new String[]{model.getDate()}
+                    new String[]{model.getDaily_activity_tracking_date()}
             );
         } else {
             db.insert(DAILY_ACTIVITY_TRACKING_TABLE, null, values);

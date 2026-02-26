@@ -28,9 +28,9 @@ public class ActivityGoalDao {
         if (goal == null) return;
 
         ContentValues values = new ContentValues();
-        values.put(ACTIVITY_GOAL_DATE, goal.getDate());
-        values.put(ACTIVITY_GOAL_STEPS, goal.getStepsGoal());
-        values.put(ACTIVITY_CALORIES_TO_BURN, goal.getCaloriesToBurn());
+        values.put(ACTIVITY_GOAL_DATE, goal.getActivity_goal_date());
+        values.put(ACTIVITY_GOAL_STEPS, goal.getActivity_goal_steps());
+        values.put(ACTIVITY_CALORIES_TO_BURN, goal.getActivity_goal_caloriesToBurn());
 
         db.insert(ACTIVITY_GOAL_TABLE, null, values);
     }

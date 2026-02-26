@@ -162,11 +162,11 @@ public class WorkoutFragment extends Fragment {
                     if (set instanceof StrengthSetModel) {
                         StrengthSetModel strengthSet = (StrengthSetModel) set;
                         // Проверяем, если хотя бы одно поле пустое или равно нулю
-                        isEmpty = (strengthSet.getRep() == 0 || strengthSet.getWeight() == 0);
+                        isEmpty = (strengthSet.getStrength_set_rep() == 0 || strengthSet.getStrength_set_weight() == 0);
                     } else if (set instanceof CardioSetModel) {
                         CardioSetModel cardioSet = (CardioSetModel) set;
                         // Проверяем, если хотя бы одно поле пустое или равно нулю
-                        isEmpty = (cardioSet.getTemp() == 0 || cardioSet.getTime() == 0 || cardioSet.getDistance() == 0);
+                        isEmpty = (cardioSet.getCardio_set_temp() == 0 || cardioSet.getCardio_set_time() == 0 || cardioSet.getCardio_set_distance() == 0);
                     }
 
                     if (isEmpty) {
@@ -190,10 +190,10 @@ public class WorkoutFragment extends Fragment {
                     } else {
                         // обновить порядок
                         if (set instanceof StrengthSetModel) {
-                            ((StrengthSetModel) set).setOrder(orderCounter);
+                            ((StrengthSetModel) set).setStrength_set_order(orderCounter);
                             strengthSetDetailsTableDao.updateSetOrder((StrengthSetModel) set);
                         } else if (set instanceof CardioSetModel) {
-                            ((CardioSetModel) set).setOrder(orderCounter);
+                            ((CardioSetModel) set).setCardio_set_order(orderCounter);
                             cardioSetDetailsTableDao.updateSetOrder((CardioSetModel) set);
                         }
                         orderCounter++;
@@ -278,8 +278,8 @@ public class WorkoutFragment extends Fragment {
 
         DailyActivityTrackingModel activity = activityDao.getActivityByDate(today);
 
-        this.currentSteps = activity != null ? activity.getTrackingActivitySteps() : 0;
-        this.currentBurnedCalories = activity != null ?  activity.getTrackingCaloriesBurned() : 0f;
+        this.currentSteps = activity != null ? activity.getDaily_activity_tracking_steps() : 0;
+        this.currentBurnedCalories = activity != null ?  activity.getDaily_activity_tracking_caloriesBurned() : 0f;
         this.currentDistance = (float) (currentSteps * 0.75 / 1000.0);
 
         // Расчет количества еды
@@ -298,8 +298,8 @@ public class WorkoutFragment extends Fragment {
         boolean isDefaultGoals;
 
         if (goal != null) {
-            stepsGoal = goal.getStepsGoal();
-            burnedGoal = goal.getCaloriesToBurn();
+            stepsGoal = goal.getActivity_goal_steps();
+            burnedGoal = goal.getActivity_goal_caloriesToBurn();
             isDefaultGoals = false;
         } else {
             stepsGoal = 10000;

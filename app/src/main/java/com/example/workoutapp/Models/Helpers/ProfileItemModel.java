@@ -1,4 +1,4 @@
-package com.example.workoutapp.Models.ProfileModels;
+package com.example.workoutapp.Models.Helpers;
 
 public class ProfileItemModel {
     public static final int TYPE_GROUP = 1;

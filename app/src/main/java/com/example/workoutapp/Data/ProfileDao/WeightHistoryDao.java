@@ -16,13 +16,13 @@ public class WeightHistoryDao {
     }
 
     public long addWeightEntry(WeightHistoryModel weight) {
-        if (weight == null || weight.getWeightValue() <= 0) return -1;
+        if (weight == null || weight.getWeight_history_value() <= 0) return -1;
 
         ContentValues values = new ContentValues();
         // Мы НЕ вставляем WEIGHT_ID, SQLite инкрементирует его сама
-        values.put(WEIGHT_UID, weight.getWeightUid());
-        values.put(WEIGHT_MEASUREMENT_DATE, weight.getMeasurementDate());
-        values.put(WEIGHT_VALUE, weight.getWeightValue());
+        values.put(WEIGHT_UID, weight.getWeight_history_uid());
+        values.put(WEIGHT_MEASUREMENT_DATE, weight.getWeight_history_measurementDate());
+        values.put(WEIGHT_VALUE, weight.getWeight_history_value());
 
         // Если запись с таким UID уже есть, ничего не делаем (избегаем дублей)
         return db.insertWithOnConflict(WEIGHT_HISTORY_TABLE, null, values, SQLiteDatabase.CONFLICT_IGNORE);
@@ -61,10 +61,10 @@ public class WeightHistoryDao {
 
     private WeightHistoryModel mapCursorToModel(Cursor cursor) {
         WeightHistoryModel model = new WeightHistoryModel();
-        model.setWeightId(cursor.getLong(cursor.getColumnIndexOrThrow(WEIGHT_ID)));
-        model.setWeightUid(cursor.getString(cursor.getColumnIndexOrThrow(WEIGHT_UID)));
-        model.setMeasurementDate(cursor.getString(cursor.getColumnIndexOrThrow(WEIGHT_MEASUREMENT_DATE)));
-        model.setWeightValue(cursor.getFloat(cursor.getColumnIndexOrThrow(WEIGHT_VALUE)));
+        model.setWeight_history_id(cursor.getLong(cursor.getColumnIndexOrThrow(WEIGHT_ID)));
+        model.setWeight_history_uid(cursor.getString(cursor.getColumnIndexOrThrow(WEIGHT_UID)));
+        model.setWeight_history_measurementDate(cursor.getString(cursor.getColumnIndexOrThrow(WEIGHT_MEASUREMENT_DATE)));
+        model.setWeight_history_value(cursor.getFloat(cursor.getColumnIndexOrThrow(WEIGHT_VALUE)));
         return model;
     }
 }

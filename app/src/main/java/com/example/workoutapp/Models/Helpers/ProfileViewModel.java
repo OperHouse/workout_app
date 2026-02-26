@@ -1,4 +1,4 @@
-package com.example.workoutapp.Models.ProfileModels;
+package com.example.workoutapp.Models.Helpers;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;

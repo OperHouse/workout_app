@@ -190,8 +190,8 @@ public class ActivityStatisticFragment extends Fragment {
         float goalDist = 8.0f;
 
         if (stats != null) {
-            float currentSteps = (float) stats.getTrackingActivitySteps();
-            float currentCals = stats.getTrackingCaloriesBurned();
+            float currentSteps = (float) stats.getDaily_activity_tracking_steps();
+            float currentCals = stats.getDaily_activity_tracking_caloriesBurned();
             float currentDist = calculateDistance(currentSteps);
 
             rings.setData(currentSteps, goalSteps, currentCals, goalCals, currentDist, goalDist);
@@ -227,8 +227,8 @@ public class ActivityStatisticFragment extends Fragment {
                 DailyActivityTrackingModel dayStats = trackingDao.getActivityByDate(dateStr);
 
                 if (dayStats != null) {
-                    stepsData[i] = (float) dayStats.getTrackingActivitySteps();
-                    calData[i] = dayStats.getTrackingCaloriesBurned();
+                    stepsData[i] = (float) dayStats.getDaily_activity_tracking_steps();
+                    calData[i] = dayStats.getDaily_activity_tracking_caloriesBurned();
                     distData[i] = calculateDistance(stepsData[i]);
                 } else {
                     stepsData[i] = 0f; calData[i] = 0f; distData[i] = 0f;

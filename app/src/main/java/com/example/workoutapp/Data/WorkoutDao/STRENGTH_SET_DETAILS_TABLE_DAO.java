@@ -99,9 +99,9 @@ public class STRENGTH_SET_DETAILS_TABLE_DAO {
     // =========================
     public void updateStrengthSet(StrengthSetModel set) {
         ContentValues values = new ContentValues();
-        values.put(AppDataBase.STRENGTH_SET_WEIGHT, set.getWeight());
-        values.put(AppDataBase.STRENGTH_SET_REP, set.getRep());
-        values.put(AppDataBase.STRENGTH_SET_STATE, set.getState());
+        values.put(AppDataBase.STRENGTH_SET_WEIGHT, set.getStrength_set_weight());
+        values.put(AppDataBase.STRENGTH_SET_REP, set.getStrength_set_rep());
+        values.put(AppDataBase.STRENGTH_SET_STATE, set.getStrength_set_state());
 
         db.update(AppDataBase.STRENGTH_SET_DETAILS_TABLE, values, AppDataBase.STRENGTH_SET_ID + " = ?", new String[]{String.valueOf(set.getStrength_set_id())});
     }
@@ -126,7 +126,7 @@ public class STRENGTH_SET_DETAILS_TABLE_DAO {
     // =========================
     public void updateSetOrder(StrengthSetModel set) {
         ContentValues values = new ContentValues();
-        values.put(AppDataBase.STRENGTH_SET_ORDER, set.getOrder());
+        values.put(AppDataBase.STRENGTH_SET_ORDER, set.getStrength_set_order());
 
         db.update(AppDataBase.STRENGTH_SET_DETAILS_TABLE, values, AppDataBase.STRENGTH_SET_ID + " = ?", new String[]{String.valueOf(set.getStrength_set_id())});
     }

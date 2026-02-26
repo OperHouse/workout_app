@@ -1,72 +1,92 @@
 package com.example.workoutapp.Models.ProfileModels;
 
 public class DailyFoodTrackingModel {
-    private int id;
-    private int calories;   // tracking_calories
-    private float protein;  // tracking_protein
-    private float fat;      // tracking_fat
-    private float carb;     // tracking_carb
-    private String date;    // tracking_activity_date (твоё поле, хотя логичнее tracking_food_date)
+    private int daily_food_tracking_id;
+    private int daily_food_tracking_calories;
+    private float daily_food_tracking_protein;
+    private float daily_food_tracking_fat;
+    private float daily_food_tracking_carb;
+    private String daily_food_tracking_date;
+    private String daily_food_tracking_uid;
 
-    public DailyFoodTrackingModel(int id, int calories, float protein, float fat, float carb, String date) {
-        this.id = id;
-        this.calories = calories;
-        this.protein = protein;
-        this.fat = fat;
-        this.carb = carb;
-        this.date = date;
+    public DailyFoodTrackingModel(int daily_food_tracking_id, int daily_food_tracking_calories, float daily_food_tracking_protein, float daily_food_tracking_fat, float daily_food_tracking_carb, String daily_food_tracking_date) {
+        this.daily_food_tracking_id = daily_food_tracking_id;
+        this.daily_food_tracking_calories = daily_food_tracking_calories;
+        this.daily_food_tracking_protein = daily_food_tracking_protein;
+        this.daily_food_tracking_fat = daily_food_tracking_fat;
+        this.daily_food_tracking_carb = daily_food_tracking_carb;
+        this.daily_food_tracking_date = daily_food_tracking_date;
+    }
+
+    public DailyFoodTrackingModel(int daily_food_tracking_id, int daily_food_tracking_calories, float daily_food_tracking_protein, float daily_food_tracking_fat, float daily_food_tracking_carb, String daily_food_tracking_date, String daily_food_tracking_uid) {
+        this.daily_food_tracking_id = daily_food_tracking_id;
+        this.daily_food_tracking_uid = daily_food_tracking_uid;
+        this.daily_food_tracking_calories = daily_food_tracking_calories;
+        this.daily_food_tracking_protein = daily_food_tracking_protein;
+        this.daily_food_tracking_fat = daily_food_tracking_fat;
+        this.daily_food_tracking_carb = daily_food_tracking_carb;
+        this.daily_food_tracking_date = daily_food_tracking_date;
     }
 
     public DailyFoodTrackingModel() {
     }
 
     // Getters
-    public int getId() {
-        return id;
+    @com.google.firebase.firestore.Exclude
+    public int getDaily_food_tracking_id() {
+        return daily_food_tracking_id;
     }
 
-    public int getCalories() {
-        return calories;
+    public int getDaily_food_tracking_calories() {
+        return daily_food_tracking_calories;
     }
 
-    public float getProtein() {
-        return protein;
+    public float getDaily_food_tracking_protein() {
+        return daily_food_tracking_protein;
     }
 
-    public float getFat() {
-        return fat;
+    public float getDaily_food_tracking_fat() {
+        return daily_food_tracking_fat;
     }
 
-    public float getCarb() {
-        return carb;
+    public float getDaily_food_tracking_carb() {
+        return daily_food_tracking_carb;
     }
 
-    public String getDate() {
-        return date;
+    public String getDaily_food_tracking_date() {
+        return daily_food_tracking_date;
     }
 
     // Setters
-    public void setId(int id) {
-        this.id = id;
+    public void setDaily_food_tracking_id(int daily_food_tracking_id) {
+        this.daily_food_tracking_id = daily_food_tracking_id;
     }
 
-    public void setCalories(int calories) {
-        this.calories = calories;
+    public void setDaily_food_tracking_calories(int daily_food_tracking_calories) {
+        this.daily_food_tracking_calories = daily_food_tracking_calories;
     }
 
-    public void setProtein(float protein) {
-        this.protein = protein;
+    public void setDaily_food_tracking_protein(float daily_food_tracking_protein) {
+        this.daily_food_tracking_protein = daily_food_tracking_protein;
     }
 
-    public void setFat(float fat) {
-        this.fat = fat;
+    public void setDaily_food_tracking_fat(float daily_food_tracking_fat) {
+        this.daily_food_tracking_fat = daily_food_tracking_fat;
     }
 
-    public void setCarb(float carb) {
-        this.carb = carb;
+    public void setDaily_food_tracking_carb(float daily_food_tracking_carb) {
+        this.daily_food_tracking_carb = daily_food_tracking_carb;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public void setDaily_food_tracking_date(String daily_food_tracking_date) {
+        this.daily_food_tracking_date = daily_food_tracking_date;
+    }
+
+    public String getDaily_food_tracking_uid() {
+        return daily_food_tracking_uid;
+    }
+
+    public void setDaily_food_tracking_uid(String daily_food_tracking_uid) {
+        this.daily_food_tracking_uid = daily_food_tracking_uid;
     }
 }

@@ -1,55 +1,67 @@
 package com.example.workoutapp.Models.ProfileModels;
 
 public class DailyActivityTrackingModel {
-    private int id;
-    private String date; // yyyy-MM-dd
-    private int trackingActivitySteps;
-    private float trackingCaloriesBurned;
+    private int daily_activity_tracking_id;
+    private String daily_activity_tracking_uid;
+    private String daily_activity_tracking_date;
+    private int daily_activity_tracking_steps;
+    private float daily_activity_tracking_caloriesBurned;
 
-    public DailyActivityTrackingModel(int id, String date, int trackingActivitySteps, float trackingCaloriesBurned) {
-        this.id = id;
-        this.date = date;
-        this.trackingActivitySteps = trackingActivitySteps;
-        this.trackingCaloriesBurned = trackingCaloriesBurned;
+    public DailyActivityTrackingModel(int daily_activity_tracking_id, String daily_activity_tracking_date, int daily_activity_tracking_steps, float daily_activity_tracking_caloriesBurned) {
+        this.daily_activity_tracking_id = daily_activity_tracking_id;
+        this.daily_activity_tracking_date = daily_activity_tracking_date;
+        this.daily_activity_tracking_steps = daily_activity_tracking_steps;
+        this.daily_activity_tracking_caloriesBurned = daily_activity_tracking_caloriesBurned;
     }
+    public DailyActivityTrackingModel(int daily_activity_tracking_id, String daily_activity_tracking_date, int daily_activity_tracking_steps, float daily_activity_tracking_caloriesBurned, String daily_activity_tracking_uid) {
+        this.daily_activity_tracking_id = daily_activity_tracking_id;
+        this.daily_activity_tracking_uid = daily_activity_tracking_uid;
+        this.daily_activity_tracking_date = daily_activity_tracking_date;
+        this.daily_activity_tracking_steps = daily_activity_tracking_steps;
+        this.daily_activity_tracking_caloriesBurned = daily_activity_tracking_caloriesBurned;
+    }
+    public  DailyActivityTrackingModel(){}
 
-    // Конструктор без id (для вставки новой записи)
-    public DailyActivityTrackingModel(String date, int trackingActivitySteps, float trackingCaloriesBurned) {
-        this.date = date;
-        this.trackingActivitySteps = trackingActivitySteps;
-        this.trackingCaloriesBurned = trackingCaloriesBurned;
-    }
 
     // Геттеры и сеттеры
-    public int getId() {
-        return id;
+    @com.google.firebase.firestore.Exclude
+    public int getDaily_activity_tracking_id() {
+        return daily_activity_tracking_id;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setDaily_activity_tracking_id(int daily_activity_tracking_id) {
+        this.daily_activity_tracking_id = daily_activity_tracking_id;
     }
 
-    public String getDate() {
-        return date;
+    public String getDaily_activity_tracking_date() {
+        return daily_activity_tracking_date;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public void setDaily_activity_tracking_date(String daily_activity_tracking_date) {
+        this.daily_activity_tracking_date = daily_activity_tracking_date;
     }
 
-    public int getTrackingActivitySteps() {
-        return trackingActivitySteps;
+    public int getDaily_activity_tracking_steps() {
+        return daily_activity_tracking_steps;
     }
 
-    public void setTrackingActivitySteps(int trackingActivitySteps) {
-        this.trackingActivitySteps = trackingActivitySteps;
+    public void setDaily_activity_tracking_steps(int daily_activity_tracking_steps) {
+        this.daily_activity_tracking_steps = daily_activity_tracking_steps;
     }
 
-    public float getTrackingCaloriesBurned() {
-        return trackingCaloriesBurned;
+    public float getDaily_activity_tracking_caloriesBurned() {
+        return daily_activity_tracking_caloriesBurned;
     }
 
-    public void setTrackingCaloriesBurned(float trackingCaloriesBurned) {
-        this.trackingCaloriesBurned = trackingCaloriesBurned;
+    public void setDaily_activity_tracking_caloriesBurned(float daily_activity_tracking_caloriesBurned) {
+        this.daily_activity_tracking_caloriesBurned = daily_activity_tracking_caloriesBurned;
+    }
+
+    public String getDaily_activity_tracking_uid() {
+        return daily_activity_tracking_uid;
+    }
+
+    public void setDaily_activity_tracking_uid(String daily_activity_tracking_uid) {
+        this.daily_activity_tracking_uid = daily_activity_tracking_uid;
     }
 }

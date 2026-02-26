@@ -118,11 +118,11 @@ public class CARDIO_SET_DETAILS_TABLE_DAO {
     // =========================
     public void updateCardioSet(CardioSetModel set) {
         ContentValues values = new ContentValues();
-        values.put(AppDataBase.CARDIO_SET_TEMP, set.getTemp());
-        values.put(AppDataBase.CARDIO_SET_TIME, set.getTime());
-        values.put(AppDataBase.CARDIO_SET_DISTANCE, set.getDistance());
-        values.put(AppDataBase.CARDIO_SET_STATE, set.getState());
-        values.put(AppDataBase.CARDIO_SET_ORDER, set.getOrder());
+        values.put(AppDataBase.CARDIO_SET_TEMP, set.getCardio_set_temp());
+        values.put(AppDataBase.CARDIO_SET_TIME, set.getCardio_set_time());
+        values.put(AppDataBase.CARDIO_SET_DISTANCE, set.getCardio_set_distance());
+        values.put(AppDataBase.CARDIO_SET_STATE, set.getCardio_set_state());
+        values.put(AppDataBase.CARDIO_SET_ORDER, set.getCardio_set_order());
 
         db.update(
                 AppDataBase.CARDIO_SET_DETAILS_TABLE,
@@ -161,7 +161,7 @@ public class CARDIO_SET_DETAILS_TABLE_DAO {
     // =========================
     public void updateSetOrder(CardioSetModel set) {
         ContentValues values = new ContentValues();
-        values.put(AppDataBase.CARDIO_SET_ORDER, set.getOrder());
+        values.put(AppDataBase.CARDIO_SET_ORDER, set.getCardio_set_order());
 
         db.update(
                 AppDataBase.CARDIO_SET_DETAILS_TABLE,

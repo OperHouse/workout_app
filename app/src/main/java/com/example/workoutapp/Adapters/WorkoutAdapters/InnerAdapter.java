@@ -138,9 +138,9 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     private String getSetState(Object set) {
         if (set instanceof StrengthSetModel) {
-            return ((StrengthSetModel) set).getState();
+            return ((StrengthSetModel) set).getStrength_set_state();
         } else if (set instanceof CardioSetModel) {
-            return ((CardioSetModel) set).getState();
+            return ((CardioSetModel) set).getCardio_set_state();
         }
         return "";
     }
@@ -193,8 +193,8 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
 
         public void bind(StrengthSetModel set, boolean isFinished, STRENGTH_SET_DETAILS_TABLE_DAO dao, ExecutorService executor) {
-            weight.setText(set.getWeight() == 0 ? "" : String.valueOf(set.getWeight()));
-            reps.setText(set.getRep() == 0 ? "" : String.valueOf(set.getRep()));
+            weight.setText(set.getStrength_set_weight() == 0 ? "" : String.valueOf(set.getStrength_set_weight()));
+            reps.setText(set.getStrength_set_rep() == 0 ? "" : String.valueOf(set.getStrength_set_rep()));
 
 
             // Очистим фон от ошибок при повторном биндинге
@@ -225,7 +225,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                         return;
                     }
 
-                    set.setState("finished");
+                    set.setStrength_set_state("finished");
                     executor.execute(() -> dao.updateStrengthSet(set));
 
                     itemView.post(() -> {
@@ -234,7 +234,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                         reps.setEnabled(false);
                     });
                 } else {
-                    set.setState("active");
+                    set.setStrength_set_state("active");
                     executor.execute(() -> dao.updateStrengthSet(set));
 
                     itemView.post(() -> {
@@ -249,13 +249,13 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             weight.addTextChangedListener(new SimpleTextWatcher(s -> {
                 double value = parseDoubleSafe(s);
                 weight.setBackgroundResource(R.drawable.edit_text_back2);
-                set.setWeight(value);
+                set.setStrength_set_weight(value);
                 executor.execute(() -> dao.updateStrengthSet(set));
             }));
             reps.addTextChangedListener(new SimpleTextWatcher(s -> {
                 int value = parseIntSafe(s);
                 reps.setBackgroundResource(R.drawable.edit_text_back2);
-                set.setRep(value);
+                set.setStrength_set_rep(value);
                 executor.execute(() -> dao.updateStrengthSet(set));
             }));
         }
@@ -277,9 +277,9 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
 
         public void bind(CardioSetModel set, boolean isFinished, CARDIO_SET_DETAILS_TABLE_DAO dao, ExecutorService executor) {
-            time.setText(set.getTime() == 0 ? "" : String.valueOf(set.getTime()));
-            distance.setText(set.getDistance() == 0 ? "" : String.valueOf(set.getDistance()));
-            temp.setText(set.getTemp() == 0 ? "" : String.valueOf(set.getTemp()));
+            time.setText(set.getCardio_set_time() == 0 ? "" : String.valueOf(set.getCardio_set_time()));
+            distance.setText(set.getCardio_set_distance() == 0 ? "" : String.valueOf(set.getCardio_set_distance()));
+            temp.setText(set.getCardio_set_temp() == 0 ? "" : String.valueOf(set.getCardio_set_temp()));
 
             // Сбросим фон на стандартный (без ошибок)
             time.setBackgroundResource(R.drawable.edit_text_back2);
@@ -320,7 +320,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                         return;
                     }
 
-                    set.setState("finished");
+                    set.setCardio_set_state("finished");
                     executor.execute(() -> dao.updateCardioSet(set));
 
                     itemView.post(() -> {
@@ -331,7 +331,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     });
 
                 } else {
-                    set.setState("active");
+                    set.setCardio_set_state("active");
                     executor.execute(() -> dao.updateCardioSet(set));
 
                     itemView.post(() -> {
@@ -344,17 +344,17 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             });
 
             time.addTextChangedListener(new SimpleTextWatcher(s -> {
-                set.setTime(parseIntSafe(s));
+                set.setCardio_set_time(parseIntSafe(s));
                 time.setBackgroundResource(R.drawable.edit_text_back2);
                 executor.execute(() -> dao.updateCardioSet(set));
             }));
             distance.addTextChangedListener(new SimpleTextWatcher(s -> {
-                set.setDistance(parseDoubleSafe(s));
+                set.setCardio_set_distance(parseDoubleSafe(s));
                 distance.setBackgroundResource(R.drawable.edit_text_back2);
                 executor.execute(() -> dao.updateCardioSet(set));
             }));
             temp.addTextChangedListener(new SimpleTextWatcher(s -> {
-                set.setTemp(parseDoubleSafe(s));
+                set.setCardio_set_temp(parseDoubleSafe(s));
                 temp.setBackgroundResource(R.drawable.edit_text_back2);
                 executor.execute(() -> dao.updateCardioSet(set));
             }));

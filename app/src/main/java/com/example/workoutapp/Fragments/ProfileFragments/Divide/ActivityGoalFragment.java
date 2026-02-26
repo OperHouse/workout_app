@@ -152,11 +152,11 @@ public class ActivityGoalFragment extends Fragment {
         ActivityGoalModel lastGoal = goalDao.getLatestGoal();
 
         if (lastGoal != null) {
-            if (lastGoal.getCaloriesToBurn() > 0) {
-                caloriesToBurnEdit.setText(String.valueOf(lastGoal.getCaloriesToBurn()));
+            if (lastGoal.getActivity_goal_caloriesToBurn() > 0) {
+                caloriesToBurnEdit.setText(String.valueOf(lastGoal.getActivity_goal_caloriesToBurn()));
             }
-            if (lastGoal.getStepsGoal() > 0) {
-                amountStepsEdit.setText(String.valueOf(lastGoal.getStepsGoal()));
+            if (lastGoal.getActivity_goal_steps() > 0) {
+                amountStepsEdit.setText(String.valueOf(lastGoal.getActivity_goal_steps()));
             }
         }
     }

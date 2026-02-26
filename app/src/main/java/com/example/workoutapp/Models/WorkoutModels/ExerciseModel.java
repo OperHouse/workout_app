@@ -12,6 +12,7 @@ public class ExerciseModel {
     private String exerciseBodyType;
     private String ex_Data = "";
     private String state = "unfinished";
+    private String exercise_uid;
     // Единый список для сетов, который может содержать разные типы объектов
     private List<Object> sets;
 
@@ -43,6 +44,17 @@ public class ExerciseModel {
 
         // Вызов метода для глубокого копирования
         this.sets = deepCopySets(other.getSets());
+    }
+    public ExerciseModel(long id, String name, String type, String bodyType, String date, String currentState, List<Object> sets, String exercise_uid) {
+        this.exercise_id = id;
+        this.exerciseName = name;
+        this.exerciseType = type;
+        this.exerciseBodyType = bodyType;
+        this.ex_Data = date;
+        this.state = currentState;
+        this.exercise_uid = exercise_uid;
+        // Вызов метода для глубокого копирования
+        this.sets = deepCopySets(sets);
     }
 
     // Основной конструктор, который вы будете использовать в DAO
@@ -79,7 +91,7 @@ public class ExerciseModel {
         return newSets;
     }
 
-
+    @com.google.firebase.firestore.Exclude
     public long getExercise_id() {
         return exercise_id;
     }
@@ -139,4 +151,11 @@ public class ExerciseModel {
         this.sets.add(set);
     }
 
+    public String getExercise_uid() {
+        return exercise_uid;
+    }
+
+    public void setExercise_uid(String exercise_uid) {
+        this.exercise_uid = exercise_uid;
+    }
 }

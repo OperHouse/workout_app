@@ -156,15 +156,15 @@ public class GeneralGoalFragment extends Fragment {
         GeneralGoalModel lastGoal = goalDao.getLatestGoal();
 
         if (lastGoal != null) {
-            if (lastGoal.getGoalText() != null && !lastGoal.getGoalText().isEmpty()) {
+            if (lastGoal.getGeneral_goal_Text() != null && !lastGoal.getGeneral_goal_Text().isEmpty()) {
                 // false → чтобы не триггерить адаптер/фильтр
-                generalGoalView.setText(lastGoal.getGoalText(), false);
+                generalGoalView.setText(lastGoal.getGeneral_goal_Text(), false);
             }
-            if (lastGoal.getWorkoutsWeekly() > 0) {
-                workoutGoalView.setText(String.valueOf(lastGoal.getWorkoutsWeekly()), false);
+            if (lastGoal.getGeneral_goal_workoutsWeekly() > 0) {
+                workoutGoalView.setText(String.valueOf(lastGoal.getGeneral_goal_workoutsWeekly()), false);
             }
-            if (lastGoal.getFoodTrackingWeekly() > 0) {
-                nutritionGoalView.setText(String.valueOf(lastGoal.getFoodTrackingWeekly()), false);
+            if (lastGoal.getGeneral_goal_foodTrackingWeekly() > 0) {
+                nutritionGoalView.setText(String.valueOf(lastGoal.getGeneral_goal_foodTrackingWeekly()), false);
             }
         }
     }

@@ -1,5 +1,9 @@
 package com.example.workoutapp.Tools;
 
+import static android.content.ContentValues.TAG;
+
+import android.util.Log;
+
 import com.example.workoutapp.Data.WorkoutDao.BASE_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
@@ -7,6 +11,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,62 +26,72 @@ public class BaseExerciseSync {
         this.userId = FirebaseAuth.getInstance().getUid();
     }
 
-    // Массовая синхронизация списка упражнений
-    public void syncBaseExercises(List<BaseExModel> localBaseExercises, boolean isPublicSyncEnabled) {
-        if (userId == null) return;
-        for (BaseExModel ex : localBaseExercises) {
-            syncBaseExerciseChange(null, ex); // null, так как это начальная выгрузка
-            // Логика публичной библиотеки (опционально)
-            if (isPublicSyncEnabled) {
-                db.collection("library").document(formatId(ex.getExName())).set(ex, SetOptions.merge());
-            }
-        }
+    /**
+     * Превращаем модель в карту для отправки, исключая локальный ID и временные состояния (isPressed)
+     */
+    private Map<String, Object> prepareDataForCloud(BaseExModel ex) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("base_ex_uid", ex.getBase_ex_uid());
+        data.put("base_ex_name", ex.getBase_ex_name());
+        data.put("base_ex_type", ex.getBase_ex_type());
+        data.put("base_ex_bodyType", ex.getBase_ex_bodyType());
+        // id и isPressed НЕ добавляем
+        return data;
     }
 
-    // Одиночное изменение/удаление/добавление
+    /**
+     * Синхронизация списка упражнений (массовая загрузка через Batch)
+     */
+    public void syncBaseExercises(List<BaseExModel> list, boolean isPublic) {
+        if (userId == null || list == null || list.isEmpty()) return;
+
+        WriteBatch batch = db.batch();
+
+        for (BaseExModel ex : list) {
+            if (ex.getBase_ex_uid() == null || ex.getBase_ex_uid().isEmpty()) continue;
+
+            Map<String, Object> cloudData = prepareDataForCloud(ex);
+
+            // 1. В личную коллекцию пользователя
+            batch.set(db.collection("users").document(userId)
+                    .collection("custom_exercises").document(ex.getBase_ex_uid()), cloudData, SetOptions.merge());
+
+            // 2. В общую библиотеку, если отмечено
+            if (isPublic) {
+                cloudData.put("authorId", userId);
+                batch.set(db.collection("library").document(ex.getBase_ex_uid()), cloudData, SetOptions.merge());
+            }
+        }
+
+        batch.commit().addOnSuccessListener(aVoid -> Log.d(TAG, "Все упражнения успешно синхронизированы"))
+                .addOnFailureListener(e -> Log.e(TAG, "Ошибка массовой синхронизации: " + e.getMessage()));
+    }
+
     public void syncBaseExerciseChange(String oldName, BaseExModel updatedEx) {
         if (userId == null) return;
 
-        String oldDocId = formatId(oldName);
+        // В качестве ID документа в Firestore всё еще удобно использовать форматированное имя
+        // (чтобы избежать дубликатов "Отжимания" и "отжимания"), либо сам UID.
+        // Используем UID как имя документа — это самый надежный вариант.
+        String docId = updatedEx != null ? updatedEx.getBase_ex_uid() : formatId(oldName);
 
-        // 1. СЛУЧАЙ УДАЛЕНИЯ
         if (updatedEx == null) {
-            if (oldDocId != null) {
-                db.collection("users").document(userId).collection("custom_exercises").document(oldDocId).delete();
-                // Из библиотеки тоже удаляем, если нужно (или оставляем для других)
-                // db.collection("library").document(oldDocId).delete();
-            }
+            // Удаление
+            db.collection("users").document(userId).collection("custom_exercises").document(docId).delete();
             return;
         }
 
-        // 2. СЛУЧАЙ ДОБАВЛЕНИЯ ИЛИ ИЗМЕНЕНИЯ
-        String newDocId = formatId(updatedEx.getExName());
+        Map<String, Object> cloudData = prepareDataForCloud(updatedEx);
 
-        // Если имя изменилось, удаляем старый документ из обеих коллекций
-        if (oldDocId != null && !oldDocId.equals(newDocId)) {
-            db.collection("users").document(userId).collection("custom_exercises").document(oldDocId).delete();
-            db.collection("library").document(oldDocId).delete();
-        }
-
-        // --- ЗАПИСЬ В ЛИЧНУЮ КОЛЛЕКЦИЮ (как обычно) ---
+        // 1. Личная коллекция
         db.collection("users").document(userId)
                 .collection("custom_exercises")
-                .document(newDocId)
-                .set(updatedEx, SetOptions.merge());
+                .document(docId)
+                .set(cloudData, SetOptions.merge());
 
-        // --- ЗАПИСЬ В ОБЩУЮ БИБЛИОТЕКУ (с добавлением автора) ---
-        // Создаем карту (Map), чтобы добавить поле, которого нет в модели
-        Map<String, Object> publicData = new HashMap<>();
-        publicData.put("exName", updatedEx.getExName());
-        publicData.put("exType", updatedEx.getExType());
-        publicData.put("bodyType", updatedEx.getBodyType());
-        publicData.put("base_ex_id", updatedEx.getBase_ex_id());
-        publicData.put("isPressed", updatedEx.getIsPressed());
-        publicData.put("authorId", userId); // Добавляем автора!
-
-        db.collection("library")
-                .document(newDocId)
-                .set(publicData, SetOptions.merge());
+        // 2. Общая библиотека (добавляем автора)
+        cloudData.put("authorId", userId);
+        db.collection("library").document(docId).set(cloudData, SetOptions.merge());
     }
 
     public void restoreUserCustomExercises() {
@@ -88,7 +103,8 @@ public class BaseExerciseSync {
                     for (DocumentSnapshot doc : queryDocumentSnapshots) {
                         BaseExModel cloudEx = doc.toObject(BaseExModel.class);
                         if (cloudEx != null) {
-                            if (!isLocalExerciseExists(dao, cloudEx.getExName())) {
+                            // Теперь проверяем существование по UID, а не по имени!
+                            if (!dao.isExerciseUidExists(cloudEx.getBase_ex_uid())) {
                                 dao.addExercise(cloudEx);
                             }
                         }
@@ -97,15 +113,7 @@ public class BaseExerciseSync {
     }
 
     private String formatId(String name) {
-        if (name == null || name.isEmpty()) return null;
+        if (name == null || name.isEmpty()) return "unknown";
         return name.trim().toLowerCase().replaceAll("\\s+", "_");
-    }
-
-    private boolean isLocalExerciseExists(BASE_EXERCISE_TABLE_DAO dao, String name) {
-        List<BaseExModel> all = dao.getAllExercises();
-        for (BaseExModel ex : all) {
-            if (ex.getExName().equalsIgnoreCase(name)) return true;
-        }
-        return false;
     }
 }
