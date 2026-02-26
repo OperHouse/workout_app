@@ -20,7 +20,9 @@ public class ProfileSync {
         this.userId = FirebaseAuth.getInstance().getUid();
     }
 
-    // Синхронизация профиля: решаем, откуда брать данные
+    /**
+     * Полная синхронизация: решаем, нужно ли скачивать данные или отправлять локальные.
+     */
     public void syncProfile() {
         if (userId == null) return;
 
@@ -28,8 +30,8 @@ public class ProfileSync {
         UserProfileModel localProfile = dao.getProfile();
 
         db.collection("users").document(userId).get().addOnSuccessListener(doc -> {
-            if (doc.exists() && doc.contains("name") && doc.get("name") != null) {
-                // 1. В ОБЛАКЕ ЕСТЬ ДАННЫЕ — скачиваем
+            if (doc.exists() && doc.get("name") != null) {
+                // 1. В ОБЛАКЕ ЕСТЬ ДАННЫЕ — скачиваем и обновляем локально
                 UserProfileModel cloudProfile = new UserProfileModel(
                         0,
                         doc.getString("name"),
@@ -38,30 +40,32 @@ public class ProfileSync {
                         null
                 );
                 dao.insertOrUpdateProfile(cloudProfile);
-                Log.d("ProfileSync", "Профиль скачан из облака");
+                Log.d("ProfileSync", "Профиль скачан из облака и сохранен локально");
             } else {
-                // 2. В ОБЛАКЕ ПУСТО (или удалено)
-                // ПРОВЕРКА: пушим только если локальное имя не null и не пустое
+                // 2. В ОБЛАКЕ ПУСТО — отправляем локальные данные, если они есть
                 if (localProfile != null && localProfile.getUserName() != null && !localProfile.getUserName().trim().isEmpty()) {
                     uploadProfile(localProfile);
-                    Log.d("ProfileSync", "Локальные данные отправлены в облако");
-                } else {
-                    Log.d("ProfileSync", "И там, и там пусто. Ничего не делаем.");
+                    Log.d("ProfileSync", "Локальные данные отправлены в пустое облако");
                 }
             }
         });
     }
 
-    // Отправка данных на сервер (вызывается при редактировании профиля)
+    /**
+     * Отправка профиля на сервер.
+     */
     public void uploadProfile(UserProfileModel profile) {
-        if (userId == null || profile == null || profile.getUserName() == null) return;
+        if (userId == null || profile == null) return;
 
-        Map<String, Object> userMap = new HashMap<>();
-        userMap.put("name", profile.getUserName());
-        userMap.put("height", profile.getUserHeight());
-        userMap.put("age", profile.getUserAge());
-        userMap.put("last_sync", System.currentTimeMillis());
+        Map<String, Object> cloudData = new HashMap<>();
+        cloudData.put("name", profile.getUserName());
+        cloudData.put("height", profile.getUserHeight());
+        cloudData.put("age", profile.getUserAge());
+        cloudData.put("last_sync", System.currentTimeMillis());
 
-        db.collection("users").document(userId).set(userMap, SetOptions.merge());
+        db.collection("users").document(userId)
+                .set(cloudData, SetOptions.merge())
+                .addOnSuccessListener(aVoid -> Log.d("ProfileSync", "Firestore обновлен"))
+                .addOnFailureListener(e -> Log.e("ProfileSync", "Ошибка синхронизации", e));
     }
 }

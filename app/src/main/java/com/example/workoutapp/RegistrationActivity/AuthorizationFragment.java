@@ -176,9 +176,9 @@ public class AuthorizationFragment extends Fragment {
                                 UserProfileDao profileDao = new UserProfileDao(MainActivity.getAppDataBase());
                                 profileDao.updateFirebaseId(user.getUid());
 
-                                // 2. Синхронизируем профиль
-                                profileDao.syncProfileWithCloud();
 
+
+                                // 2. Синхронизируем профиль
                                 // 3. Синхронизируем тренировки
                                 WORKOUT_EXERCISE_TABLE_DAO workoutDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
                                 List<ExerciseModel> localExercises = workoutDao.getAllExercisesForSync();
@@ -187,7 +187,6 @@ public class AuthorizationFragment extends Fragment {
 
                                 navigateToMain();
                             } else {
-                                // ВОТ ЭТОТ БЛОК НУЖНО ДОБАВИТЬ
                                 // Почта не подтверждена — отправляем на фрагмент верификации
                                 showVerificationFragment(email);
 

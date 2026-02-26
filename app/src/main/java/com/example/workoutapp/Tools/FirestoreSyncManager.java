@@ -1,6 +1,7 @@
 package com.example.workoutapp.Tools;
 
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
+import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.google.firebase.auth.FirebaseAuth;
@@ -17,6 +18,7 @@ public class FirestoreSyncManager {
     private final ProfileSync profileSync;
     private final FirebaseFirestore db;
     private final String userId;
+    private final WeightSync weightSync;
 
     public FirestoreSyncManager() {
         this.db = FirebaseFirestore.getInstance();
@@ -24,6 +26,7 @@ public class FirestoreSyncManager {
         this.baseExerciseSync = new BaseExerciseSync();
         this.workoutSessionSync = new WorkoutSessionSync();
         this.profileSync = new ProfileSync();
+        this.weightSync = new WeightSync();
     }
 
     public void startFullSynchronization(List<ExerciseModel> localExercises) {
@@ -32,6 +35,7 @@ public class FirestoreSyncManager {
         // Восстановление справочника
         baseExerciseSync.restoreUserCustomExercises();
         profileSync.syncProfile();
+        weightSync.syncWeightHistory();
 
         // Синхронизация тренировок (2 аргумента)
         db.collection("users").document(userId).collection("workouts")
@@ -60,5 +64,14 @@ public class FirestoreSyncManager {
 
     public void syncProfileUpdate(UserProfileModel profile) {
         profileSync.uploadProfile(profile);
+    }
+
+    /**
+     * Метод для мгновенной отправки нового замера веса
+     */
+    public void syncNewWeight(WeightHistoryModel weightEntry) {
+        if (weightEntry != null) {
+            weightSync.uploadWeightEntry(weightEntry);
+        }
     }
 }

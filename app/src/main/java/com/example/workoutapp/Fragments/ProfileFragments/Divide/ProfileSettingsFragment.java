@@ -26,6 +26,7 @@ import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
 import com.example.workoutapp.R;
+import com.example.workoutapp.Tools.FirestoreSyncManager;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
@@ -181,25 +182,39 @@ public class ProfileSettingsFragment extends Fragment {
         try { weight = Float.parseFloat(weightEdit.getText().toString().trim()); } catch (Exception ignored) {}
         try { age = Integer.parseInt(ageEdit.getText().toString().trim()); } catch (Exception ignored) {}
 
-        // --- ВАЖНО: Если было выбрано новое фото, сохраняем его сейчас ---
+        // 1. Обработка фото
         if (tempSelectedUri != null) {
             currentImagePath = finalizeImageSaving(tempSelectedUri);
         }
 
-        // 1. Сохраняем профиль
+        // 2. Инициализация инструментов
         UserProfileDao userProfileDao = new UserProfileDao(MainActivity.getAppDataBase());
+        WeightHistoryDao weightDao = new WeightHistoryDao(MainActivity.getAppDataBase());
+        FirestoreSyncManager syncManager = new FirestoreSyncManager();
+
+        // 3. СОХРАНЕНИЕ ПРОФИЛЯ (Локально + Облако)
         UserProfileModel profile = new UserProfileModel(1, name, height, age);
         profile.setUserImagePath(currentImagePath);
-        userProfileDao.insertOrUpdateProfile(profile);
 
-        // 2. Сохраняем вес
+        userProfileDao.insertOrUpdateProfile(profile); // Локально
+        syncManager.syncProfileUpdate(profile);
+
+        String uuid = java.util.UUID.randomUUID().toString();// В облако
+
+        // 4. СОХРАНЕНИЕ ВЕСА (Локально + Облако)
         String formattedDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-        WeightHistoryDao weightDao = new WeightHistoryDao(MainActivity.getAppDataBase());
-        weightDao.addWeightEntry(new WeightHistoryModel(0, formattedDate, weight));
+        WeightHistoryModel weightEntry = new WeightHistoryModel(0, uuid, formattedDate, weight);
+
+        // Вызываем ОДИН раз. Внутри DAO должна быть проверка на дубликат веса,
+        // чтобы не плодить ID при каждом нажатии "Сохранить"
+        long generatedId = weightDao.addWeightEntry(weightEntry);
+
+        if (generatedId != -1) {
+            syncManager.syncNewWeight(weightEntry);
+        }
 
         requireActivity().getSupportFragmentManager().popBackStack();
     }
-
     // --- ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ---
 
     private void setupEditorActionListener(EditText editText) {

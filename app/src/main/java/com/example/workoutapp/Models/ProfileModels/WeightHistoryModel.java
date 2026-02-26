@@ -4,16 +4,22 @@ public class WeightHistoryModel {
 
 
     private long weightId;
+    private String weightUid;
     private String measurementDate;
     private float weightValue;
 
     // Конструктор
-    public WeightHistoryModel(long weightId, String measurementDate, float weightValue) {
+    public WeightHistoryModel(long weightId, String weightUid, String measurementDate, float weightValue) {
         this.weightId = weightId;
+        this.weightUid = weightUid;
         this.measurementDate = measurementDate;
         this.weightValue = weightValue;
     }
 
+    public WeightHistoryModel() {
+    }
+
+    @com.google.firebase.firestore.Exclude
     public long getWeightId() {
         return weightId;
     }
@@ -37,4 +43,7 @@ public class WeightHistoryModel {
     public void setWeightValue(float weightValue) {
         this.weightValue = weightValue;
     }
+
+    public String getWeightUid() { return weightUid; }
+    public void setWeightUid(String weightUid) { this.weightUid = weightUid; }
 }
