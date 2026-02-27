@@ -2,8 +2,12 @@ package com.example.workoutapp.Tools;
 
 import android.util.Log;
 
+import com.example.workoutapp.Data.ProfileDao.ActivityGoalDao;
+import com.example.workoutapp.Data.ProfileDao.GeneralGoalDao;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
+import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
+import com.example.workoutapp.Models.ProfileModels.GeneralGoalModel;
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
@@ -24,6 +28,8 @@ public class FirestoreSyncManager {
     private final FirebaseFirestore db;
     private final String userId;
     private final WeightSync weightSync;
+    private ActivityGoalSync activityGoalSync;
+    private GeneralGoalSync generalGoalSync;
 
     public FirestoreSyncManager() {
         this.db = FirebaseFirestore.getInstance();
@@ -33,6 +39,8 @@ public class FirestoreSyncManager {
         this.profileSync = new ProfileSync();
         this.weightSync = new WeightSync();
         this.presetWorkoutSync = new PresetWorkoutSync(); // Инициализация
+        this.activityGoalSync = new ActivityGoalSync();
+        this.generalGoalSync = new GeneralGoalSync();
     }
 
     private boolean isSyncing = false;
@@ -47,6 +55,9 @@ public class FirestoreSyncManager {
         baseExerciseSync.restoreUserCustomExercises();
         profileSync.syncProfile();
         weightSync.syncWeightHistory();
+
+        syncActivityGoals();
+        syncGeneralGoals();
 
         // 2. Запрос к коллекции тренировок
         db.collection("users").document(userId).collection("workouts")
@@ -123,5 +134,32 @@ public class FirestoreSyncManager {
         if (weightEntry != null) {
             weightSync.uploadWeightEntry(weightEntry);
         }
+    }
+
+    public void uploadGoal(ActivityGoalModel newGoal) {
+        activityGoalSync.uploadGoal(newGoal);
+    }
+
+    public void syncActivityGoals() {
+        ActivityGoalDao goalDao = new ActivityGoalDao(MainActivity.getAppDataBase());
+
+        // 1. Сначала тянем новое из облака
+        activityGoalSync.pullGoalsFromCloud(goalDao);
+
+        // 2. Затем выталкиваем то, чего нет в облаке, из локальной базы
+        activityGoalSync.pushLocalGoalsToCloud(goalDao);
+    }
+
+    public void uploadGeneralGoal(GeneralGoalModel newGoal) {
+        generalGoalSync.uploadGoal(newGoal);
+
+    }
+
+    public void syncGeneralGoals() {
+        GeneralGoalDao goalDao = new GeneralGoalDao(MainActivity.getAppDataBase());
+        // Загружаем из облака
+        generalGoalSync.pullGoalsFromCloud(goalDao);
+        // Выгружаем локальные
+        generalGoalSync.pushLocalGoalsToCloud(goalDao);
     }
 }

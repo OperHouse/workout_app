@@ -5,6 +5,7 @@ import static com.example.workoutapp.Data.Tables.AppDataBase.ACTIVITY_GOAL_DATE;
 import static com.example.workoutapp.Data.Tables.AppDataBase.ACTIVITY_GOAL_ID;
 import static com.example.workoutapp.Data.Tables.AppDataBase.ACTIVITY_GOAL_STEPS;
 import static com.example.workoutapp.Data.Tables.AppDataBase.ACTIVITY_GOAL_TABLE;
+import static com.example.workoutapp.Data.Tables.AppDataBase.ACTIVITY_GOAL_UID;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -12,6 +13,9 @@ import android.database.Cursor;
 import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
 
 import net.sqlcipher.database.SQLiteDatabase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ActivityGoalDao {
 
@@ -31,6 +35,7 @@ public class ActivityGoalDao {
         values.put(ACTIVITY_GOAL_DATE, goal.getActivity_goal_date());
         values.put(ACTIVITY_GOAL_STEPS, goal.getActivity_goal_steps());
         values.put(ACTIVITY_CALORIES_TO_BURN, goal.getActivity_goal_caloriesToBurn());
+        values.put(ACTIVITY_GOAL_UID, goal.getActivity_goal_uid());
 
         db.insert(ACTIVITY_GOAL_TABLE, null, values);
     }
@@ -59,7 +64,8 @@ public class ActivityGoalDao {
                         cursor.getInt(cursor.getColumnIndexOrThrow(ACTIVITY_GOAL_ID)),
                         cursor.getString(cursor.getColumnIndexOrThrow(ACTIVITY_GOAL_DATE)),
                         cursor.getInt(cursor.getColumnIndexOrThrow(ACTIVITY_GOAL_STEPS)),
-                        cursor.getInt(cursor.getColumnIndexOrThrow(ACTIVITY_CALORIES_TO_BURN))
+                        cursor.getInt(cursor.getColumnIndexOrThrow(ACTIVITY_CALORIES_TO_BURN)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ACTIVITY_GOAL_UID))
                 );
             }
         } finally {
@@ -67,5 +73,38 @@ public class ActivityGoalDao {
         }
 
         return goal;
+    }
+
+    public boolean isGoalUidExists(String uid) {
+        Cursor cursor = db.rawQuery("SELECT 1 FROM " + ACTIVITY_GOAL_TABLE + " WHERE activity_goal_uid = ?", new String[]{uid});
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
+
+    public List<ActivityGoalModel> getAllGoals() {
+        List<ActivityGoalModel> list = new ArrayList<>();
+        Cursor cursor = db.query(ACTIVITY_GOAL_TABLE, null, null, null, null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                list.add(new ActivityGoalModel(
+                        cursor.getInt(cursor.getColumnIndexOrThrow(ACTIVITY_GOAL_ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(ACTIVITY_GOAL_DATE)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(ACTIVITY_GOAL_STEPS)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(ACTIVITY_CALORIES_TO_BURN)),
+                        cursor.getString(cursor.getColumnIndexOrThrow("activity_goal_uid"))
+                ));
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return list;
+    }
+
+    // Обновление UID для старых записей
+    public void updateGoalUid(int id, String uid) {
+        ContentValues cv = new ContentValues();
+        cv.put("activity_goal_uid", uid);
+        db.update(ACTIVITY_GOAL_TABLE, cv, ACTIVITY_GOAL_ID + " = ?", new String[]{String.valueOf(id)});
     }
 }

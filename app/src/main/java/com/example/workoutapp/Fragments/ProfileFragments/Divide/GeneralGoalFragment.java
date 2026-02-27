@@ -178,7 +178,6 @@ public class GeneralGoalFragment extends Fragment {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         String formattedDate = sdf.format(new Date(currentTimeMillis));
 
-        // Конвертация строковых значений из AutoCompleteTextView в int
         try {
             workoutsWeekly = Integer.parseInt(workoutGoalView.getText().toString().trim());
         } catch (NumberFormatException ignored) {}
@@ -187,28 +186,33 @@ public class GeneralGoalFragment extends Fragment {
             foodTrackingWeekly = Integer.parseInt(nutritionGoalView.getText().toString().trim());
         } catch (NumberFormatException ignored) {}
 
-        // Проверка на заполнение цели
         if (selectedGoal.isEmpty() || workoutsWeekly == 0 || foodTrackingWeekly == 0) {
             Toast.makeText(requireContext(), "Пожалуйста, заполните все поля.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Сохраняем цель
-        GeneralGoalDao goalDao = new GeneralGoalDao(MainActivity.getAppDataBase());
+        // 1. Генерируем UID
+        String goalUid = "GG_" + java.util.UUID.randomUUID().toString();
 
+        // 2. Создаем модель с UID
         GeneralGoalModel newGoal = new GeneralGoalModel(
-                0, // id автоинкремент
+                0,
                 selectedGoal,
                 workoutsWeekly,
                 foodTrackingWeekly,
-                formattedDate // текущая дата
+                formattedDate,
+                goalUid
         );
 
-        goalDao.insertGoal(newGoal); // добавляем в базу
+        // 3. Сохраняем локально
+        GeneralGoalDao goalDao = new GeneralGoalDao(MainActivity.getAppDataBase());
+        goalDao.insertGoal(newGoal);
 
-        //Возврат на предыдущий экран
-        requireActivity()
-                .getSupportFragmentManager()
-                .popBackStack();
+        // 4. Отправляем в облако
+        if (MainActivity.getSyncManager() != null) {
+            MainActivity.getSyncManager().uploadGeneralGoal(newGoal);
+        }
+
+        requireActivity().getSupportFragmentManager().popBackStack();
     }
 }

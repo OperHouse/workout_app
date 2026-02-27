@@ -22,6 +22,7 @@ import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
+import com.example.workoutapp.Tools.UidGenerator;
 import com.google.android.material.button.MaterialButton;
 
 import java.text.SimpleDateFormat;
@@ -187,14 +188,20 @@ public class ActivityGoalFragment extends Fragment {
         // Сохраняем цель активности
         ActivityGoalDao goalDao = new ActivityGoalDao(MainActivity.getAppDataBase());
 
+        String newUid = UidGenerator.generateActivityGoalUid();
+
         ActivityGoalModel newGoal = new ActivityGoalModel(
                 0, // id автоинкремент
                 formattedDate,
                 amountSteps,
-                caloriesToBurn
+                caloriesToBurn,
+                newUid
         );
 
         goalDao.addGoal(newGoal); // добавляем в базу
+
+        // СИНХРОНИЗАЦИЯ: Отправляем в облако
+        MainActivity.getSyncManager().uploadGoal(newGoal);
 
         Toast.makeText(requireContext(), "Цели активности сохранены.", Toast.LENGTH_SHORT).show();
 

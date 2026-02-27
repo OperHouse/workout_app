@@ -10,12 +10,15 @@ import static com.example.workoutapp.Data.Tables.AppDataBase.GENERAL_GOAL_WORKOU
 import android.content.ContentValues;
 import android.database.Cursor;
 
+import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.ProfileModels.GeneralGoalModel;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class GeneralGoalDao {
@@ -31,53 +34,25 @@ public class GeneralGoalDao {
     // =========================
     public void insertGoal(GeneralGoalModel goal) {
         if (goal == null) return;
-
         ContentValues values = getContentValues(goal);
 
-        // Если дата не указана, ставим текущую
+        // Добавляем UID в ContentValues
+        values.put(AppDataBase.GENERAL_GOAL_UID, goal.getGeneral_goal_uid());
+
         if (!values.containsKey(GENERAL_GOAL_DATE)) {
             String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                     .format(new Date(System.currentTimeMillis()));
             values.put(GENERAL_GOAL_DATE, date);
         }
-
         db.insert(GENERAL_GOAL_TABLE, null, values);
     }
 
-    // =========================
-    // Обновление существующей цели по ID
-    // =========================
-    public int updateGoal(GeneralGoalModel goal) {
-        if (goal == null || goal.getGeneral_goal_id() <= 0) return 0;
-
-        ContentValues values = getContentValues(goal);
-
-        return db.update(
-                GENERAL_GOAL_TABLE,
-                values,
-                GENERAL_GOAL_ID + " = ?",
-                new String[]{String.valueOf(goal.getGeneral_goal_id())}
-        );
-    }
-
-    // =========================
-    // Получение последней цели (по дате)
-    // =========================
     public GeneralGoalModel getLatestGoal() {
         GeneralGoalModel latestGoal = null;
         Cursor cursor = null;
-
         try {
-            cursor = db.query(
-                    GENERAL_GOAL_TABLE,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    GENERAL_GOAL_DATE + " DESC, " + GENERAL_GOAL_ID + " DESC",
-                    "1"
-            );
+            cursor = db.query(GENERAL_GOAL_TABLE, null, null, null, null, null,
+                    GENERAL_GOAL_DATE + " DESC, " + GENERAL_GOAL_ID + " DESC", "1");
 
             if (cursor != null && cursor.moveToFirst()) {
                 latestGoal = new GeneralGoalModel(
@@ -85,14 +60,48 @@ public class GeneralGoalDao {
                         cursor.getString(cursor.getColumnIndexOrThrow(GENERAL_GLOBAL_GOAL_TEXT)),
                         cursor.getInt(cursor.getColumnIndexOrThrow(GENERAL_GOAL_WORKOUTS_WEEKLY)),
                         cursor.getInt(cursor.getColumnIndexOrThrow(GENERAL_GOAL_FOOD_TRACKING_WEEKLY)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(GENERAL_GOAL_DATE))
+                        cursor.getString(cursor.getColumnIndexOrThrow(GENERAL_GOAL_DATE)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.GENERAL_GOAL_UID)) // Читаем UID
                 );
             }
         } finally {
             if (cursor != null) cursor.close();
         }
-
         return latestGoal;
+    }
+
+    // Новые методы для синхронизации
+    public boolean isGoalUidExists(String uid) {
+        if (uid == null) return false;
+        Cursor cursor = db.rawQuery("SELECT 1 FROM " + GENERAL_GOAL_TABLE + " WHERE general_goal_uid = ?", new String[]{uid});
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
+
+    public List<GeneralGoalModel> getAllGoals() {
+        List<GeneralGoalModel> list = new ArrayList<>();
+        Cursor cursor = db.query(GENERAL_GOAL_TABLE, null, null, null, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                list.add(new GeneralGoalModel(
+                        cursor.getInt(cursor.getColumnIndexOrThrow(GENERAL_GOAL_ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(GENERAL_GLOBAL_GOAL_TEXT)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(GENERAL_GOAL_WORKOUTS_WEEKLY)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(GENERAL_GOAL_FOOD_TRACKING_WEEKLY)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(GENERAL_GOAL_DATE)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.GENERAL_GOAL_UID))
+                ));
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return list;
+    }
+
+    public void updateGoalUid(int id, String uid) {
+        ContentValues cv = new ContentValues();
+        cv.put(AppDataBase.GENERAL_GOAL_UID, uid);
+        db.update(GENERAL_GOAL_TABLE, cv, GENERAL_GOAL_ID + " = ?", new String[]{String.valueOf(id)});
     }
 
     // =========================

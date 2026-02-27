@@ -16,6 +16,9 @@ public class UidGenerator {
     public static String generatePresetWorkoutUid() {
         return "PW_" + UUID.randomUUID().toString();
     }
+    public static String generateActivityGoalUid() {
+        return "AG_" + UUID.randomUUID().toString();
+    }
 
     public static String generateFoodUid() {
         return "FOOD_" + UUID.randomUUID().toString();
