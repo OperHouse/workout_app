@@ -19,6 +19,9 @@ public class UidGenerator {
     public static String generateActivityGoalUid() {
         return "AG_" + UUID.randomUUID().toString();
     }
+    public static String generateFoodGoalUid() {
+        return "FG_" + UUID.randomUUID().toString();
+    }
 
     public static String generateFoodUid() {
         return "FOOD_" + UUID.randomUUID().toString();

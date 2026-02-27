@@ -23,6 +23,7 @@ import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ProfileModels.FoodGainGoalModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
+import com.example.workoutapp.Tools.UidGenerator;
 import com.google.android.material.button.MaterialButton;
 
 import java.text.SimpleDateFormat;
@@ -191,7 +192,7 @@ public class FoodGoalFragment extends Fragment {
             Toast.makeText(requireContext(), "Пожалуйста, заполните все поля корректными числами.", Toast.LENGTH_SHORT).show();
             return;
         }
-
+        String goalUid = UidGenerator.generateFoodGoalUid();
         // 1. Создаем модель
         FoodGainGoalModel newGoal = new FoodGainGoalModel(
                 0, // ID будет присвоен автоматически
@@ -199,17 +200,18 @@ public class FoodGoalFragment extends Fragment {
                 protein,
                 fat,
                 carb,
-                formattedDate
+                formattedDate,
+                goalUid
         );
 
         // 2. Сохраняем в базу данных
         foodGainGoalDao.insertGoal(newGoal);
 
-        Toast.makeText(requireContext(), "Цели питания успешно сохранены.", Toast.LENGTH_SHORT).show();
+        if (MainActivity.getSyncManager() != null) {
+            MainActivity.getSyncManager().uploadFoodGoal(newGoal);
+        }
 
-        // 3. Возврат на предыдущий экран
-        requireActivity()
-                .getSupportFragmentManager()
-                .popBackStack();
+        Toast.makeText(requireContext(), "Цели питания успешно сохранены.", Toast.LENGTH_SHORT).show();
+        requireActivity().getSupportFragmentManager().popBackStack();
     }
 }

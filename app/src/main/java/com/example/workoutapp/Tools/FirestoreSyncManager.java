@@ -3,10 +3,12 @@ package com.example.workoutapp.Tools;
 import android.util.Log;
 
 import com.example.workoutapp.Data.ProfileDao.ActivityGoalDao;
+import com.example.workoutapp.Data.ProfileDao.FoodGainGoalDao;
 import com.example.workoutapp.Data.ProfileDao.GeneralGoalDao;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
+import com.example.workoutapp.Models.ProfileModels.FoodGainGoalModel;
 import com.example.workoutapp.Models.ProfileModels.GeneralGoalModel;
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
@@ -30,6 +32,7 @@ public class FirestoreSyncManager {
     private final WeightSync weightSync;
     private ActivityGoalSync activityGoalSync;
     private GeneralGoalSync generalGoalSync;
+    private FoodGoalSync foodGoalSync;
 
     public FirestoreSyncManager() {
         this.db = FirebaseFirestore.getInstance();
@@ -41,6 +44,7 @@ public class FirestoreSyncManager {
         this.presetWorkoutSync = new PresetWorkoutSync(); // Инициализация
         this.activityGoalSync = new ActivityGoalSync();
         this.generalGoalSync = new GeneralGoalSync();
+        this.foodGoalSync = new FoodGoalSync();
     }
 
     private boolean isSyncing = false;
@@ -58,6 +62,7 @@ public class FirestoreSyncManager {
 
         syncActivityGoals();
         syncGeneralGoals();
+        syncFoodGoals();
 
         // 2. Запрос к коллекции тренировок
         db.collection("users").document(userId).collection("workouts")
@@ -161,5 +166,25 @@ public class FirestoreSyncManager {
         generalGoalSync.pullGoalsFromCloud(goalDao);
         // Выгружаем локальные
         generalGoalSync.pushLocalGoalsToCloud(goalDao);
+    }
+
+    public void uploadFoodGoal(FoodGainGoalModel newGoal) {
+        FoodGainGoalDao goalDao = new FoodGainGoalDao(MainActivity.getAppDataBase());
+        // 1. Сначала скачиваем (Pull)
+        foodGoalSync.pullGoalsFromCloud(goalDao);
+        // 2. Затем выгружаем локальные (Push)
+        foodGoalSync.pushLocalGoalsToCloud(goalDao);
+    }
+
+    public void syncFoodGoals() {
+        FoodGainGoalDao goalDao = new FoodGainGoalDao(MainActivity.getAppDataBase());
+
+        // 1. Сначала скачиваем новые данные из облака
+        foodGoalSync.pullGoalsFromCloud(goalDao);
+
+        // 2. Затем выгружаем локальные данные, которых нет в облаке
+        foodGoalSync.pushLocalGoalsToCloud(goalDao);
+
+        Log.d("SyncManager", "Синхронизация целей питания завершена.");
     }
 }
