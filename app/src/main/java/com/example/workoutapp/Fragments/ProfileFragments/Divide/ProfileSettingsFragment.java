@@ -28,6 +28,7 @@ import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.FirestoreSyncManager;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
+import com.example.workoutapp.Tools.UidGenerator;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
 
@@ -199,7 +200,8 @@ public class ProfileSettingsFragment extends Fragment {
         userProfileDao.insertOrUpdateProfile(profile); // Локально
         syncManager.syncProfileUpdate(profile);
 
-        String uuid = java.util.UUID.randomUUID().toString();// В облако
+
+        String uuid = UidGenerator.generateWeightUid();
 
         // 4. СОХРАНЕНИЕ ВЕСА (Локально + Облако)
         String formattedDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());

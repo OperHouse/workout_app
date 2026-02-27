@@ -10,6 +10,9 @@ public class UidGenerator {
     public static String generateWorkoutExUid() {
         return "WORK_" + UUID.randomUUID().toString();
     }
+    public static String generateWeightUid() {
+        return "WEIGHT_" + UUID.randomUUID().toString();
+    }
 
     public static String generateFoodUid() {
         return "FOOD_" + UUID.randomUUID().toString();
