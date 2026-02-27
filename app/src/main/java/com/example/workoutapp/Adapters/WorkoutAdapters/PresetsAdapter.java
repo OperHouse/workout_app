@@ -96,7 +96,8 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsAdapter.MyViewHo
                     workoutExerciseDao.addExercise(
                             baseExerciseDao.getExerciseById(baseExId).getBase_ex_name(),
                             baseExerciseDao.getExerciseById(baseExId).getBase_ex_type(),
-                            baseExerciseDao.getExerciseById(baseExId).getBase_ex_bodyType()
+                            baseExerciseDao.getExerciseById(baseExId).getBase_ex_bodyType(),
+                            baseExerciseDao.getExerciseById(baseExId).getBase_ex_uid()
                     );
                 }
 

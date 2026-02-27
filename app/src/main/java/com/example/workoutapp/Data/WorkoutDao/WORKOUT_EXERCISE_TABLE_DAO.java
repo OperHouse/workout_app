@@ -5,10 +5,10 @@ import android.database.Cursor;
 import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
+import com.example.workoutapp.Models.Helpers.WorkoutSessionModel;
 import com.example.workoutapp.Models.WorkoutModels.CardioSetModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Models.WorkoutModels.StrengthSetModel;
-import com.example.workoutapp.Models.Helpers.WorkoutSessionModel;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
@@ -31,63 +31,14 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
     }
 
     // =========================
-    // Получение упражнений по состоянию
+    // Добавление упражнения (С UID)
     // =========================
-    public List<ExerciseModel> getExByState(String state) {
-        List<ExerciseModel> exerciseList = new ArrayList<>();
-        Cursor cursor = null;
-
-        try {
-            String query =
-                    "SELECT " +
-                            AppDataBase.WORKOUT_EXERCISE_ID + ", " +
-                            AppDataBase.WORKOUT_EXERCISE_NAME + ", " +
-                            AppDataBase.WORKOUT_EXERCISE_TYPE + ", " +
-                            AppDataBase.WORKOUT_EXERCISE_BODY_TYPE + ", " +
-                            AppDataBase.WORKOUT_EXERCISE_DATE + ", " +
-                            AppDataBase.WORKOUT_EXERCISE_STATE +
-                            " FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE +
-                            " WHERE " + AppDataBase.WORKOUT_EXERCISE_STATE + " = ?";
-
-            cursor = db.rawQuery(query, new String[]{state});
-
-            while (cursor.moveToNext()) {
-                long id = cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_ID));
-                String name = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_NAME));
-                String type = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_TYPE));
-                String bodyType = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE));
-                String date = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_DATE));
-                String currentState = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_STATE));
-
-                List<Object> sets = new ArrayList<>();
-
-                if ("Кардио".equalsIgnoreCase(type) || "Время".equalsIgnoreCase(type)) {
-                    List<CardioSetModel> cardioSets = cardioSetDao.getSetsForExercise(id);
-                    sets.addAll(cardioSets);
-                } else {
-                    List<StrengthSetModel> strengthSets = strengthSetDao.getSetsForExercise(id);
-                    sets.addAll(strengthSets);
-                }
-
-                exerciseList.add(
-                        new ExerciseModel(id, name, type, bodyType, date, currentState, sets)
-                );
-            }
-        } finally {
-            if (cursor != null) cursor.close();
-        }
-
-        return exerciseList;
-    }
-
-    // =========================
-    // Добавление упражнения
-    // =========================
-    public void addExercise(String name, String type, String bodyType) {
+    public void addExercise(String name, String type, String bodyType, String uid) {
         ContentValues values = new ContentValues();
         values.put(AppDataBase.WORKOUT_EXERCISE_NAME, name);
         values.put(AppDataBase.WORKOUT_EXERCISE_TYPE, type);
         values.put(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE, bodyType);
+        values.put(AppDataBase.WORKOUT_EXERCISE_UID, uid); // НОВОЕ ПОЛЕ
         values.put(
                 AppDataBase.WORKOUT_EXERCISE_DATE,
                 new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date())
@@ -97,82 +48,235 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
         db.insert(AppDataBase.WORKOUT_EXERCISE_TABLE, null, values);
     }
 
+    public List<ExerciseModel> getExByState(String state) {
+        List<ExerciseModel> exerciseList = new ArrayList<>();
+        Cursor cursor = null;
+
+        try {
+            // Выбираем все колонки, включая UID
+            cursor = db.query(
+                    AppDataBase.WORKOUT_EXERCISE_TABLE, // Твоя константа таблицы
+                    null,                         // null вернет все колонки
+                    AppDataBase.WORKOUT_EXERCISE_STATE + " = ?",
+                    new String[]{state},
+                    null, null, null
+            );
+
+            while (cursor.moveToNext()) {
+                // Используем вспомогательный метод mapCursorToExercise, который мы создали ранее
+                exerciseList.add(mapCursorToExercise(cursor));
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+
+        return exerciseList;
+    }
+
     // =========================
-    // Удаление упражнения
+    // Проверка существования по UID
     // =========================
+    public boolean isExerciseUidExists(String uid) {
+        if (uid == null || uid.isEmpty()) return false;
+        Cursor cursor = db.query(AppDataBase.WORKOUT_EXERCISE_TABLE,
+                new String[]{AppDataBase.WORKOUT_EXERCISE_ID},
+                AppDataBase.WORKOUT_EXERCISE_UID + " = ?",
+                new String[]{uid}, null, null, null);
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
+
+    // =========================
+    // Получение всех данных для синхронизации (С UID)
+    // =========================
+    public List<ExerciseModel> getAllExercisesForSync() {
+        List<ExerciseModel> exerciseList = new ArrayList<>();
+        Cursor cursor = db.query(AppDataBase.WORKOUT_EXERCISE_TABLE, null, null, null, null, null, null);
+
+        try {
+            while (cursor.moveToNext()) {
+                exerciseList.add(mapCursorToExercise(cursor));
+            }
+        } finally {
+            cursor.close();
+        }
+        return exerciseList;
+    }
+
+    // Вспомогательный метод для маппинга, чтобы не дублировать код
+    private ExerciseModel mapCursorToExercise(Cursor cursor) {
+        long id = cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_ID));
+        String name = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_NAME));
+        String type = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_TYPE));
+        String bodyType = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE));
+        String date = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_DATE));
+        String state = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_STATE));
+        String uid = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_UID)); // Читаем UID
+
+        List<Object> sets = new ArrayList<>();
+        if ("Кардио".equalsIgnoreCase(type) || "Время".equalsIgnoreCase(type)) {
+            sets.addAll(cardioSetDao.getSetsForExercise(id));
+        } else {
+            sets.addAll(strengthSetDao.getSetsForExercise(id));
+        }
+
+        ExerciseModel model = new ExerciseModel(id, name, type, bodyType, date, state, sets);
+        model.setExercise_uid(uid); // Убедись, что в ExerciseModel есть это поле и сеттер
+        return model;
+    }
+
+    // =========================
+    // Сохранение упражнения из облака (С обработкой UID)
+    // =========================
+    public void addFullExerciseFromCloud(ExerciseModel ex) {
+        if (ex == null || isExerciseUidExists(ex.getExercise_uid())) return;
+
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.WORKOUT_EXERCISE_NAME, ex.getExerciseName());
+        values.put(AppDataBase.WORKOUT_EXERCISE_TYPE, ex.getExerciseType());
+        values.put(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE, ex.getExerciseBodyType());
+        values.put(AppDataBase.WORKOUT_EXERCISE_DATE, ex.getEx_Data());
+        values.put(AppDataBase.WORKOUT_EXERCISE_STATE, ex.getState());
+        values.put(AppDataBase.WORKOUT_EXERCISE_UID, ex.getExercise_uid()); // Пишем UID из облака
+
+        long newExId = db.insert(AppDataBase.WORKOUT_EXERCISE_TABLE, null, values);
+
+        if (ex.getSets() != null && newExId != -1) {
+            for (Object setObj : ex.getSets()) {
+                // ... твоя логика обработки сетов (Map или Model) остается прежней ...
+                // Просто используй newExId для привязки сетов к новому упражнению
+                saveSet(newExId, setObj, ex.getExerciseType());
+            }
+        }
+    }
+
+    private void saveSet(long exerciseId, Object setObj, String type) {
+        if (setObj instanceof java.util.Map) {
+            java.util.Map<String, Object> map = (java.util.Map<String, Object>) setObj;
+            String setType = (String) map.get("type");
+            if ("strength".equals(setType)) {
+                strengthSetDao.addStrengthSet(exerciseId, getDouble(map.get("weight")), getInt(map.get("rep")), getInt(map.get("order")), (String) map.get("state"));
+            } else if ("cardio".equals(setType)) {
+                cardioSetDao.addCardioSet(exerciseId, getDouble(map.get("temp")), getInt(map.get("time")), getDouble(map.get("distance")), getInt(map.get("order")), (String) map.get("state"));
+            }
+        } else if (setObj instanceof StrengthSetModel) {
+            StrengthSetModel s = (StrengthSetModel) setObj;
+            strengthSetDao.addStrengthSet(exerciseId, s.getStrength_set_weight(), s.getStrength_set_rep(), s.getStrength_set_order(), s.getStrength_set_state());
+        } else if (setObj instanceof CardioSetModel) {
+            CardioSetModel c = (CardioSetModel) setObj;
+            cardioSetDao.addCardioSet(exerciseId, c.getCardio_set_temp(), c.getCardio_set_time(), c.getCardio_set_distance(), c.getCardio_set_order(), c.getCardio_set_state());
+        }
+    }
+
+    // ОСТАЛЬНЫЕ МЕТОДЫ (getExByState, deleteExercise, и т.д.)
+    // Нужно обновить, вызывая внутри них mapCursorToExercise(cursor), чтобы UID не терялся.
+
+    public void deleteExercisesByDate(String date) {
+        if (date == null || date.isEmpty()) return;
+        db.delete(AppDataBase.WORKOUT_EXERCISE_TABLE, AppDataBase.WORKOUT_EXERCISE_DATE + " = ?", new String[]{date});
+    }
+
     public void deleteExercise(ExerciseModel exercise) {
         if (exercise == null) return;
 
         long exerciseId = exercise.getExercise_id();
 
-        strengthSetDao.deleteSetsForExercise(exerciseId);
-        cardioSetDao.deleteSetsForExercise(exerciseId);
+        // 1. Сначала удаляем все связанные сеты (подходы) из других таблиц
+        // Это важно, чтобы не оставлять "мусор" в базе
+        if (strengthSetDao != null) {
+            strengthSetDao.deleteSetsForExercise(exerciseId);
+        }
+        if (cardioSetDao != null) {
+            cardioSetDao.deleteSetsForExercise(exerciseId);
+        }
 
+        // 2. Теперь удаляем само упражнение по его локальному ID
         db.delete(
                 AppDataBase.WORKOUT_EXERCISE_TABLE,
                 AppDataBase.WORKOUT_EXERCISE_ID + " = ?",
                 new String[]{String.valueOf(exerciseId)}
         );
+
+        Log.d("DAO", "Упражнение удалено: " + exercise.getExerciseName() + " (ID: " + exerciseId + ")");
+    }
+    public void deleteAllWorkouts() {
+        try {
+            // 1. Удаляем все подходы из связанных таблиц
+            db.delete(AppDataBase.STRENGTH_SET_DETAILS_TABLE, null, null);
+            db.delete(AppDataBase.CARDIO_SET_DETAILS_TABLE, null, null);
+
+            // 2. Удаляем все упражнения
+            db.delete(AppDataBase.WORKOUT_EXERCISE_TABLE, null, null);
+
+            // 3. Сбрасываем счетчик ID (sqlite_sequence), чтобы новые ID снова начинались с 1
+            db.delete("sqlite_sequence", "name = ?", new String[]{AppDataBase.WORKOUT_EXERCISE_TABLE});
+
+            Log.d("DAO", "Вся история тренировок полностью очищена локально");
+        } catch (Exception e) {
+            Log.e("DAO", "Ошибка при полной очистке тренировок: " + e.getMessage());
+        }
     }
 
+    /**
+     * Возвращает дату последней завершенной тренировки.
+     * @return Дата в формате String или null, если тренировок нет.
+     */
+    public String getLatestWorkoutDate() {
+        Cursor cursor = null;
+        try {
+            // Ищем максимальную дату среди упражнений со статусом 'finished'
+            String query = "SELECT MAX(" + AppDataBase.WORKOUT_EXERCISE_DATE + ")" +
+                    " FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE +
+                    " WHERE " + AppDataBase.WORKOUT_EXERCISE_STATE + " = ?";
 
-    // =========================
-    // Завершение упражнения
-    // =========================
+            cursor = db.rawQuery(query, new String[]{"finished"});
+
+            if (cursor != null && cursor.moveToFirst()) {
+                return cursor.getString(0); // Возвращает дату или null
+            }
+        } catch (Exception e) {
+            Log.e("DAO", "Ошибка при получении даты последней тренировки: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return null;
+    }
+    /**
+     * Помечает упражнение как завершенное.
+     * @param exerciseId Локальный ID упражнения из SQLite.
+     */
     public void markExerciseAsFinished(long exerciseId) {
         ContentValues values = new ContentValues();
         values.put(AppDataBase.WORKOUT_EXERCISE_STATE, "finished");
 
-        db.update(
-                AppDataBase.WORKOUT_EXERCISE_TABLE,
-                values,
-                AppDataBase.WORKOUT_EXERCISE_ID + " = ?",
-                new String[]{String.valueOf(exerciseId)}
-        );
-    }
-
-    // =========================
-    // Последняя дата тренировки
-    // =========================
-    public String getLatestWorkoutDate() {
-        Cursor cursor = null;
         try {
-            String query =
-                    "SELECT MAX(" + AppDataBase.WORKOUT_EXERCISE_DATE + ")" +
-                            " FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE +
-                            " WHERE " + AppDataBase.WORKOUT_EXERCISE_STATE + " = ?";
+            int rowsUpdated = db.update(
+                    AppDataBase.WORKOUT_EXERCISE_TABLE,
+                    values,
+                    AppDataBase.WORKOUT_EXERCISE_ID + " = ?",
+                    new String[]{String.valueOf(exerciseId)}
+            );
 
-            cursor = db.rawQuery(query, new String[]{"finished"});
-            return cursor.moveToFirst() ? cursor.getString(0) : null;
-        } finally {
-            if (cursor != null) cursor.close();
+            if (rowsUpdated > 0) {
+                Log.d("DAO", "Упражнение ID " + exerciseId + " успешно завершено");
+            }
+        } catch (Exception e) {
+            Log.e("DAO", "Ошибка при завершении упражнения: " + e.getMessage());
         }
     }
 
-    public long getCount() {
-        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE, null);
-        long count = 0;
-        if (cursor.moveToFirst()) count = cursor.getLong(0);
-        cursor.close();
-        return count;
-    }
 
-    public void deleteAllWorkouts() {
-        // Удаляем все записи из таблицы упражнений тренировок
-        db.delete(AppDataBase.WORKOUT_EXERCISE_TABLE, null, null);
-        db.delete("sqlite_sequence", "name = ?", new String[]{AppDataBase.WORKOUT_EXERCISE_TABLE});
-        // Также необходимо очистить таблицы сетов, чтобы не занимать место
-        db.delete(AppDataBase.STRENGTH_SET_DETAILS_TABLE, null, null);
-        db.delete(AppDataBase.CARDIO_SET_DETAILS_TABLE, null, null);
-    }
-
-    // =========================
-    // Получение списка СЕССИЙ (группировка по датам) с пагинацией
-    // =========================
+    /**
+     * Получает историю тренировок, сгруппированную по датам.
+     * @param limit Количество дней (сессий) для загрузки.
+     * @param offset Смещение (для пагинации).
+     * @return Список моделей сессий.
+     */
     public List<WorkoutSessionModel> getWorkoutHistory(int limit, int offset) {
         List<WorkoutSessionModel> history = new ArrayList<>();
 
-        // 1. Получаем список уникальных дат завершенных тренировок
+        // 1. Получаем список уникальных дат, когда были завершенные упражнения
         String dateQuery = "SELECT DISTINCT " + AppDataBase.WORKOUT_EXERCISE_DATE +
                 " FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE +
                 " WHERE " + AppDataBase.WORKOUT_EXERCISE_STATE + " = 'finished'" +
@@ -181,46 +285,48 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
 
         Cursor dateCursor = db.rawQuery(dateQuery, new String[]{String.valueOf(limit), String.valueOf(offset)});
 
-        while (dateCursor.moveToNext()) {
-            String date = dateCursor.getString(0);
-            // 2. Для каждой даты подтягиваем список упражнений
-            List<ExerciseModel> exercisesForDate = getExercisesByDate(date);
-            history.add(new WorkoutSessionModel(date, exercisesForDate));
+        try {
+            if (dateCursor != null) {
+                while (dateCursor.moveToNext()) {
+                    String date = dateCursor.getString(0);
+
+                    // 2. Для каждой найденной даты вытягиваем список упражнений
+                    // Мы используем уже созданный метод getExercisesByDate
+                    List<ExerciseModel> exercisesForDate = getExercisesByDate(date);
+
+                    if (!exercisesForDate.isEmpty()) {
+                        history.add(new WorkoutSessionModel(date, exercisesForDate));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e("DAO", "Ошибка при получении истории: " + e.getMessage());
+        } finally {
+            if (dateCursor != null) dateCursor.close();
         }
-        dateCursor.close();
+
         return history;
     }
 
-    // =========================
-    // Получение упражнений за конкретную дату
-    // =========================
+    /**
+     * Вспомогательный метод для получения упражнений за конкретный день.
+     */
     public List<ExerciseModel> getExercisesByDate(String date) {
         List<ExerciseModel> exerciseList = new ArrayList<>();
         Cursor cursor = null;
 
         try {
-            String query = "SELECT * FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE +
-                    " WHERE " + AppDataBase.WORKOUT_EXERCISE_DATE + " = ?" +
-                    " AND " + AppDataBase.WORKOUT_EXERCISE_STATE + " = 'finished'";
-
-            cursor = db.rawQuery(query, new String[]{date});
+            cursor = db.query(
+                    AppDataBase.WORKOUT_EXERCISE_TABLE,
+                    null,
+                    AppDataBase.WORKOUT_EXERCISE_DATE + " = ? AND " + AppDataBase.WORKOUT_EXERCISE_STATE + " = ?",
+                    new String[]{date, "finished"},
+                    null, null, null
+            );
 
             while (cursor.moveToNext()) {
-                long id = cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_ID));
-                String name = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_NAME));
-                String type = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_TYPE));
-                String bodyType = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE));
-                String exDate = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_DATE));
-                String state = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_STATE));
-
-                List<Object> sets = new ArrayList<>();
-                if ("Кардио".equalsIgnoreCase(type) || "Время".equalsIgnoreCase(type)) {
-                    sets.addAll(cardioSetDao.getSetsForExercise(id));
-                } else {
-                    sets.addAll(strengthSetDao.getSetsForExercise(id));
-                }
-
-                exerciseList.add(new ExerciseModel(id, name, type, bodyType, exDate, state, sets));
+                // Используем наш универсальный mapCursorToExercise, который уже умеет в UID
+                exerciseList.add(mapCursorToExercise(cursor));
             }
         } finally {
             if (cursor != null) cursor.close();
@@ -228,82 +334,51 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
         return exerciseList;
     }
 
-    // =========================
-    // Получение истории за конкретную дату (для поиска)
-    // =========================
+    /**
+     * Получает историю тренировок за конкретную выбранную дату.
+     * Используется для поиска или календаря.
+     * @param date Дата в формате "yyyy-MM-dd"
+     * @return Список сессий (WorkoutSessionModel)
+     */
     public List<WorkoutSessionModel> getWorkoutHistoryByDate(String date) {
         List<WorkoutSessionModel> history = new ArrayList<>();
 
-        // Получаем список упражнений за этот день
+        // 1. Используем уже существующий метод для получения списка упражнений за эту дату
         List<ExerciseModel> exercisesForDate = getExercisesByDate(date);
 
-        // Если упражнения найдены, создаем одну сессию и добавляем в список
-        if (!exercisesForDate.isEmpty()) {
+        // 2. Если упражнения найдены, упаковываем их в модель сессии
+        if (exercisesForDate != null && !exercisesForDate.isEmpty()) {
             history.add(new WorkoutSessionModel(date, exercisesForDate));
         }
 
         return history;
     }
 
-    public List<ExerciseModel> getAllExercisesForSync() {
-        List<ExerciseModel> exerciseList = new ArrayList<>();
-        Cursor cursor = null;
+    // =========================
+// Обновление упражнения из облака по UID
+// =========================
+    public void updateFullExerciseFromCloud(ExerciseModel ex) {
 
-        try {
-            // Выбираем абсолютно все упражнения без фильтрации по state
-            String query = "SELECT * FROM " + AppDataBase.WORKOUT_EXERCISE_TABLE;
-            cursor = db.rawQuery(query, null);
+        if (ex == null || ex.getExercise_uid() == null) return;
 
-            while (cursor.moveToNext()) {
-                long id = cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_ID));
-                String name = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_NAME));
-                String type = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_TYPE));
-                String bodyType = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE));
-                String date = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_DATE));
-                String state = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_STATE));
+        // 1. Получаем локальный ID по UID
+        Cursor cursor = db.query(
+                AppDataBase.WORKOUT_EXERCISE_TABLE,
+                new String[]{AppDataBase.WORKOUT_EXERCISE_ID},
+                AppDataBase.WORKOUT_EXERCISE_UID + " = ?",
+                new String[]{ex.getExercise_uid()},
+                null, null, null
+        );
 
-                List<Object> sets = new ArrayList<>();
-                // Проверяем тип и подтягиваем сеты через существующие DAO сетов
-                if ("Кардио".equalsIgnoreCase(type) || "Время".equalsIgnoreCase(type)) {
-                    sets.addAll(cardioSetDao.getSetsForExercise(id));
-                } else {
-                    sets.addAll(strengthSetDao.getSetsForExercise(id));
-                }
-
-                exerciseList.add(new ExerciseModel(id, name, type, bodyType, date, state, sets));
-            }
-        } finally {
+        if (cursor == null || !cursor.moveToFirst()) {
             if (cursor != null) cursor.close();
+            return;
         }
-        return exerciseList;
-    }
 
-    private void saveCloudSessionToSQLite(WorkoutSessionModel session) {
-        if (session == null || session.getExercises() == null) return;
+        long localId = cursor.getLong(0);
+        cursor.close();
 
-        // Нам нужен доступ к базе. В вашем случае можно взять через MainActivity
-        net.sqlcipher.database.SQLiteDatabase db = com.example.workoutapp.MainActivity.getAppDataBase();
-        com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO dao =
-                new com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO(db);
-
-        // Логика сохранения сессии из облака
-        // ВАЖНО: В вашем DAO должен быть метод, который принимает готовый ExerciseModel
-        // и сохраняет его вместе с вложенными сетами.
-        for (ExerciseModel ex : session.getExercises()) {
-            // Устанавливаем дату из сессии, если в самом упражнении она вдруг пустая
-            if (ex.getEx_Data() == null || ex.getEx_Data().isEmpty()) {
-                ex.setEx_Data(session.getWorkoutDate());
-            }
-
-            // Вызываем сохранение в базу (нужно реализовать метод addFullExercise в DAO)
-            dao.addFullExerciseFromCloud(ex);
-        }
-        Log.d("FirestoreSync", "Данные за " + session.getWorkoutDate() + " скачаны и сохранены локально");
-    }
-
-    public void addFullExerciseFromCloud(ExerciseModel ex) {
-        if (ex == null) return;
-
+        // 2. Обновляем основные поля упражнения
         ContentValues values = new ContentValues();
         values.put(AppDataBase.WORKOUT_EXERCISE_NAME, ex.getExerciseName());
         values.put(AppDataBase.WORKOUT_EXERCISE_TYPE, ex.getExerciseType());
@@ -311,78 +386,29 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
         values.put(AppDataBase.WORKOUT_EXERCISE_DATE, ex.getEx_Data());
         values.put(AppDataBase.WORKOUT_EXERCISE_STATE, ex.getState());
 
-        long newExId = db.insert(AppDataBase.WORKOUT_EXERCISE_TABLE, null, values);
+        db.update(
+                AppDataBase.WORKOUT_EXERCISE_TABLE,
+                values,
+                AppDataBase.WORKOUT_EXERCISE_UID + " = ?",
+                new String[]{ex.getExercise_uid()}
+        );
 
-        if (ex.getSets() != null && newExId != -1) {
+        // 3. Удаляем старые сеты
+        strengthSetDao.deleteSetsForExercise(localId);
+        cardioSetDao.deleteSetsForExercise(localId);
+
+        // 4. Записываем новые сеты
+        if (ex.getSets() != null) {
             for (Object setObj : ex.getSets()) {
-
-                // ЕСЛИ ПРИШЛА MAP (из Firebase)
-                if (setObj instanceof java.util.Map) {
-                    java.util.Map<String, Object> map = (java.util.Map<String, Object>) setObj;
-                    String type = (String) map.get("type");
-
-                    if ("strength".equals(type)) {
-                        double weight = getDouble(map.get("weight"));
-                        int rep = getInt(map.get("rep"));
-                        int order = getInt(map.get("order"));
-                        String state = (String) map.get("state");
-                        strengthSetDao.addStrengthSet(newExId, weight, rep, order, state);
-
-                    } else if ("cardio".equals(type)) {
-                        double temp = getDouble(map.get("temp"));
-                        int time = getInt(map.get("time"));
-                        double distance = getDouble(map.get("distance"));
-                        int order = getInt(map.get("order"));
-                        String state = (String) map.get("state");
-                        cardioSetDao.addCardioSet(newExId, temp, time, distance, order, state);
-                    }
-                }
-                // ЕСЛИ ПРИШЕЛ ОБЪЕКТ (локально)
-                else if (setObj instanceof StrengthSetModel) {
-                    StrengthSetModel s = (StrengthSetModel) setObj;
-                    strengthSetDao.addStrengthSet(newExId, s.getStrength_set_weight(), s.getStrength_set_rep(), s.getStrength_set_order(), s.getStrength_set_state());
-                } else if (setObj instanceof CardioSetModel) {
-                    CardioSetModel c = (CardioSetModel) setObj;
-                    cardioSetDao.addCardioSet(newExId, c.getCardio_set_temp(), c.getCardio_set_time(), c.getCardio_set_distance(), c.getCardio_set_order(), c.getCardio_set_state());
-                }
+                saveSet(localId, setObj, ex.getExerciseType());
             }
         }
+
+        Log.d("DAO", "Упражнение обновлено из облака: " + ex.getExerciseName());
     }
 
-    // Вспомогательные методы для безопасного извлечения чисел из Map
-    private double getDouble(Object val) {
-        if (val instanceof Number) return ((Number) val).doubleValue();
-        return 0.0;
-    }
 
-    private int getInt(Object val) {
-        if (val instanceof Number) return ((Number) val).intValue();
-        return 0;
-    }
-
-    /**
-     * Удаляет все упражнения за конкретную дату.
-     * Используется для предотвращения дублирования данных при синхронизации.
-     * @param date Дата в формате String (например, "2026-02-24")
-     */
-    public void deleteExercisesByDate(String date) {
-        if (date == null || date.isEmpty()) return;
-
-        try {
-            // Замени WORKOUT_EXERCISE_TABLE и ex_Data на свои константы,
-            // если они называются иначе в твоем классе AppDataBase
-            db.delete("WORKOUT_EXERCISE_TABLE", "ex_Data = ?", new String[]{date});
-        } catch (Exception e) {
-            android.util.Log.e("SQL_ERROR", "Ошибка при удалении упражнений за дату: " + date, e);
-        }
-    }
-
-    public boolean isExerciseExists(String exerciseName, String date) {
-        // Используй свои имена колонок (из CSV видно: workout_exercise_name и workout_exercise_data)
-        String query = "SELECT 1 FROM WORKOUT_EXERCISE_TABLE WHERE workout_exercise_name = ? AND workout_exercise_data = ?";
-        Cursor cursor = db.rawQuery(query, new String[]{exerciseName, date});
-        boolean exists = cursor.getCount() > 0;
-        cursor.close();
-        return exists;
-    }
+    // Вспомогательные методы getDouble/getInt оставляем без изменений
+    private double getDouble(Object val) { if (val instanceof Number) return ((Number) val).doubleValue(); return 0.0; }
+    private int getInt(Object val) { if (val instanceof Number) return ((Number) val).intValue(); return 0; }
 }

@@ -1,6 +1,7 @@
 package com.example.workoutapp.Fragments.WorkoutFragments;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -142,53 +143,61 @@ public class WorkoutFragment extends Fragment {
 
 
         finalWorkBtn.setOnClickListener(v -> {
-            workoutExerciseTableDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
-            cardioSetDetailsTableDao = new CARDIO_SET_DETAILS_TABLE_DAO(MainActivity.getAppDataBase());
-            strengthSetDetailsTableDao = new STRENGTH_SET_DETAILS_TABLE_DAO(MainActivity.getAppDataBase());
+            // 1. Инициализация DAO
+            WORKOUT_EXERCISE_TABLE_DAO workoutExerciseTableDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
+            CARDIO_SET_DETAILS_TABLE_DAO cardioSetDetailsTableDao = new CARDIO_SET_DETAILS_TABLE_DAO(MainActivity.getAppDataBase());
+            STRENGTH_SET_DETAILS_TABLE_DAO strengthSetDetailsTableDao = new STRENGTH_SET_DETAILS_TABLE_DAO(MainActivity.getAppDataBase());
+            MainActivity mainActivity = (MainActivity) getActivity();
 
+            if (mainActivity == null) return;
+
+            // 2. Цикл обработки упражнений из текущего списка (exList)
             for (ExerciseModel elm : exList) {
-                if (elm.getSets().isEmpty()) {
+                // Если в упражнении вообще нет подходов в памяти - удаляем везде
+                if (elm.getSets() == null || elm.getSets().isEmpty()) {
                     workoutExerciseTableDao.deleteExercise(elm);
+                    mainActivity.getSyncManager().deleteExerciseFromCloud(elm);
                     continue;
                 }
 
-                List<Object> updatedSets = new ArrayList<>(); // временный список для актуальных сетов
                 int orderCounter = 1;
-                boolean exerciseDeleted = false; // Флаг, чтобы отслеживать, было ли удалено упражнение
+                boolean exerciseDeleted = false;
 
-                for (Object set : elm.getSets()) {
+                // Создаем копию списка сетов для итерации, чтобы избежать ConcurrentModificationException
+                List<Object> currentSets = new ArrayList<>(elm.getSets());
+
+                for (Object set : currentSets) {
                     boolean isEmpty = false;
 
+                    // Проверка на пустые значения
                     if (set instanceof StrengthSetModel) {
-                        StrengthSetModel strengthSet = (StrengthSetModel) set;
-                        // Проверяем, если хотя бы одно поле пустое или равно нулю
-                        isEmpty = (strengthSet.getStrength_set_rep() == 0 || strengthSet.getStrength_set_weight() == 0);
+                        StrengthSetModel s = (StrengthSetModel) set;
+                        isEmpty = (s.getStrength_set_rep() == 0 || s.getStrength_set_weight() == 0);
                     } else if (set instanceof CardioSetModel) {
-                        CardioSetModel cardioSet = (CardioSetModel) set;
-                        // Проверяем, если хотя бы одно поле пустое или равно нулю
-                        isEmpty = (cardioSet.getCardio_set_temp() == 0 || cardioSet.getCardio_set_time() == 0 || cardioSet.getCardio_set_distance() == 0);
+                        CardioSetModel c = (CardioSetModel) set;
+                        isEmpty = (c.getCardio_set_temp() == 0 || c.getCardio_set_time() == 0 || c.getCardio_set_distance() == 0);
                     }
 
                     if (isEmpty) {
+                        // Удаляем пустой сет из базы
                         if (set instanceof StrengthSetModel) {
-                            StrengthSetModel strengthSet = (StrengthSetModel) set;
-                            strengthSetDetailsTableDao.deleteStrengthSet(strengthSet);
-                            updatedSets.remove(strengthSet);
-                            if (updatedSets.isEmpty()) {
-                                workoutExerciseTableDao.deleteExercise(elm);
-                                exerciseDeleted = true; // Помечаем, что упражнение удалено
-                            }
+                            strengthSetDetailsTableDao.deleteStrengthSet((StrengthSetModel) set);
                         } else if (set instanceof CardioSetModel) {
-                            CardioSetModel cardioSet = (CardioSetModel) set;
-                            cardioSetDetailsTableDao.deleteCardioSet(cardioSet);
-                            updatedSets.remove(cardioSet);
-                            if (updatedSets.isEmpty()) {
-                                workoutExerciseTableDao.deleteExercise(elm);
-                                exerciseDeleted = true; // Помечаем, что упражнение удалено
-                            }
+                            cardioSetDetailsTableDao.deleteCardioSet((CardioSetModel) set);
+                        }
+
+                        // Удаляем из локального объекта в памяти
+                        elm.getSets().remove(set);
+
+                        // Если это был последний сет - удаляем упражнение целиком
+                        if (elm.getSets().isEmpty()) {
+                            workoutExerciseTableDao.deleteExercise(elm);
+                            mainActivity.getSyncManager().deleteExerciseFromCloud(elm);
+                            exerciseDeleted = true;
+                            break; // Выходим из цикла сетов этого упражнения
                         }
                     } else {
-                        // обновить порядок
+                        // Если сет не пустой - обновляем его порядок в базе
                         if (set instanceof StrengthSetModel) {
                             ((StrengthSetModel) set).setStrength_set_order(orderCounter);
                             strengthSetDetailsTableDao.updateSetOrder((StrengthSetModel) set);
@@ -197,23 +206,51 @@ public class WorkoutFragment extends Fragment {
                             cardioSetDetailsTableDao.updateSetOrder((CardioSetModel) set);
                         }
                         orderCounter++;
-                        updatedSets.add(set);
                     }
                 }
 
-                // Если упражнение не было удалено, то оно становится завершённым
+                // Если упражнение выжило - помечаем как завершенное
                 if (!exerciseDeleted) {
-                    workoutExerciseTableDao.markExerciseAsFinished(elm.getExercise_id()); // Помечаем как завершённое
+                    workoutExerciseTableDao.markExerciseAsFinished(elm.getExercise_id());
                 }
             }
 
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
 
-            // Обновляем список упражнений, чтобы отобразить завершённые
-            exList = workoutExerciseTableDao.getExByState("unfinished");
-            assert getView() != null;
-            updateUI(getView(), exList);
-            workoutAdapter.updateExList(exList);
-            Toast.makeText(requireContext(), "Тренировка завершена!", Toast.LENGTH_SHORT).show();
+                // Перечитываем данные ПРЯМО перед отправкой
+                List<ExerciseModel> finalSyncList = workoutExerciseTableDao.getAllExercisesForSync();
+
+                Log.d("SYNC_FINAL", "Отправка на сервер. Кол-во упражнений: " + finalSyncList.size());
+
+                // Отправляем
+                mainActivity.getSyncManager().syncAllWorkouts(finalSyncList);
+
+                // Обновляем UI
+                exList = workoutExerciseTableDao.getExByState("unfinished");
+                if (getView() != null) updateUI(getView(), exList);
+                workoutAdapter.updateExList(exList);
+
+                Toast.makeText(requireContext(), "Тренировка сохранена в облаке!", Toast.LENGTH_SHORT).show();
+
+            }, 1000); // Задержка 300 миллисекунд
+
+//            List<ExerciseModel> freshExercisesForCloud = workoutExerciseTableDao.getAllExercisesForSync();
+//
+//            FirestoreSyncManager syncManager = new FirestoreSyncManager();
+//            syncManager.syncAllWorkouts(freshExercisesForCloud);
+
+
+//            exList = workoutExerciseTableDao.getExByState("unfinished");
+//
+//            if (getView() != null) {
+//                updateUI(getView(), exList);
+//            }
+//
+//            if (workoutAdapter != null) {
+//                workoutAdapter.updateExList(exList);
+//            }
+
+            Toast.makeText(requireContext(), "Тренировка сохранена и синхронизирована!", Toast.LENGTH_SHORT).show();
         });
 
         ActivityRingView activityRingView = view.findViewById(R.id.activityRing);

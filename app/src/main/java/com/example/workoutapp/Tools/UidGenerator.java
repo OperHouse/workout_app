@@ -4,8 +4,11 @@ import java.util.UUID;
 
 public class UidGenerator {
 
-    public static String generateExUid() {
+    public static String generateBaseExUid() {
         return "EX_" + UUID.randomUUID().toString();
+    }
+    public static String generateWorkoutExUid() {
+        return "WORK_" + UUID.randomUUID().toString();
     }
 
     public static String generateFoodUid() {

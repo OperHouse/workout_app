@@ -14,7 +14,7 @@ public class ExerciseModel {
     private String state = "unfinished";
     private String exercise_uid;
     // Единый список для сетов, который может содержать разные типы объектов
-    private List<Object> sets;
+    private List<Object> sets = new ArrayList<>();
 
     public ExerciseModel(){
 
@@ -148,7 +148,14 @@ public class ExerciseModel {
      * @param set Объект сета для добавления.
      */
     public void addSet(Object set) {
+        if (this.sets == null) {
+            this.sets = new ArrayList<>();
+        }
         this.sets.add(set);
+    }
+
+    public void setSets(List<Object> sets) {
+        this.sets = sets;
     }
 
     public String getExercise_uid() {

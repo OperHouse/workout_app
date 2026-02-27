@@ -12,13 +12,11 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
-import com.example.workoutapp.Data.WorkoutDao.BASE_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Fragments.NutritionFragments.NutritionFragment;
 import com.example.workoutapp.Fragments.ProfileFragments.ProfileFragment;
 import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutFragment;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
-import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Tools.EncryptionTools.DatabaseProvider;
 import com.example.workoutapp.Tools.FirestoreSyncManager;
@@ -47,7 +45,12 @@ public class MainActivity extends AppCompatActivity
     private BottomNavigationView bottomNavigationView;
     private List<ExerciseModel> cachedExercises;
 
+    private FirebaseAuth.AuthStateListener authStateListener;
+
     private ActivityResultLauncher<String[]> healthPermissionLauncher;
+    private FirestoreSyncManager syncManager;
+    private boolean isInitialSyncDone = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,14 +65,21 @@ public class MainActivity extends AppCompatActivity
 
         appDataBase = DatabaseProvider.get(this);
         //DatabaseExporter.exportDatabase(this, "WorkoutApp_plain.db");
-
+        syncManager = new FirestoreSyncManager();
 
         loadExercisesFromDb();
         setInitialActiveButton();
 
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            //syncDataWithCloud();
-        }
+        // 2. Вместо простого вызова метода, вешаем слушатель
+        authStateListener = firebaseAuth -> {
+            if (firebaseAuth.getCurrentUser() != null && !isInitialSyncDone) {
+                Log.d("CloudSync", "Auth подтвержден: " + firebaseAuth.getCurrentUser().getUid());
+                startInitialCloudSync();
+            }
+        };
+        FirebaseAuth.getInstance().addAuthStateListener(authStateListener);
+
+
 
         // ---------- Health Connect permission launcher ----------
         healthPermissionLauncher =
@@ -249,29 +259,46 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            // Получаем доступ к БД один раз
-            net.sqlcipher.database.SQLiteDatabase db = getAppDataBase();
-
-            // Инициализируем DAO
-            WORKOUT_EXERCISE_TABLE_DAO workoutDao = new WORKOUT_EXERCISE_TABLE_DAO(db);
-            BASE_EXERCISE_TABLE_DAO exDao = new BASE_EXERCISE_TABLE_DAO(db);
-
-            // Получаем данные для синхронизации
-            List<ExerciseModel> localExercises = workoutDao.getAllExercisesForSync();
-            List<BaseExModel> baseExercises = exDao.getAllExercises();
-
-            FirestoreSyncManager syncManager = new FirestoreSyncManager();
-
-            // 1. Полная синхронизация (проверка истории тренировок и восстановление справочника)
-            syncManager.startFullSynchronization(localExercises);
-
-            // 2. Массовая выгрузка справочника (вызывай только если есть что выгружать)
-            if (baseExercises != null && !baseExercises.isEmpty()) {
-                // Если в менеджере нет прямого метода, добавь его или используй этот:
-                syncManager.uploadAllBaseExercises(baseExercises, true);
-            }
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (authStateListener != null) {
+            FirebaseAuth.getInstance().removeAuthStateListener(authStateListener);
         }
+    }
+
+    private void startInitialCloudSync() {
+        // Ставим флаг СРАЗУ, чтобы не запустить поток дважды
+        isInitialSyncDone = true;
+
+        new Thread(() -> {
+            try {
+                Log.d("CloudSync", "ВХОД В ПОТОК СИНХРОНИЗАЦИИ");
+
+                // Даем базе время инициализироваться
+                Thread.sleep(100);
+
+                if (appDataBase != null && appDataBase.isOpen()) {
+                    WORKOUT_EXERCISE_TABLE_DAO dao = new WORKOUT_EXERCISE_TABLE_DAO(appDataBase);
+                    List<ExerciseModel> allLocalExercises = dao.getAllExercisesForSync();
+
+                    Log.d("CloudSync", "Запуск startFullSynchronization. Локальных данных: " +
+                            (allLocalExercises != null ? allLocalExercises.size() : 0));
+
+                    syncManager.startFullSynchronization(allLocalExercises);
+                } else {
+                    Log.e("CloudSync", "БАЗА НЕ ГОТОВА");
+                    isInitialSyncDone = false; // Сбрасываем флаг для повторной попытки
+                }
+            } catch (Exception e) {
+                Log.e("CloudSync", "ОШИБКА В ПОТОКЕ: " + e.getMessage());
+                isInitialSyncDone = false;
+            }
+        }).start();
+    }
+
+    public FirestoreSyncManager getSyncManager() {
+        return syncManager;
     }
 }

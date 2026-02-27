@@ -409,7 +409,7 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
             newExercise.setBase_ex_bodyType(bodyPart);
 
             // ГЕНЕРИРУЕМ UID ЗДЕСЬ
-            newExercise.setBase_ex_uid(UidGenerator.generateExUid());
+            newExercise.setBase_ex_uid(UidGenerator.generateBaseExUid());
 
             // Сохраняем в локальную БД (убедись, что addExercise учитывает поле UID)
             long id = baseExerciseDao.addExercise(newExercise);

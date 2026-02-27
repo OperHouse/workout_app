@@ -19,6 +19,7 @@ import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.OnExItemClickListener;
+import com.example.workoutapp.Tools.UidGenerator;
 import com.example.workoutapp.Tools.WorkoutMode;
 
 import java.util.ArrayList;
@@ -61,9 +62,9 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
         if (!exListAll.isEmpty() || !exListFiltered.isEmpty()) {
 
             BaseExModel exercise;
-            if(!Objects.equals(currentFilter, "")){
+            if (!Objects.equals(currentFilter, "")) {
                 exercise = exListFiltered.get(position);
-            }else{
+            } else {
                 exercise = exListAll.get(position);
             }
             holder.name.setText(exercise.getBase_ex_name() + "\u00A0" + "(" + exercise.getBase_ex_type() + ")");
@@ -85,17 +86,26 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
                     WORKOUT_EXERCISE_TABLE_DAO workoutExerciseDao =
                             new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
 
+                    // 1. Генерируем уникальный ID для этого упражнения ВНУТРИ тренировки
+                    String exerciseUid = UidGenerator.generateWorkoutExUid();
+
+                    // 2. Сохраняем в БД (Добавь exerciseUid в аргументы метода addExercise в DAO!)
                     workoutExerciseDao.addExercise(
                             exercise.getBase_ex_name(),
                             exercise.getBase_ex_type(),
-                            exercise.getBase_ex_bodyType()
+                            exercise.getBase_ex_bodyType(),
+                            exerciseUid // <--- Передаем UID
                     );
 
                     // Обновляем кэш
                     MainActivity mainActivity = (MainActivity) fragment.requireActivity();
                     mainActivity.reloadExercisesFromDb();
 
-                    // Получаем существующий WorkoutFragment по тегу
+                    // 3. СИНХРОНИЗАЦИЯ: Отправляем обновленный список упражнений в облако
+                    // У MainActivity должен быть доступ к FirestoreSyncManager
+                    mainActivity.getSyncManager().syncAllWorkouts(mainActivity.getCachedExercises());
+
+                    // --- Логика переключения фрагментов (без изменений) ---
                     WorkoutFragment workoutFragment = (WorkoutFragment)
                             mainActivity.getSupportFragmentManager().findFragmentByTag("workout");
 
@@ -108,14 +118,11 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
                     } else {
                         workoutFragment.setExercises(mainActivity.getCachedExercises());
                         workoutFragment.refreshWorkoutData();
-
-                        // Если фрагмент скрыт, покажем его
                         mainActivity.getSupportFragmentManager().beginTransaction()
                                 .show(workoutFragment)
                                 .commit();
                     }
 
-                    // Возвращаемся на WorkoutFragment
                     mainActivity.showOrAddFragment("workout", workoutFragment);
                 }
             });

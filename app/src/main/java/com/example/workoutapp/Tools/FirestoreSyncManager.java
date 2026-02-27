@@ -1,5 +1,7 @@
 package com.example.workoutapp.Tools;
 
+import android.util.Log;
+
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
@@ -29,15 +31,20 @@ public class FirestoreSyncManager {
         this.weightSync = new WeightSync();
     }
 
-    public void startFullSynchronization(List<ExerciseModel> localExercises) {
-        if (userId == null) return;
+    private boolean isSyncing = false; // Добавь флаг, чтобы не запускать две синхронизации сразу
 
-        // Восстановление справочника
+    public void startFullSynchronization(List<ExerciseModel> localExercises) {
+        if (userId == null || isSyncing) return; // Если уже синхронизируем — выходим
+
+        isSyncing = true;
+        Log.d("SyncManager", "Запущена полная синхронизация...");
+
+        // Восстановление справочника и профиля
         baseExerciseSync.restoreUserCustomExercises();
         profileSync.syncProfile();
         weightSync.syncWeightHistory();
 
-        // Синхронизация тренировок (2 аргумента)
+        // Синхронизация тренировок
         db.collection("users").document(userId).collection("workouts")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
@@ -46,6 +53,12 @@ public class FirestoreSyncManager {
                         cloudMap.put(doc.getId(), doc);
                     }
                     workoutSessionSync.startWorkoutSync(localExercises, cloudMap);
+                    isSyncing = false; // Освобождаем менеджер
+                    Log.d("SyncManager", "Синхронизация тренировок завершена.");
+                })
+                .addOnFailureListener(e -> {
+                    isSyncing = false;
+                    Log.e("SyncManager", "Ошибка синхронизации: " + e.getMessage());
                 });
     }
 
@@ -56,6 +69,11 @@ public class FirestoreSyncManager {
     public void syncAllWorkouts(List<ExerciseModel> allExercises) {
         // Теперь метод найден в workoutSessionSync
         workoutSessionSync.syncAllWorkouts(allExercises);
+    }
+
+    public void deleteExerciseFromCloud(ExerciseModel exercise) {
+        // workoutSessionSync — это экземпляр WorkoutSessionSync внутри менеджера
+        workoutSessionSync.removeExerciseFromCloud(exercise);
     }
 
     public void uploadAllBaseExercises(List<BaseExModel> list, boolean isPublic) {
