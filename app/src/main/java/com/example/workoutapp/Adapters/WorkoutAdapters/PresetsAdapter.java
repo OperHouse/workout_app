@@ -3,6 +3,7 @@ package com.example.workoutapp.Adapters.WorkoutAdapters;
 import android.annotation.SuppressLint;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,6 +70,7 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsAdapter.MyViewHo
         StringBuilder exercisesListText = new StringBuilder();
         List<Long> baseExIds = connectingPresetDao.getBaseExIdsByPresetId(currentPreset.getExercise_id());
 
+        // Безопасное формирование строки списка упражнений для отображения
         for (Long baseExId : baseExIds) {
             BaseExModel exercise = baseExerciseDao.getExerciseById(baseExId);
             if (exercise != null) {
@@ -88,22 +90,31 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsAdapter.MyViewHo
         holder.itemView.setOnClickListener(v -> {
             // Запускаем операции с базой данных в фоновом потоке
             executor.execute(() -> {
-                for (Long baseExId : baseExIds) {
+                WORKOUT_EXERCISE_TABLE_DAO workoutExerciseDao =
+                        new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
 
-                    // Добавляем упражнение в текущую тренировку
-                    WORKOUT_EXERCISE_TABLE_DAO workoutExerciseDao =
-                            new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
-                    workoutExerciseDao.addExercise(
-                            baseExerciseDao.getExerciseById(baseExId).getBase_ex_name(),
-                            baseExerciseDao.getExerciseById(baseExId).getBase_ex_type(),
-                            baseExerciseDao.getExerciseById(baseExId).getBase_ex_bodyType(),
-                            baseExerciseDao.getExerciseById(baseExId).getBase_ex_uid()
-                    );
+                for (Long baseExId : baseExIds) {
+                    // ПРОВЕРКА: получаем объект один раз и проверяем на null
+                    BaseExModel exercise = baseExerciseDao.getExerciseById(baseExId);
+
+                    if (exercise != null) {
+                        // Добавляем упражнение в текущую тренировку, только если оно существует
+                        workoutExerciseDao.addExercise(
+                                exercise.getBase_ex_name(),
+                                exercise.getBase_ex_type(),
+                                exercise.getBase_ex_bodyType(),
+                                exercise.getBase_ex_uid()
+                        );
+                    } else {
+                        Log.w("PresetsAdapter", "Упражнение с ID " + baseExId + " удалено из базы, пропускаем.");
+                    }
                 }
 
                 // После завершения, возвращаемся в основной поток для обновления UI
                 mainHandler.post(() -> {
-                    // Возвращаемся на предыдущий фрагмент в стеке (WorkoutFragment)
+                    if (fragment == null || !fragment.isAdded()) return;
+
+                    // Возвращаемся на предыдущий фрагмент
                     FragmentManager fragmentManager = fragment.getParentFragmentManager();
                     if (fragmentManager.getBackStackEntryCount() > 0) {
                         fragmentManager.popBackStack();
@@ -112,8 +123,7 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsAdapter.MyViewHo
                     MainActivity mainActivity = (MainActivity) fragment.requireActivity();
                     mainActivity.reloadExercisesFromDb();
 
-
-                    // Получаем существующий WorkoutFragment по тегу
+                    // Работа с WorkoutFragment
                     WorkoutFragment workoutFragment = (WorkoutFragment)
                             mainActivity.getSupportFragmentManager().findFragmentByTag("workout");
 
@@ -127,23 +137,22 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsAdapter.MyViewHo
                         workoutFragment.setExercises(mainActivity.getCachedExercises());
                         workoutFragment.refreshWorkoutData();
 
-                        // Если фрагмент скрыт, покажем его
                         mainActivity.getSupportFragmentManager().beginTransaction()
                                 .show(workoutFragment)
                                 .commit();
                     }
 
-                    // Возвращаемся на WorkoutFragment
                     mainActivity.showOrAddFragment("workout", workoutFragment);
 
-                    // Показываем сообщение пользователю
                     Toast.makeText(fragment.requireContext(), "Упражнения из пресета добавлены!", Toast.LENGTH_SHORT).show();
                 });
             });
         });
 
         holder.itemView.setOnLongClickListener(v -> {
-            longClickListener.onWorkoutPresetLongClick(currentPreset);
+            if (longClickListener != null) {
+                longClickListener.onWorkoutPresetLongClick(currentPreset);
+            }
             return true;
         });
     }

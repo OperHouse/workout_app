@@ -10,6 +10,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -795,17 +796,30 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
     }
 
     private void deletePreset(ExerciseModel presetToDelete, int position) {
+        // 1. Получаем UID перед удалением из локальной базы
+        String presetUid = presetToDelete.getExercise_uid();
+
+        // 2. Локальное удаление
         // Удаляем записи из соединяющей таблицы
         connectingPresetDao.deleteExercisesByPresetId(presetToDelete.getExercise_id());
         // Удаляем сам пресет
         presetNameDao.deletePreset(presetToDelete.getExercise_id());
 
-        // Обновляем список и адаптер
+        // 3. УДАЛЕНИЕ С СЕРВЕРА
+        if (presetUid != null && !presetUid.isEmpty()) {
+            MainActivity.getSyncManager().deletePresetFromCloud(presetUid);
+            Log.d("PresetSync", "Запрос на удаление пресета отправлен: " + presetUid);
+        } else {
+            Log.w("PresetSync", "Локальный пресет не имел UID, удаление только из SQLite.");
+        }
+
+        // 4. Обновляем список и адаптер
         presetsList.remove(position);
+        // Обычно достаточно notifyItemRemoved, но если в updatePresetsList есть важная логика — оставляем
         presetAdapter.updatePresetsList(presetsList);
         presetAdapter.notifyItemRemoved(position);
-        presetVisibility(textPreset, getString(R.string.hint_add_workout), presetsList.isEmpty());
 
+        presetVisibility(textPreset, getString(R.string.hint_add_workout), presetsList.isEmpty());
     }
 
     private void presetVisibility(TextView t1, String message, boolean show) {

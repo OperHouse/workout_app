@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity
     private FirebaseAuth.AuthStateListener authStateListener;
 
     private ActivityResultLauncher<String[]> healthPermissionLauncher;
-    private FirestoreSyncManager syncManager;
+    private static FirestoreSyncManager syncManager;
     private boolean isInitialSyncDone = false;
 
 
@@ -298,7 +298,7 @@ public class MainActivity extends AppCompatActivity
         }).start();
     }
 
-    public FirestoreSyncManager getSyncManager() {
+    public static FirestoreSyncManager getSyncManager() {
         return syncManager;
     }
 }

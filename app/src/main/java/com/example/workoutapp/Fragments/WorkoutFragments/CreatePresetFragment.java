@@ -39,6 +39,7 @@ import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.OnExItemClickListener;
+import com.example.workoutapp.Tools.UidGenerator;
 import com.example.workoutapp.Tools.WorkoutMode;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -314,38 +315,70 @@ public class CreatePresetFragment extends Fragment implements OnExItemClickListe
                 return;
             }
 
+            String finalUid = null; // UID для синхронизации
+
             if (currentState == WorkoutMode.CREATE_PRESET) {
-                long newPresetId = presetNameDao.addPreset(presetName);
+                // 1. Генерируем новый UID
+                finalUid = UidGenerator.generatePresetWorkoutUid();
+
+                // 2. Сохраняем локально
+                long newPresetId = presetNameDao.addPreset(presetName, finalUid);
                 for (BaseExModel exercise : selectedExercises) {
                     connectingPresetDao.addPresetExercise(newPresetId, exercise.getBase_ex_id());
                 }
 
             } else if (currentState == WorkoutMode.EDIT_PRESET && preset != null) {
+                // 1. Берем существующий UID
+                finalUid = preset.getExercise_uid();
+
+                // На случай, если у старого пресета нет UID в объекте, лезем в базу
+                if (finalUid == null || finalUid.isEmpty()) {
+                    finalUid = presetNameDao.getPresetUidById(preset.getExercise_id());
+                }
+
+                // Если и в базе нет (старый пресет), генерируем новый и обновляем базу
+                if (finalUid == null || finalUid.isEmpty()) {
+                    finalUid = UidGenerator.generatePresetWorkoutUid();
+                    // Тут можно добавить метод в DAO для обновления UID, если нужно
+                }
+
+                // 2. Обновляем имя и связи локально
                 if (!preset.getExerciseName().equals(presetName)) {
                     presetNameDao.updatePresetName(preset.getExercise_id(), presetName);
                 }
 
                 connectingPresetDao.deleteExercisesByPresetId(preset.getExercise_id());
-
                 for (BaseExModel exercise : selectedExercises) {
                     connectingPresetDao.addPresetExercise(preset.getExercise_id(), exercise.getBase_ex_id());
                 }
             }
 
+            // ================= СИНХРОНИЗАЦИЯ С СЕРВЕРОМ =================
+            if (finalUid != null) {
+                // Преобразуем выбранные BaseExModel в ExerciseModel для отправки
+                List<ExerciseModel> syncList = new ArrayList<>();
+                for (BaseExModel be : selectedExercises) {
+                    ExerciseModel em = new ExerciseModel();
+                    em.setExerciseName(be.getBase_ex_name());
+                    em.setExerciseType(be.getBase_ex_type());
+                    em.setExerciseBodyType(be.getBase_ex_bodyType());
+                    em.setExercise_uid(be.getBase_ex_uid());
+                    syncList.add(em);
+                }
+
+                // Отправляем в облако (создаст новый или перезапишет старый по UID)
+                MainActivity.getSyncManager().syncPresetUpdate(presetName, finalUid, syncList);
+            }
+            // ============================================================
 
             final String REQUEST_KEY = "preset_updated_key";
-            // Отправляем пустой результат, чтобы просто уведомить другой фрагмент
             getParentFragmentManager().setFragmentResult(REQUEST_KEY, new Bundle());
-
-            // ===============================================
 
             dialog.dismiss();
             FragmentManager fragmentManager = getFragmentManager();
             if (fragmentManager != null && fragmentManager.getBackStackEntryCount() > 0) {
-                fragmentManager.popBackStack(); // Возвращаемся назад
+                fragmentManager.popBackStack();
             }
-
-
         });
 
         dialog.show();

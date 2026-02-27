@@ -2,6 +2,7 @@ package com.example.workoutapp.Data.WorkoutDao;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
@@ -24,77 +25,75 @@ public class WORKOUT_PRESET_NAME_TABLE_DAO {
         this.baseExerciseDao = new BASE_EXERCISE_TABLE_DAO(db);
     }
 
-    // =========================
-    // Добавление нового пресета
-    // =========================
+    // Добавление нового пресета (старый метод для совместимости)
     public long addPreset(String presetName) {
         ContentValues values = new ContentValues();
         values.put(AppDataBase.WORKOUT_PRESET_NAME, presetName);
         return db.insert(AppDataBase.WORKOUT_PRESET_NAME_TABLE, null, values);
     }
 
-    // =========================
-    // Удаление пресета по ID
-    // =========================
+    // Добавление пресета с UID
+    public long addPreset(String presetName, String presetUid) {
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.WORKOUT_PRESET_NAME, presetName);
+        values.put(AppDataBase.WORKOUT_PRESET_UID, presetUid);
+        return db.insert(AppDataBase.WORKOUT_PRESET_NAME_TABLE, null, values);
+    }
+
     public void deletePreset(long presetId) {
-        db.delete(
-                AppDataBase.WORKOUT_PRESET_NAME_TABLE,
-                AppDataBase.WORKOUT_PRESET_NAME_ID + " = ?",
-                new String[]{String.valueOf(presetId)}
-        );
-        // Также удаляем связанные упражнения
+        db.delete(AppDataBase.WORKOUT_PRESET_NAME_TABLE, AppDataBase.WORKOUT_PRESET_NAME_ID + " = ?", new String[]{String.valueOf(presetId)});
         connectingPresetDao.deleteExercisesByPresetId(presetId);
     }
 
-    // =========================
-    // Получение всех пресетов с полными данными об упражнениях
-    // =========================
+    // ИСПРАВЛЕННЫЙ МЕТОД: теперь тянет UID и не падает
     public List<ExerciseModel> getAllPresets() {
         List<ExerciseModel> presets = new ArrayList<>();
+
+        // 1. Добавляем UID в список запрашиваемых колонок
+        String[] columns = {
+                AppDataBase.WORKOUT_PRESET_NAME_ID,
+                AppDataBase.WORKOUT_PRESET_NAME,
+                AppDataBase.WORKOUT_PRESET_UID // Добавлено!
+        };
+
         Cursor cursor = null;
-
         try {
-            String[] columns = {
-                    AppDataBase.WORKOUT_PRESET_NAME_ID,
-                    AppDataBase.WORKOUT_PRESET_NAME
-            };
-
             cursor = db.query(
                     AppDataBase.WORKOUT_PRESET_NAME_TABLE,
-                    columns,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
+                    columns, null, null, null, null, null
             );
 
-            if (cursor.moveToFirst()) {
+            if (cursor != null && cursor.moveToFirst()) {
+                Log.d("PresetSync", "DAO: Найдено строк в базе: " + cursor.getCount());
+
                 int idIndex = cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_PRESET_NAME_ID);
                 int nameIndex = cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_PRESET_NAME);
+                int uidIndex = cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_PRESET_UID);
 
                 do {
                     long presetId = cursor.getLong(idIndex);
                     String presetName = cursor.getString(nameIndex);
+                    String presetUid = cursor.getString(uidIndex); // Получаем UID
 
-                    // Получаем список ID упражнений для текущего пресета
                     List<Long> baseExIds = connectingPresetDao.getBaseExIdsByPresetId(presetId);
-
-                    // Получаем полную информацию об упражнениях
                     List<Object> exercises = new ArrayList<>();
                     for (Long baseExId : baseExIds) {
                         BaseExModel exercise = baseExerciseDao.getExerciseById(baseExId);
-                        if (exercise != null) {
-                            exercises.add(exercise);
-                        }
+                        if (exercise != null) exercises.add(exercise);
                     }
 
-                    // Создаем объект ExerciseModel для пресета
-                    presets.add(new ExerciseModel(presetId, presetName, exercises));
+                    // Создаем модель и ОБЯЗАТЕЛЬНО сеттим UID
+                    ExerciseModel model = new ExerciseModel(presetId, presetName, exercises);
+                    model.setExercise_uid(presetUid);
+                    presets.add(model);
 
+                    Log.d("PresetSync", "DAO: Считан пресет: " + presetName + " | UID: " + presetUid);
                 } while (cursor.moveToNext());
+            } else {
+                Log.d("PresetSync", "DAO: Таблица пресетов пуста");
             }
-
+        } catch (Exception e) {
+            Log.e("PresetSync", "DAO Error: " + e.getMessage());
         } finally {
             if (cursor != null) cursor.close();
         }
@@ -102,23 +101,92 @@ public class WORKOUT_PRESET_NAME_TABLE_DAO {
         return presets;
     }
 
-    // =========================
-    // Обновление имени пресета
-    // =========================
     public void updatePresetName(long presetId, String newName) {
         ContentValues values = new ContentValues();
         values.put(AppDataBase.WORKOUT_PRESET_NAME, newName);
-
-        db.update(
-                AppDataBase.WORKOUT_PRESET_NAME_TABLE,
-                values,
-                AppDataBase.WORKOUT_PRESET_NAME_ID + " = ?",
-                new String[]{String.valueOf(presetId)}
-        );
+        db.update(AppDataBase.WORKOUT_PRESET_NAME_TABLE, values, AppDataBase.WORKOUT_PRESET_NAME_ID + " = ?", new String[]{String.valueOf(presetId)});
     }
 
+    // Проверка существования по UID
+    public boolean isPresetUidExists(String uid) {
+        if (uid == null) return false;
+        Cursor cursor = db.rawQuery("SELECT 1 FROM " + AppDataBase.WORKOUT_PRESET_NAME_TABLE +
+                " WHERE " + AppDataBase.WORKOUT_PRESET_UID + " = ?", new String[]{uid});
+        boolean exists = (cursor != null && cursor.getCount() > 0);
+        if (cursor != null) cursor.close();
+        return exists;
+    }
+
+    // Получение локального ID по UID
+    public long getPresetIdByUid(String uid) {
+        Cursor cursor = db.query(AppDataBase.WORKOUT_PRESET_NAME_TABLE,
+                new String[]{AppDataBase.WORKOUT_PRESET_NAME_ID},
+                AppDataBase.WORKOUT_PRESET_UID + " = ?", new String[]{uid}, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            long id = cursor.getLong(0);
+            cursor.close();
+            return id;
+        }
+        return -1;
+    }
+
+    public String getPresetUidById(long presetId) {
+        Cursor cursor = db.query(AppDataBase.WORKOUT_PRESET_NAME_TABLE,
+                new String[]{AppDataBase.WORKOUT_PRESET_UID}, AppDataBase.WORKOUT_PRESET_NAME_ID + " = ?",
+                new String[]{String.valueOf(presetId)}, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            String uid = cursor.getString(0);
+            cursor.close();
+            return uid;
+        }
+        return null;
+    }
+
+    public void savePresetFromCloud(String name, String uid, List<ExerciseModel> exercises) {
+        db.beginTransaction();
+        try {
+            ContentValues values = new ContentValues();
+            values.put(AppDataBase.WORKOUT_PRESET_NAME, name);
+            values.put(AppDataBase.WORKOUT_PRESET_UID, uid);
+
+            long presetId;
+            if (isPresetUidExists(uid)) {
+                presetId = getPresetIdByUid(uid);
+                db.update(AppDataBase.WORKOUT_PRESET_NAME_TABLE, values, AppDataBase.WORKOUT_PRESET_UID + " = ?", new String[]{uid});
+                connectingPresetDao.deleteExercisesByPresetId(presetId);
+            } else {
+                presetId = db.insert(AppDataBase.WORKOUT_PRESET_NAME_TABLE, null, values);
+            }
+
+            for (ExerciseModel ex : exercises) {
+                long baseExId = baseExerciseDao.getExerciseIdByName(ex.getExerciseName());
+                if (baseExId != -1) {
+                    connectingPresetDao.addPresetExercise(presetId, baseExId);
+                }
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    // =========================
+// Полная очистка всех пресетов (локально)
+// =========================
     public void deleteAllPresets() {
-        db.delete(AppDataBase.WORKOUT_PRESET_NAME_TABLE, null, null);
-        db.delete(AppDataBase.CONNECTING_WORKOUT_PRESET_TABLE, null, null);
+        db.beginTransaction();
+        try {
+            // Удаляем имена пресетов
+            db.delete(AppDataBase.WORKOUT_PRESET_NAME_TABLE, null, null);
+            // Удаляем связи упражнений в пресетах
+            db.delete(AppDataBase.CONNECTING_WORKOUT_PRESET_TABLE, null, null);
+
+            db.setTransactionSuccessful();
+            Log.d("PresetSync", "Все локальные пресеты удалены");
+        } catch (Exception e) {
+            Log.e("PresetSync", "Ошибка при удалении пресетов: " + e.getMessage());
+        } finally {
+            db.endTransaction();
+        }
     }
 }

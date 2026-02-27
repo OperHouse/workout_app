@@ -8,13 +8,14 @@ public class BaseExModel {
     private String base_ex_uid;
     private boolean isPressed = false;
 
-    public BaseExModel(long id, String base_ex_name, String base_ex_type, String base_ex_bodyType, boolean isPressed) {
-        this.base_ex_id = id;
-        this.base_ex_name = base_ex_name;
-        this.base_ex_type = base_ex_type;
-        this.base_ex_bodyType = base_ex_bodyType;
-        this.isPressed = isPressed;
-    }
+//    public BaseExModel(long id, String base_ex_name, String base_ex_type, String base_ex_bodyType, boolean isPressed, String base_ex_uid) {
+//        this.base_ex_id = id;
+//        this.base_ex_name = base_ex_name;
+//        this.base_ex_type = base_ex_type;
+//        this.base_ex_bodyType = base_ex_bodyType;
+//        this.isPressed = isPressed;
+//        this.base_ex_uid = base_ex_uid;
+//    }
 
     public BaseExModel(long id, String base_ex_name, String base_ex_type, String base_ex_bodyType,String base_ex_uid) {
         this.base_ex_id = id;
@@ -37,13 +38,15 @@ public class BaseExModel {
         this.base_ex_type = other.base_ex_type;
         this.base_ex_bodyType = other.base_ex_bodyType;
         this.isPressed = other.isPressed;
+        this.base_ex_uid = other.base_ex_uid;
     }
-    public BaseExModel(BaseExModel other, boolean state) {
+    public BaseExModel(BaseExModel other, boolean state, String base_ex_uid) {
         this.base_ex_id = other.base_ex_id;
         this.base_ex_name = other.base_ex_name;
         this.base_ex_type = other.base_ex_type;
         this.base_ex_bodyType = other.base_ex_bodyType;
         this.isPressed = state;
+        this.base_ex_uid = base_ex_uid;
     }
 
     public BaseExModel() {
