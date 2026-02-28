@@ -135,7 +135,7 @@ public class PdfReportManager {
         stream.beginText();
         stream.setFont(regular, 10);
         stream.newLineAtOffset(MARGIN, y);
-        String date = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(new Date());
+        String date = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new Date());
         stream.showText("Дата формирования: " + date);
         stream.endText();
 
@@ -266,7 +266,7 @@ public class PdfReportManager {
                 SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                 Date parsed = dbFormat.parse(rawDate);
 
-                SimpleDateFormat outFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+                SimpleDateFormat outFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                 dates.add(outFormat.format(parsed));
 
             } catch (Exception e) {

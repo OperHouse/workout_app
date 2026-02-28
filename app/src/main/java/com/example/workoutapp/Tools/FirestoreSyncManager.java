@@ -4,12 +4,14 @@ import android.util.Log;
 
 import com.example.workoutapp.Data.ProfileDao.ActivityGoalDao;
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
+import com.example.workoutapp.Data.ProfileDao.DailyFoodTrackingDao;
 import com.example.workoutapp.Data.ProfileDao.FoodGainGoalDao;
 import com.example.workoutapp.Data.ProfileDao.GeneralGoalDao;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
+import com.example.workoutapp.Models.ProfileModels.DailyFoodTrackingModel;
 import com.example.workoutapp.Models.ProfileModels.FoodGainGoalModel;
 import com.example.workoutapp.Models.ProfileModels.GeneralGoalModel;
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
@@ -36,6 +38,7 @@ public class FirestoreSyncManager {
     private GeneralGoalSync generalGoalSync;
     private FoodGoalSync foodGoalSync;
     private DailyActivitySync dailyActivitySync;
+    private DailyFoodSync dailyFoodSync;
 
     public FirestoreSyncManager() {
         this.db = FirebaseFirestore.getInstance();
@@ -49,6 +52,7 @@ public class FirestoreSyncManager {
         this.generalGoalSync = new GeneralGoalSync();
         this.foodGoalSync = new FoodGoalSync();
         this.dailyActivitySync = new DailyActivitySync();
+        this.dailyFoodSync = new DailyFoodSync();
     }
 
     private boolean isSyncing = false;
@@ -68,6 +72,7 @@ public class FirestoreSyncManager {
         syncGeneralGoals();
         syncFoodGoals();
         syncDailyActivity();
+        syncDailyFood();
 
         // 2. Запрос к коллекции тренировок
         db.collection("users").document(userId).collection("workouts")
@@ -202,5 +207,16 @@ public class FirestoreSyncManager {
         DailyActivityTrackingDao dao = new DailyActivityTrackingDao(MainActivity.getAppDataBase());
         dailyActivitySync.pullFromCloud(dao);
         dailyActivitySync.pushLocalToCloud(dao);
+    }
+
+    public void uploadDailyFood(DailyFoodTrackingModel model) {
+        dailyFoodSync.uploadEntry(model);
+    }
+
+    // Метод для полной синхронизации (вызвать в startFullSynchronization):
+    public void syncDailyFood() {
+        DailyFoodTrackingDao dao = new DailyFoodTrackingDao(MainActivity.getAppDataBase());
+        dailyFoodSync.pullFromCloud(dao);
+        dailyFoodSync.pushLocalToCloud(dao);
     }
 }

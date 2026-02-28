@@ -201,6 +201,7 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
             notifyItemRemoved(position);
             outsideRecyclerView.setAdapter(null);
             ((NutritionFragment) fragment).refreshAdapter();
+            ((NutritionFragment) fragment).syncDailyTotals();
         });
 
         dialogDeleteMeal.show();

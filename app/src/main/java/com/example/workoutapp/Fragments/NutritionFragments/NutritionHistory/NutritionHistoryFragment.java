@@ -210,8 +210,8 @@ public class NutritionHistoryFragment extends Fragment {
         datePicker.addOnPositiveButtonClickListener(selection -> {
             Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
             calendar.setTimeInMillis(selection);
-            // Проверьте формат dd.MM.yyyy на соответствие вашей базе данных
-            SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
             loadSpecificDay(sdf.format(calendar.getTime()));
         });
 

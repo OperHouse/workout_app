@@ -18,7 +18,7 @@ public class DailyFoodTrackingModel {
         this.daily_food_tracking_date = daily_food_tracking_date;
     }
 
-    public DailyFoodTrackingModel(int daily_food_tracking_id, int daily_food_tracking_calories, float daily_food_tracking_protein, float daily_food_tracking_fat, float daily_food_tracking_carb, String daily_food_tracking_date, String daily_food_tracking_uid) {
+    public DailyFoodTrackingModel(int daily_food_tracking_id,String daily_food_tracking_uid, int daily_food_tracking_calories, float daily_food_tracking_protein, float daily_food_tracking_fat, float daily_food_tracking_carb, String daily_food_tracking_date ) {
         this.daily_food_tracking_id = daily_food_tracking_id;
         this.daily_food_tracking_uid = daily_food_tracking_uid;
         this.daily_food_tracking_calories = daily_food_tracking_calories;

@@ -24,6 +24,7 @@ import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthConnectHel
 import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthConnectReader;
 import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthPermissions;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
+import com.example.workoutapp.Tools.UidGenerator;
 import com.example.workoutapp.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -168,7 +169,7 @@ public class MainActivity extends AppCompatActivity
                 } else {
                     // Если локально нет, используем дату как основу для UID или просто создаем новый
                     // Т.к. в облаке ID документа = Дата, конфликта не будет
-                    uid = "DAT_" + todayDate;
+                    uid = UidGenerator.generateDailyActivityUid();
                 }
 
                 DailyActivityTrackingModel model = new DailyActivityTrackingModel(

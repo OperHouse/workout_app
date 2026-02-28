@@ -7,13 +7,12 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
 
 
-
 public class AppDataBase extends SQLiteOpenHelper {
 
     private SQLiteDatabase database;
 
     private static final String DB_NAME = "WorkoutApp.db";
-    private static final int DB_VERSION = 6;
+    private static final int DB_VERSION = 8;
     private static AppDataBase instance;
 
     // Конструктор private для реализации Singleton
@@ -129,7 +128,7 @@ public class AppDataBase extends SQLiteOpenHelper {
     public static final String MEAL_FOOD_AMOUNT = "meal_food_amount";
     public static final String MEAL_FOOD_MEASUREMENT_TYPE = "meal_food_measurement_type";
 
-    public static final String CONNECTING_MEAL_TABLE = "connecting_meal_table";
+    public static final String CONNECTING_MEAL_TABLE = "connecting_meal_tables";
     public static final String CONNECTING_MEAL_NAME_ID = "connecting_meal_name_id";
     public static final String CONNECTING_MEAL_FOOD_ID = "connecting_meal_food_id";
 
@@ -207,141 +206,150 @@ public class AppDataBase extends SQLiteOpenHelper {
 
     // ======================== СОЗДАНИЕ ТАБЛИЦ ======================== //
 
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-            Log.d("DB_LOG", "Creating all tables with UID support...");
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        Log.d("DB_LOG", "Creating all tables with UID support...");
 
-            // === ТРЕНИРОВКИ ===
-            db.execSQL("CREATE TABLE " + BASE_EXERCISE_TABLE + " ("
-                    + BASE_EXERCISE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + BASE_EXERCISE_UID + " TEXT UNIQUE, "
-                    + BASE_EXERCISE_NAME + " TEXT NOT NULL, "
-                    + BASE_EXERCISE_TYPE + " TEXT NOT NULL, "
-                    + BASE_EXERCISE_BODY_TYPE + " TEXT NOT NULL);");
+        // === ТРЕНИРОВКИ ===
+        db.execSQL("CREATE TABLE " + BASE_EXERCISE_TABLE + " ("
+                + BASE_EXERCISE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + BASE_EXERCISE_UID + " TEXT UNIQUE, "
+                + BASE_EXERCISE_NAME + " TEXT NOT NULL, "
+                + BASE_EXERCISE_TYPE + " TEXT NOT NULL, "
+                + BASE_EXERCISE_BODY_TYPE + " TEXT NOT NULL);");
 
-            db.execSQL("CREATE TABLE " + WORKOUT_PRESET_NAME_TABLE + " ("
-                    + WORKOUT_PRESET_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + WORKOUT_PRESET_UID + " TEXT UNIQUE, "
-                    + WORKOUT_PRESET_NAME + " TEXT NOT NULL UNIQUE);");
+        db.execSQL("CREATE TABLE " + WORKOUT_PRESET_NAME_TABLE + " ("
+                + WORKOUT_PRESET_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + WORKOUT_PRESET_UID + " TEXT UNIQUE, "
+                + WORKOUT_PRESET_NAME + " TEXT NOT NULL UNIQUE);");
 
-            db.execSQL("CREATE TABLE " + CONNECTING_WORKOUT_PRESET_TABLE + " ("
-                    + CONNECTING_WORKOUT_PRESET_NAME_ID + " INTEGER NOT NULL, "
-                    + CONNECTING_WORKOUT_PRESET_BASE_EXERCISE_ID + " INTEGER NOT NULL, "
-                    + "PRIMARY KEY (" + CONNECTING_WORKOUT_PRESET_NAME_ID + ", " + CONNECTING_WORKOUT_PRESET_BASE_EXERCISE_ID + "));");
+        db.execSQL("CREATE TABLE " + CONNECTING_WORKOUT_PRESET_TABLE + " ("
+                + CONNECTING_WORKOUT_PRESET_NAME_ID + " INTEGER NOT NULL, "
+                + CONNECTING_WORKOUT_PRESET_BASE_EXERCISE_ID + " INTEGER NOT NULL, "
+                + "PRIMARY KEY (" + CONNECTING_WORKOUT_PRESET_NAME_ID + ", " + CONNECTING_WORKOUT_PRESET_BASE_EXERCISE_ID + "));");
 
-            db.execSQL("CREATE TABLE " + WORKOUT_EXERCISE_TABLE + " ("
-                    + WORKOUT_EXERCISE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + WORKOUT_EXERCISE_UID + " TEXT UNIQUE, "
-                    + WORKOUT_EXERCISE_NAME + " TEXT NOT NULL, "
-                    + WORKOUT_EXERCISE_TYPE + " TEXT NOT NULL, "
-                    + WORKOUT_EXERCISE_BODY_TYPE + " TEXT NOT NULL, "
-                    + WORKOUT_EXERCISE_DATE + " TEXT NOT NULL, "
-                    + WORKOUT_EXERCISE_STATE + " TEXT NOT NULL);");
+        db.execSQL("CREATE TABLE " + WORKOUT_EXERCISE_TABLE + " ("
+                + WORKOUT_EXERCISE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + WORKOUT_EXERCISE_UID + " TEXT UNIQUE, "
+                + WORKOUT_EXERCISE_NAME + " TEXT NOT NULL, "
+                + WORKOUT_EXERCISE_TYPE + " TEXT NOT NULL, "
+                + WORKOUT_EXERCISE_BODY_TYPE + " TEXT NOT NULL, "
+                + WORKOUT_EXERCISE_DATE + " TEXT NOT NULL, "
+                + WORKOUT_EXERCISE_STATE + " TEXT NOT NULL);");
 
-            db.execSQL("CREATE TABLE " + STRENGTH_SET_DETAILS_TABLE + " ("
-                    + STRENGTH_SET_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + SET_UID + " TEXT UNIQUE, "
-                    + STRENGTH_SET_FOREIGN_KEY_EXERCISE + " INTEGER NOT NULL, "
-                    + STRENGTH_SET_ORDER + " INTEGER NOT NULL, "
-                    + STRENGTH_SET_WEIGHT + " REAL NOT NULL, "
-                    + STRENGTH_SET_REP + " INTEGER NOT NULL, "
-                    + STRENGTH_SET_STATE + " TEXT NOT NULL);");
+        db.execSQL("CREATE TABLE " + STRENGTH_SET_DETAILS_TABLE + " ("
+                + STRENGTH_SET_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + SET_UID + " TEXT UNIQUE, "
+                + STRENGTH_SET_FOREIGN_KEY_EXERCISE + " INTEGER NOT NULL, "
+                + STRENGTH_SET_ORDER + " INTEGER NOT NULL, "
+                + STRENGTH_SET_WEIGHT + " REAL NOT NULL, "
+                + STRENGTH_SET_REP + " INTEGER NOT NULL, "
+                + STRENGTH_SET_STATE + " TEXT NOT NULL);");
 
-            db.execSQL("CREATE TABLE " + CARDIO_SET_DETAILS_TABLE + " ("
-                    + CARDIO_SET_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + SET_UID + " TEXT UNIQUE, "
-                    + CARDIO_SET_FOREIGN_KEY_EXERCISE + " INTEGER NOT NULL, "
-                    + CARDIO_SET_ORDER + " INTEGER NOT NULL, "
-                    + CARDIO_SET_TEMP + " REAL NOT NULL, "
-                    + CARDIO_SET_TIME + " INTEGER NOT NULL, "
-                    + CARDIO_SET_DISTANCE + " REAL NOT NULL, "
-                    + CARDIO_SET_STATE + " TEXT NOT NULL);");
+        db.execSQL("CREATE TABLE " + CARDIO_SET_DETAILS_TABLE + " ("
+                + CARDIO_SET_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + SET_UID + " TEXT UNIQUE, "
+                + CARDIO_SET_FOREIGN_KEY_EXERCISE + " INTEGER NOT NULL, "
+                + CARDIO_SET_ORDER + " INTEGER NOT NULL, "
+                + CARDIO_SET_TEMP + " REAL NOT NULL, "
+                + CARDIO_SET_TIME + " INTEGER NOT NULL, "
+                + CARDIO_SET_DISTANCE + " REAL NOT NULL, "
+                + CARDIO_SET_STATE + " TEXT NOT NULL);");
 
-            // === ПИТАНИЕ ===
-            db.execSQL("CREATE TABLE " + BASE_FOOD_TABLE + " ("
-                    + BASE_FOOD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + BASE_FOOD_UID + " TEXT UNIQUE, "
-                    + BASE_FOOD_NAME + " TEXT NOT NULL UNIQUE, "
-                    + BASE_FOOD_PROTEIN + " REAL NOT NULL, " + BASE_FOOD_FAT + " REAL NOT NULL, "
-                    + BASE_FOOD_CARB + " REAL NOT NULL, " + BASE_FOOD_CALORIES + " REAL NOT NULL, "
-                    + BASE_FOOD_AMOUNT + " INTEGER NOT NULL, " + BASE_FOOD_MEASUREMENT_TYPE + " TEXT NOT NULL);");
+        // === ПИТАНИЕ ===
+        db.execSQL("CREATE TABLE " + BASE_FOOD_TABLE + " ("
+                + BASE_FOOD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + BASE_FOOD_UID + " TEXT UNIQUE, "
+                + BASE_FOOD_NAME + " TEXT NOT NULL UNIQUE, "
+                + BASE_FOOD_PROTEIN + " REAL NOT NULL, " + BASE_FOOD_FAT + " REAL NOT NULL, "
+                + BASE_FOOD_CARB + " REAL NOT NULL, " + BASE_FOOD_CALORIES + " REAL NOT NULL, "
+                + BASE_FOOD_AMOUNT + " INTEGER NOT NULL, " + BASE_FOOD_MEASUREMENT_TYPE + " TEXT NOT NULL);");
 
-            db.execSQL("CREATE TABLE " + PRESET_FOOD_TABLE + " ("
-                    + PRESET_FOOD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + PRESET_FOOD_UID + " TEXT UNIQUE, "
-                    + PRESET_FOOD_NAME + " TEXT NOT NULL, "
-                    + PRESET_FOOD_PROTEIN + " REAL NOT NULL, " + PRESET_FOOD_FAT + " REAL NOT NULL, "
-                    + PRESET_FOOD_CARB + " REAL NOT NULL, " + PRESET_FOOD_CALORIES + " REAL NOT NULL, "
-                    + PRESET_FOOD_AMOUNT + " INTEGER NOT NULL, " + PRESET_FOOD_MEASUREMENT_TYPE + " TEXT NOT NULL);");
+        db.execSQL("CREATE TABLE " + PRESET_FOOD_TABLE + " ("
+                + PRESET_FOOD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + PRESET_FOOD_UID + " TEXT UNIQUE, "
+                + PRESET_FOOD_NAME + " TEXT NOT NULL, "
+                + PRESET_FOOD_PROTEIN + " REAL NOT NULL, " + PRESET_FOOD_FAT + " REAL NOT NULL, "
+                + PRESET_FOOD_CARB + " REAL NOT NULL, " + PRESET_FOOD_CALORIES + " REAL NOT NULL, "
+                + PRESET_FOOD_AMOUNT + " INTEGER NOT NULL, " + PRESET_FOOD_MEASUREMENT_TYPE + " TEXT NOT NULL);");
 
-            db.execSQL("CREATE TABLE " + MEAL_PRESET_NAME_TABLE + " ("
-                    + MEAL_PRESET_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + MEAL_PRESET_UID + " TEXT UNIQUE, "
-                    + MEAL_PRESET_NAME + " TEXT NOT NULL UNIQUE);");
+        db.execSQL("CREATE TABLE " + MEAL_PRESET_NAME_TABLE + " ("
+                + MEAL_PRESET_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + MEAL_PRESET_UID + " TEXT UNIQUE, "
+                + MEAL_PRESET_NAME + " TEXT NOT NULL UNIQUE);");
 
-            db.execSQL("CREATE TABLE " + MEAL_NAME_TABLE + " ("
-                    + MEAL_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + MEAL_NAME_UID + " TEXT UNIQUE, "
-                    + MEAL_NAME + " TEXT NOT NULL, " + MEAL_DATA + " TEXT NOT NULL);");
+        db.execSQL("CREATE TABLE " + CONNECTING_MEAL_TABLE + " ("
+                + "connecting_meal_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + CONNECTING_MEAL_NAME_ID + " INTEGER NOT NULL, "
+                + CONNECTING_MEAL_FOOD_ID + " INTEGER NOT NULL);");
 
-            db.execSQL("CREATE TABLE " + MEAL_FOOD_TABLE + " ("
-                    + MEAL_FOOD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + MEAL_FOOD_UID + " TEXT UNIQUE, "
-                    + MEAL_FOOD_NAME + " TEXT NOT NULL, "
-                    + MEAL_FOOD_PROTEIN + " REAL NOT NULL, " + MEAL_FOOD_FAT + " REAL NOT NULL, "
-                    + MEAL_FOOD_CARB + " REAL NOT NULL, " + MEAL_FOOD_CALORIES + " REAL NOT NULL, "
-                    + MEAL_FOOD_AMOUNT + " INTEGER NOT NULL, " + MEAL_FOOD_MEASUREMENT_TYPE + " TEXT NOT NULL);");
 
-            // === ПРОФИЛЬ, ТРЕКИНГ И ЦЕЛИ ===
-            db.execSQL("CREATE TABLE " + USER_PROFILE_TABLE + " ("
-                    + USER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + USER_FIREBASE_ID + " TEXT, "
-                    + USER_NAME + " TEXT NOT NULL, " + USER_HEIGHT + " REAL, "
-                    + USER_AGE + " INTEGER, " + USER_IMAGE_PATH + " TEXT);");
+        db.execSQL("CREATE TABLE " + CONNECTING_MEAL_PRESET_TABLE + " (" + CONNECTING_MEAL_PRESET_NAME_ID + " INTEGER NOT NULL, " + CONNECTING_MEAL_PRESET_FOOD_ID + " INTEGER NOT NULL, PRIMARY KEY (" + CONNECTING_MEAL_PRESET_NAME_ID + ", " + CONNECTING_MEAL_PRESET_FOOD_ID + "), FOREIGN KEY (" + CONNECTING_MEAL_PRESET_NAME_ID + ") REFERENCES " + MEAL_PRESET_NAME_TABLE + "(" + MEAL_PRESET_NAME_ID + ") ON DELETE CASCADE, FOREIGN KEY (" + CONNECTING_MEAL_PRESET_FOOD_ID + ") REFERENCES " + PRESET_FOOD_TABLE + "(" + PRESET_FOOD_ID + ") ON DELETE CASCADE);");
 
-            db.execSQL("CREATE TABLE " + WEIGHT_HISTORY_TABLE + " ("
-                    + WEIGHT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + WEIGHT_UID +" TEXT UNIQUE, "
-                    + WEIGHT_MEASUREMENT_DATE + " TEXT NOT NULL, "
-                    + WEIGHT_VALUE + " REAL NOT NULL);");
 
-            db.execSQL("CREATE TABLE " + DAILY_ACTIVITY_TRACKING_TABLE + " ("
-                    + DAILY_ACTIVITY_TRACKING_ACTIVITY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + DAILY_ACTIVITY_TRACKING_UID + " TEXT UNIQUE, "
-                    + DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE + " TEXT NOT NULL, "
-                    + DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS + " INTEGER, "
-                    + DAILY_ACTIVITY_TRACKING_ACTIVITY_DISTANCE + " REAL, "
-                    + DAILY_ACTIVITY_TRACKING_CALORIES_BURN + " REAL);");
+        db.execSQL("CREATE TABLE " + MEAL_NAME_TABLE + " ("
+                + MEAL_NAME_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + MEAL_NAME_UID + " TEXT UNIQUE, "
+                + MEAL_NAME + " TEXT NOT NULL, " + MEAL_DATA + " TEXT NOT NULL);");
 
-            db.execSQL("CREATE TABLE " + GENERAL_GOAL_TABLE + " ("
-                    + GENERAL_GOAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + GENERAL_GOAL_UID + " TEXT UNIQUE, "
-                    + GENERAL_GLOBAL_GOAL_TEXT + " TEXT, "
-                    + GENERAL_GOAL_WORKOUTS_WEEKLY + " INTEGER, "
-                    + GENERAL_GOAL_FOOD_TRACKING_WEEKLY + " INTEGER, "
-                    + GENERAL_GOAL_DATE + " TEXT NOT NULL);");
+        db.execSQL("CREATE TABLE " + MEAL_FOOD_TABLE + " ("
+                + MEAL_FOOD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + MEAL_FOOD_UID + " TEXT UNIQUE, "
+                + MEAL_FOOD_NAME + " TEXT NOT NULL, "
+                + MEAL_FOOD_PROTEIN + " REAL NOT NULL, " + MEAL_FOOD_FAT + " REAL NOT NULL, "
+                + MEAL_FOOD_CARB + " REAL NOT NULL, " + MEAL_FOOD_CALORIES + " REAL NOT NULL, "
+                + MEAL_FOOD_AMOUNT + " INTEGER NOT NULL, " + MEAL_FOOD_MEASUREMENT_TYPE + " TEXT NOT NULL);");
 
-            db.execSQL("CREATE TABLE " + ACTIVITY_GOAL_TABLE + " ("
-                    + ACTIVITY_GOAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + ACTIVITY_GOAL_UID + " TEXT UNIQUE, "
-                    + ACTIVITY_GOAL_DATE + " TEXT NOT NULL, "
-                    + ACTIVITY_GOAL_STEPS + " INTEGER, "
-                    + ACTIVITY_CALORIES_TO_BURN + " REAL);");
+        // === ПРОФИЛЬ, ТРЕКИНГ И ЦЕЛИ ===
+        db.execSQL("CREATE TABLE " + USER_PROFILE_TABLE + " ("
+                + USER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + USER_FIREBASE_ID + " TEXT, "
+                + USER_NAME + " TEXT NOT NULL, " + USER_HEIGHT + " REAL, "
+                + USER_AGE + " INTEGER, " + USER_IMAGE_PATH + " TEXT);");
 
-            db.execSQL("CREATE TABLE " + FOOD_GAIN_GOAL_TABLE + " ("
-                    + FOOD_GAIN_GOAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + FOOD_GAIN_GOAL_UID + " TEXT UNIQUE, "
-                    + FOOD_GAIN_GOAL_CALORIES + " REAL, " + FOOD_GAIN_GOAL_PROTEIN + " REAL, "
-                    + FOOD_GAIN_GOAL_FAT + " REAL, " + FOOD_GAIN_GOAL_CARB + " REAL, "
-                    + FOOD_GAIN_GOAL_DATE + " TEXT NOT NULL);");
+        db.execSQL("CREATE TABLE " + WEIGHT_HISTORY_TABLE + " ("
+                + WEIGHT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + WEIGHT_UID + " TEXT UNIQUE, "
+                + WEIGHT_MEASUREMENT_DATE + " TEXT NOT NULL, "
+                + WEIGHT_VALUE + " REAL NOT NULL);");
 
-            db.execSQL("CREATE TABLE " + DAILY_FOOD_TRACKING_TABLE + " ("
-                    + TRACKING_FOOD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                    + DAILY_FOOD_TRACKING_UID + " TEXT UNIQUE, "
-                    + DAILY_FOOD_TRACKING_DATE + " TEXT NOT NULL, "
-                    + TRACKING_CALORIES + " INTEGER NOT NULL, " + TRACKING_PROTEIN + " REAL, "
-                    + TRACKING_FAT + " REAL, " + TRACKING_CARB + " REAL);");
-        }
+        db.execSQL("CREATE TABLE " + DAILY_ACTIVITY_TRACKING_TABLE + " ("
+                + DAILY_ACTIVITY_TRACKING_ACTIVITY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + DAILY_ACTIVITY_TRACKING_UID + " TEXT UNIQUE, "
+                + DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE + " TEXT NOT NULL, "
+                + DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS + " INTEGER, "
+                + DAILY_ACTIVITY_TRACKING_ACTIVITY_DISTANCE + " REAL, "
+                + DAILY_ACTIVITY_TRACKING_CALORIES_BURN + " REAL);");
+
+        db.execSQL("CREATE TABLE " + GENERAL_GOAL_TABLE + " ("
+                + GENERAL_GOAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + GENERAL_GOAL_UID + " TEXT UNIQUE, "
+                + GENERAL_GLOBAL_GOAL_TEXT + " TEXT, "
+                + GENERAL_GOAL_WORKOUTS_WEEKLY + " INTEGER, "
+                + GENERAL_GOAL_FOOD_TRACKING_WEEKLY + " INTEGER, "
+                + GENERAL_GOAL_DATE + " TEXT NOT NULL);");
+
+        db.execSQL("CREATE TABLE " + ACTIVITY_GOAL_TABLE + " ("
+                + ACTIVITY_GOAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + ACTIVITY_GOAL_UID + " TEXT UNIQUE, "
+                + ACTIVITY_GOAL_DATE + " TEXT NOT NULL, "
+                + ACTIVITY_GOAL_STEPS + " INTEGER, "
+                + ACTIVITY_CALORIES_TO_BURN + " REAL);");
+
+        db.execSQL("CREATE TABLE " + FOOD_GAIN_GOAL_TABLE + " ("
+                + FOOD_GAIN_GOAL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + FOOD_GAIN_GOAL_UID + " TEXT UNIQUE, "
+                + FOOD_GAIN_GOAL_CALORIES + " REAL, " + FOOD_GAIN_GOAL_PROTEIN + " REAL, "
+                + FOOD_GAIN_GOAL_FAT + " REAL, " + FOOD_GAIN_GOAL_CARB + " REAL, "
+                + FOOD_GAIN_GOAL_DATE + " TEXT NOT NULL);");
+
+        db.execSQL("CREATE TABLE " + DAILY_FOOD_TRACKING_TABLE + " ("
+                + TRACKING_FOOD_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + DAILY_FOOD_TRACKING_UID + " TEXT UNIQUE, "
+                + DAILY_FOOD_TRACKING_DATE + " TEXT NOT NULL, "
+                + TRACKING_CALORIES + " INTEGER NOT NULL, " + TRACKING_PROTEIN + " REAL, "
+                + TRACKING_FAT + " REAL, " + TRACKING_CARB + " REAL);");
+    }
 
 
     @Override

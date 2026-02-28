@@ -8,7 +8,7 @@ public class UidGenerator {
         return "EX_" + UUID.randomUUID().toString();
     }
     public static String generateWorkoutExUid() {
-        return "WORK_" + UUID.randomUUID().toString();
+        return "WORK_EX_" + UUID.randomUUID().toString();
     }
     public static String generateWeightUid() {
         return "WEIGHT_" + UUID.randomUUID().toString();
@@ -24,6 +24,9 @@ public class UidGenerator {
     }
     public static String generateDailyActivityUid() {
         return "DAT_" + UUID.randomUUID().toString();
+    }
+    public static String generateDailyFoodTrackingUid() {
+        return "DFT_" + UUID.randomUUID().toString();
     }
 
     public static String generateFoodUid() {

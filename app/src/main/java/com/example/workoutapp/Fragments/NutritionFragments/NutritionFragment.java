@@ -38,6 +38,7 @@ import com.example.workoutapp.Models.ProfileModels.DailyFoodTrackingModel;
 import com.example.workoutapp.Models.ProfileModels.FoodGainGoalModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.CalorieRingView;
+import com.example.workoutapp.Tools.UidGenerator;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
@@ -89,9 +90,9 @@ public class NutritionFragment extends Fragment {
         text2 = view.findViewById(R.id.nutrition_fragment_hint2_TV);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            currentFormattedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+            currentFormattedDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         } else {
-            currentFormattedDate = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(new java.util.Date());
+            currentFormattedDate = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new java.util.Date());
         }
 
         outsideMealAdapter = new OutsideMealAdapter(this, outer_RV);
@@ -260,8 +261,15 @@ public class NutritionFragment extends Fragment {
         // Проверяем, есть ли хотя бы одно ненулевое значение
         if (totalCalories > 0 || totalProtein > 0 || totalFat > 0 || totalCarbs > 0) {
 
+            DailyFoodTrackingModel existing = historyDao.getEntryByDate(currentFormattedDate);
+
+            String uid = (existing != null && existing.getDaily_food_tracking_uid() != null)
+                    ? existing.getDaily_food_tracking_uid()
+                    : UidGenerator.generateDailyFoodTrackingUid();
+
             DailyFoodTrackingModel dailyRecord = new DailyFoodTrackingModel(
                     0,
+                    uid,
                     totalCalories,
                     totalProtein,
                     totalFat,
@@ -270,6 +278,9 @@ public class NutritionFragment extends Fragment {
             );
 
             historyDao.insertOrUpdate(dailyRecord);
+
+            MainActivity.getSyncManager().uploadDailyFood(dailyRecord);
+
             Log.d("FoodSync", "Daily stats updated for: " + currentFormattedDate);
         } else {
             Log.d("FoodSync", "Daily stats skip: all values are zero");

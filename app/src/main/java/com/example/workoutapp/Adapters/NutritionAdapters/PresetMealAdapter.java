@@ -110,7 +110,7 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
                     String formattedDate = "";
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         LocalDate currentDate = LocalDate.now();
-                        formattedDate = currentDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+                        formattedDate = currentDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                     }
 
                     preset.setMealData(formattedDate); // Устанавливаем дату в модель
