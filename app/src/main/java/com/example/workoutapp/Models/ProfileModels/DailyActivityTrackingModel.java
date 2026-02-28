@@ -6,22 +6,22 @@ public class DailyActivityTrackingModel {
     private String daily_activity_tracking_date;
     private int daily_activity_tracking_steps;
     private float daily_activity_tracking_caloriesBurned;
+    private float daily_activity_tracking_distance;
 
-    public DailyActivityTrackingModel(int daily_activity_tracking_id, String daily_activity_tracking_date, int daily_activity_tracking_steps, float daily_activity_tracking_caloriesBurned) {
-        this.daily_activity_tracking_id = daily_activity_tracking_id;
-        this.daily_activity_tracking_date = daily_activity_tracking_date;
-        this.daily_activity_tracking_steps = daily_activity_tracking_steps;
-        this.daily_activity_tracking_caloriesBurned = daily_activity_tracking_caloriesBurned;
-    }
-    public DailyActivityTrackingModel(int daily_activity_tracking_id, String daily_activity_tracking_date, int daily_activity_tracking_steps, float daily_activity_tracking_caloriesBurned, String daily_activity_tracking_uid) {
+
+    public DailyActivityTrackingModel(int daily_activity_tracking_id, String daily_activity_tracking_date, int daily_activity_tracking_steps, float daily_activity_tracking_caloriesBurned, String daily_activity_tracking_uid, float daily_activity_tracking_distance) {
         this.daily_activity_tracking_id = daily_activity_tracking_id;
         this.daily_activity_tracking_uid = daily_activity_tracking_uid;
         this.daily_activity_tracking_date = daily_activity_tracking_date;
         this.daily_activity_tracking_steps = daily_activity_tracking_steps;
         this.daily_activity_tracking_caloriesBurned = daily_activity_tracking_caloriesBurned;
+        this.daily_activity_tracking_distance = daily_activity_tracking_distance;
     }
     public  DailyActivityTrackingModel(){}
 
+
+    public float getDaily_activity_tracking_distance() { return daily_activity_tracking_distance; }
+    public void setDaily_activity_tracking_distance(float distance) { this.daily_activity_tracking_distance = distance; }
 
     // Геттеры и сеттеры
     @com.google.firebase.firestore.Exclude

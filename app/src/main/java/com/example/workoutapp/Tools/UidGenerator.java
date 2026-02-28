@@ -22,6 +22,9 @@ public class UidGenerator {
     public static String generateFoodGoalUid() {
         return "FG_" + UUID.randomUUID().toString();
     }
+    public static String generateDailyActivityUid() {
+        return "DAT_" + UUID.randomUUID().toString();
+    }
 
     public static String generateFoodUid() {
         return "FOOD_" + UUID.randomUUID().toString();

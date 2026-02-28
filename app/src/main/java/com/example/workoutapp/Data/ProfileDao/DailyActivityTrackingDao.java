@@ -1,10 +1,12 @@
 package com.example.workoutapp.Data.ProfileDao;
 
 import static com.example.workoutapp.Data.Tables.AppDataBase.DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE;
+import static com.example.workoutapp.Data.Tables.AppDataBase.DAILY_ACTIVITY_TRACKING_ACTIVITY_DISTANCE;
 import static com.example.workoutapp.Data.Tables.AppDataBase.DAILY_ACTIVITY_TRACKING_ACTIVITY_ID;
 import static com.example.workoutapp.Data.Tables.AppDataBase.DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS;
 import static com.example.workoutapp.Data.Tables.AppDataBase.DAILY_ACTIVITY_TRACKING_CALORIES_BURN;
 import static com.example.workoutapp.Data.Tables.AppDataBase.DAILY_ACTIVITY_TRACKING_TABLE;
+import static com.example.workoutapp.Data.Tables.AppDataBase.DAILY_ACTIVITY_TRACKING_UID;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -39,6 +41,8 @@ public class DailyActivityTrackingDao {
         values.put(DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS, model.getDaily_activity_tracking_steps());
         values.put(DAILY_ACTIVITY_TRACKING_CALORIES_BURN, model.getDaily_activity_tracking_caloriesBurned());
         values.put(DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE, model.getDaily_activity_tracking_date());
+        values.put(DAILY_ACTIVITY_TRACKING_UID, model.getDaily_activity_tracking_uid());
+        values.put(DAILY_ACTIVITY_TRACKING_ACTIVITY_DISTANCE, model.getDaily_activity_tracking_distance());
 
         if (cursor.moveToFirst()) {
             db.update(
@@ -71,7 +75,9 @@ public class DailyActivityTrackingDao {
                     cursor.getInt(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_ID)),
                     cursor.getString(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE)),
                     cursor.getInt(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS)),
-                    cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_CALORIES_BURN))
+                    cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_CALORIES_BURN)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_UID)),
+                    cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_DISTANCE))
             );
         }
 
@@ -96,7 +102,9 @@ public class DailyActivityTrackingDao {
                     cursor.getInt(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_ID)),
                     cursor.getString(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE)),
                     cursor.getInt(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS)),
-                    cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_CALORIES_BURN))
+                    cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_CALORIES_BURN)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_UID)),
+                    cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_DISTANCE))
             );
         }
 
@@ -123,11 +131,49 @@ public class DailyActivityTrackingDao {
                         cursor.getInt(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_ID)),
                         cursor.getString(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE)),
                         cursor.getInt(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS)),
-                        cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_CALORIES_BURN))
+                        cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_CALORIES_BURN)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_UID)),
+                        cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_DISTANCE))
                 ));
             } while (cursor.moveToNext());
         }
         cursor.close();
         return list;
     }
+
+    public boolean isUidExists(String uid) {
+        if (uid == null) return false;
+        Cursor cursor = db.rawQuery("SELECT 1 FROM " + DAILY_ACTIVITY_TRACKING_TABLE +
+                " WHERE daily_activity_tracking_uid = ?", new String[]{uid});
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
+
+    public List<DailyActivityTrackingModel> getAllEntries() {
+        List<DailyActivityTrackingModel> list = new ArrayList<>();
+        Cursor cursor = db.query(DAILY_ACTIVITY_TRACKING_TABLE, null, null, null, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                list.add(new DailyActivityTrackingModel(
+                        cursor.getInt(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS)),
+                        cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_CALORIES_BURN)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_UID)),
+                        cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_DISTANCE))
+                ));
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return list;
+    }
+
+    public void updateUid(int id, String uid) {
+        ContentValues cv = new ContentValues();
+        cv.put(DAILY_ACTIVITY_TRACKING_UID, uid);
+        db.update(DAILY_ACTIVITY_TRACKING_TABLE, cv, DAILY_ACTIVITY_TRACKING_ACTIVITY_ID + " = ?", new String[]{String.valueOf(id)});
+    }
+
+
 }

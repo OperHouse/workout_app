@@ -12,6 +12,8 @@
         android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"
         tools:ignore="HealthConnectPolicy" />
 
+    <uses-permission android:name="android.permission.health.READ_DISTANCE" />
+
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
     </queries>

@@ -153,24 +153,44 @@ public class MainActivity extends AppCompatActivity
         HealthConnectReader reader = new HealthConnectReader(this);
 
         reader.readToday(data -> {
-            // Проверяем, что данные не пустые, прежде чем лезть в базу
-            if (data.getSteps() > 0 || data.getCalories() > 0) {
+            // Теперь читаем и дистанцию тоже (data.getDistance())
+            if (data.getSteps() > 0 || data.getCalories() > 0 || data.getDistance() > 0) {
+
+                String todayDate = java.time.LocalDate.now().toString();
+                DailyActivityTrackingDao dao = new DailyActivityTrackingDao(appDataBase);
+
+                // 1. Проверяем, есть ли запись за сегодня локально
+                DailyActivityTrackingModel existing = dao.getActivityByDate(todayDate);
+
+                String uid;
+                if (existing != null) {
+                    uid = existing.getDaily_activity_tracking_uid();
+                } else {
+                    // Если локально нет, используем дату как основу для UID или просто создаем новый
+                    // Т.к. в облаке ID документа = Дата, конфликта не будет
+                    uid = "DAT_" + todayDate;
+                }
 
                 DailyActivityTrackingModel model = new DailyActivityTrackingModel(
                         0,
-                        java.time.LocalDate.now().toString(),
+                        todayDate,
                         data.getSteps(),
-                        data.getCalories()
+                        (float) data.getCalories(),
+                        uid,
+                        (float) data.getDistance()
                 );
 
-                DailyActivityTrackingDao dao = new DailyActivityTrackingDao(appDataBase);
+                // 2. Сохраняем/обновляем локально
                 dao.insertOrUpdate(model);
 
-                Log.d("HealthConnect", "Data saved. Steps: " + data.getSteps() + ", Cals: " + data.getCalories());
-            } else {
-                Log.d("HealthConnect", "Sync skipped: Steps and Calories are 0.");
-            }
+                // 3. Отправляем в облако.
+                // Если в облаке уже есть запись с этим ID (датой), она просто обновится новыми значениями
+                if (syncManager != null) {
+                    syncManager.uploadDailyActivity(model);
+                }
 
+                Log.d("HealthConnect", "Saved: Steps=" + data.getSteps() + ", Dist=" + data.getDistance());
+            }
             return Unit.INSTANCE;
         });
     }

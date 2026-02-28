@@ -13,7 +13,7 @@ public class AppDataBase extends SQLiteOpenHelper {
     private SQLiteDatabase database;
 
     private static final String DB_NAME = "WorkoutApp.db";
-    private static final int DB_VERSION = 5;
+    private static final int DB_VERSION = 6;
     private static AppDataBase instance;
 
     // Конструктор private для реализации Singleton
@@ -199,7 +199,7 @@ public class AppDataBase extends SQLiteOpenHelper {
     public static final String MEAL_FOOD_UID = "meal_food_uid";
 
     // UID для целей и трекинга
-    public static final String DAILY_ACTIVITY_TRACKING_UID = "daily_activity_uid";
+    public static final String DAILY_ACTIVITY_TRACKING_UID = "daily_activity_tracking_uid";
     public static final String GENERAL_GOAL_UID = "general_goal_uid";
     public static final String ACTIVITY_GOAL_UID = "activity_goal_uid";
     public static final String FOOD_GAIN_GOAL_UID = "food_gain_goal_uid";
