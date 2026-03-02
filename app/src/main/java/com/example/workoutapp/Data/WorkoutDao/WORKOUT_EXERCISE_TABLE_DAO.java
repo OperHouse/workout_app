@@ -30,23 +30,131 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
         this.cardioSetDao = new CARDIO_SET_DETAILS_TABLE_DAO(db);
     }
 
+
     // =========================
-    // Добавление упражнения (С UID)
+    // Добавление упражнения (Локальное)
     // =========================
     public void addExercise(String name, String type, String bodyType, String uid) {
         ContentValues values = new ContentValues();
         values.put(AppDataBase.WORKOUT_EXERCISE_NAME, name);
         values.put(AppDataBase.WORKOUT_EXERCISE_TYPE, type);
         values.put(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE, bodyType);
-        values.put(AppDataBase.WORKOUT_EXERCISE_UID, uid); // НОВОЕ ПОЛЕ
-        values.put(
-                AppDataBase.WORKOUT_EXERCISE_DATE,
-                new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date())
-        );
+        values.put(AppDataBase.WORKOUT_EXERCISE_UID, uid);
+        values.put(AppDataBase.WORKOUT_EXERCISE_DATE, new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date()));
         values.put(AppDataBase.WORKOUT_EXERCISE_STATE, "unfinished");
+
+        // Устанавливаем текущее время при создании
+        values.put(AppDataBase.WORKOUT_EXERCISE_LAST_MODIFIED, System.currentTimeMillis());
 
         db.insert(AppDataBase.WORKOUT_EXERCISE_TABLE, null, values);
     }
+
+    // =========================
+    // Маппинг из курсора (теперь с LAST_MODIFIED)
+    // =========================
+    private ExerciseModel mapCursorToExercise(Cursor cursor) {
+        long id = cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_ID));
+        String name = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_NAME));
+        String type = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_TYPE));
+        String bodyType = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE));
+        String date = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_DATE));
+        String state = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_STATE));
+        String uid = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_UID));
+
+        // Читаем метку времени из базы
+        long lastModified = cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_LAST_MODIFIED));
+
+        List<Object> sets = new ArrayList<>();
+        if ("Кардио".equalsIgnoreCase(type) || "Время".equalsIgnoreCase(type)) {
+            sets.addAll(cardioSetDao.getSetsForExercise(id));
+        } else {
+            sets.addAll(strengthSetDao.getSetsForExercise(id));
+        }
+
+        ExerciseModel model = new ExerciseModel(id, name, type, bodyType, date, state, sets);
+        model.setExercise_uid(uid);
+        model.setExercise_time_lastModified(lastModified); // Убедись, что добавил это поле и сеттер в ExerciseModel
+        return model;
+    }
+
+    // =========================
+    // Обновление только метки времени (вызывай это в DAO подходов)
+    // =========================
+    public void updateLastModified(long exerciseId) {
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.WORKOUT_EXERCISE_LAST_MODIFIED, System.currentTimeMillis());
+        db.update(AppDataBase.WORKOUT_EXERCISE_TABLE, values,
+                AppDataBase.WORKOUT_EXERCISE_ID + " = ?",
+                new String[]{String.valueOf(exerciseId)});
+    }
+
+    // =========================
+    // Сохранение из облака (с учетом времени)
+    // =========================
+    public void addFullExerciseFromCloud(ExerciseModel ex) {
+        if (ex == null || isExerciseUidExists(ex.getExercise_uid())) return;
+
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.WORKOUT_EXERCISE_NAME, ex.getExerciseName());
+        values.put(AppDataBase.WORKOUT_EXERCISE_TYPE, ex.getExerciseType());
+        values.put(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE, ex.getExerciseBodyType());
+        values.put(AppDataBase.WORKOUT_EXERCISE_DATE, ex.getEx_Data());
+        values.put(AppDataBase.WORKOUT_EXERCISE_STATE, ex.getState());
+        values.put(AppDataBase.WORKOUT_EXERCISE_UID, ex.getExercise_uid());
+
+        // Сохраняем время, которое пришло из облака
+        values.put(AppDataBase.WORKOUT_EXERCISE_LAST_MODIFIED, ex.getExercise_time_lastModified());
+
+        long newExId = db.insert(AppDataBase.WORKOUT_EXERCISE_TABLE, null, values);
+
+        if (ex.getSets() != null && newExId != -1) {
+            for (Object setObj : ex.getSets()) {
+                saveSet(newExId, setObj, ex.getExerciseType());
+                Log.d("SyncDebug", "Обработка упражнения из облака: " + ex.getExerciseName() + " UID: " + ex.getExercise_uid());
+            }
+        }
+    }
+
+    public void updateFullExerciseFromCloud(ExerciseModel ex) {
+        if (ex == null || ex.getExercise_uid() == null) return;
+
+        Cursor cursor = db.query(AppDataBase.WORKOUT_EXERCISE_TABLE,
+                new String[]{AppDataBase.WORKOUT_EXERCISE_ID},
+                AppDataBase.WORKOUT_EXERCISE_UID + " = ?",
+                new String[]{ex.getExercise_uid()}, null, null, null);
+
+        if (cursor == null || !cursor.moveToFirst()) {
+            if (cursor != null) cursor.close();
+            return;
+        }
+        long localId = cursor.getLong(0);
+        cursor.close();
+
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.WORKOUT_EXERCISE_NAME, ex.getExerciseName());
+        values.put(AppDataBase.WORKOUT_EXERCISE_TYPE, ex.getExerciseType());
+        values.put(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE, ex.getExerciseBodyType());
+        values.put(AppDataBase.WORKOUT_EXERCISE_DATE, ex.getEx_Data());
+        values.put(AppDataBase.WORKOUT_EXERCISE_STATE, ex.getState());
+
+        // При обновлении из облака записываем облачное время
+        values.put(AppDataBase.WORKOUT_EXERCISE_LAST_MODIFIED, ex.getExercise_time_lastModified());
+
+        db.update(AppDataBase.WORKOUT_EXERCISE_TABLE, values,
+                AppDataBase.WORKOUT_EXERCISE_UID + " = ?",
+                new String[]{ex.getExercise_uid()});
+
+        strengthSetDao.deleteSetsForExercise(localId);
+        cardioSetDao.deleteSetsForExercise(localId);
+
+        if (ex.getSets() != null) {
+            for (Object setObj : ex.getSets()) {
+                saveSet(localId, setObj, ex.getExerciseType());
+            }
+        }
+    }
+
+
 
     public List<ExerciseModel> getExByState(String state) {
         List<ExerciseModel> exerciseList = new ArrayList<>();
@@ -104,52 +212,6 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
         return exerciseList;
     }
 
-    // Вспомогательный метод для маппинга, чтобы не дублировать код
-    private ExerciseModel mapCursorToExercise(Cursor cursor) {
-        long id = cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_ID));
-        String name = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_NAME));
-        String type = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_TYPE));
-        String bodyType = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE));
-        String date = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_DATE));
-        String state = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_STATE));
-        String uid = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_EXERCISE_UID)); // Читаем UID
-
-        List<Object> sets = new ArrayList<>();
-        if ("Кардио".equalsIgnoreCase(type) || "Время".equalsIgnoreCase(type)) {
-            sets.addAll(cardioSetDao.getSetsForExercise(id));
-        } else {
-            sets.addAll(strengthSetDao.getSetsForExercise(id));
-        }
-
-        ExerciseModel model = new ExerciseModel(id, name, type, bodyType, date, state, sets);
-        model.setExercise_uid(uid); // Убедись, что в ExerciseModel есть это поле и сеттер
-        return model;
-    }
-
-    // =========================
-    // Сохранение упражнения из облака (С обработкой UID)
-    // =========================
-    public void addFullExerciseFromCloud(ExerciseModel ex) {
-        if (ex == null || isExerciseUidExists(ex.getExercise_uid())) return;
-
-        ContentValues values = new ContentValues();
-        values.put(AppDataBase.WORKOUT_EXERCISE_NAME, ex.getExerciseName());
-        values.put(AppDataBase.WORKOUT_EXERCISE_TYPE, ex.getExerciseType());
-        values.put(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE, ex.getExerciseBodyType());
-        values.put(AppDataBase.WORKOUT_EXERCISE_DATE, ex.getEx_Data());
-        values.put(AppDataBase.WORKOUT_EXERCISE_STATE, ex.getState());
-        values.put(AppDataBase.WORKOUT_EXERCISE_UID, ex.getExercise_uid()); // Пишем UID из облака
-
-        long newExId = db.insert(AppDataBase.WORKOUT_EXERCISE_TABLE, null, values);
-
-        if (ex.getSets() != null && newExId != -1) {
-            for (Object setObj : ex.getSets()) {
-                // ... твоя логика обработки сетов (Map или Model) остается прежней ...
-                // Просто используй newExId для привязки сетов к новому упражнению
-                saveSet(newExId, setObj, ex.getExerciseType());
-            }
-        }
-    }
 
     private void saveSet(long exerciseId, Object setObj, String type) {
         if (setObj instanceof java.util.Map) {
@@ -354,58 +416,6 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
         return history;
     }
 
-    // =========================
-// Обновление упражнения из облака по UID
-// =========================
-    public void updateFullExerciseFromCloud(ExerciseModel ex) {
-
-        if (ex == null || ex.getExercise_uid() == null) return;
-
-        // 1. Получаем локальный ID по UID
-        Cursor cursor = db.query(
-                AppDataBase.WORKOUT_EXERCISE_TABLE,
-                new String[]{AppDataBase.WORKOUT_EXERCISE_ID},
-                AppDataBase.WORKOUT_EXERCISE_UID + " = ?",
-                new String[]{ex.getExercise_uid()},
-                null, null, null
-        );
-
-        if (cursor == null || !cursor.moveToFirst()) {
-            if (cursor != null) cursor.close();
-            return;
-        }
-
-        long localId = cursor.getLong(0);
-        cursor.close();
-
-        // 2. Обновляем основные поля упражнения
-        ContentValues values = new ContentValues();
-        values.put(AppDataBase.WORKOUT_EXERCISE_NAME, ex.getExerciseName());
-        values.put(AppDataBase.WORKOUT_EXERCISE_TYPE, ex.getExerciseType());
-        values.put(AppDataBase.WORKOUT_EXERCISE_BODY_TYPE, ex.getExerciseBodyType());
-        values.put(AppDataBase.WORKOUT_EXERCISE_DATE, ex.getEx_Data());
-        values.put(AppDataBase.WORKOUT_EXERCISE_STATE, ex.getState());
-
-        db.update(
-                AppDataBase.WORKOUT_EXERCISE_TABLE,
-                values,
-                AppDataBase.WORKOUT_EXERCISE_UID + " = ?",
-                new String[]{ex.getExercise_uid()}
-        );
-
-        // 3. Удаляем старые сеты
-        strengthSetDao.deleteSetsForExercise(localId);
-        cardioSetDao.deleteSetsForExercise(localId);
-
-        // 4. Записываем новые сеты
-        if (ex.getSets() != null) {
-            for (Object setObj : ex.getSets()) {
-                saveSet(localId, setObj, ex.getExerciseType());
-            }
-        }
-
-        Log.d("DAO", "Упражнение обновлено из облака: " + ex.getExerciseName());
-    }
 
 
     // Вспомогательные методы getDouble/getInt оставляем без изменений

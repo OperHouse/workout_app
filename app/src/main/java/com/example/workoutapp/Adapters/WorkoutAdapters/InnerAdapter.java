@@ -92,9 +92,9 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         boolean isFinished = "finished".equalsIgnoreCase(getSetState(set));
 
         if (holder instanceof StrengthViewHolder && set instanceof StrengthSetModel) {
-            ((StrengthViewHolder) holder).bind((StrengthSetModel) set, isFinished, strengthSetDetailsTableDao, executor, currentExercise);
+            ((StrengthViewHolder) holder).bind((StrengthSetModel) set, isFinished, strengthSetDetailsTableDao, executor, currentExercise, (long) exerciseId);
         } else if (holder instanceof CardioViewHolder && set instanceof CardioSetModel) {
-            ((CardioViewHolder) holder).bind((CardioSetModel) set, isFinished, cardioSetDetailsTableDao, executor, currentExercise);
+            ((CardioViewHolder) holder).bind((CardioSetModel) set, isFinished, cardioSetDetailsTableDao, executor, currentExercise, (long) exerciseId);
         }
     }
 
@@ -138,6 +138,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             if (position < getItemCount()) {
                 notifyItemRangeChanged(position, getItemCount() - position);
             }
+            // Синхронизируем удаление
             MainActivity.getSyncManager().updateExerciseSets(currentExercise);
         }
     }
@@ -167,9 +168,9 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 Object set = setList.get(position);
                 executor.execute(() -> {
                     if (set instanceof StrengthSetModel) {
-                        strengthSetDetailsTableDao.deleteStrengthSet((StrengthSetModel) set);
+                        strengthSetDetailsTableDao.deleteStrengthSet((StrengthSetModel) set, (long) exerciseId);
                     } else if (set instanceof CardioSetModel) {
-                        cardioSetDetailsTableDao.deleteCardioSet((CardioSetModel) set);
+                        cardioSetDetailsTableDao.deleteCardioSet((CardioSetModel) set, (long) exerciseId);
                     }
 
                     handler.post(() -> removeSet(position));
@@ -199,16 +200,14 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             liner = itemView.findViewById(R.id.foodCaloriesContainer_D_LL);
         }
 
-        public void bind(StrengthSetModel set, boolean isFinished, STRENGTH_SET_DETAILS_TABLE_DAO dao, ExecutorService executor, ExerciseModel currentExercise) {
+        public void bind(StrengthSetModel set, boolean isFinished, STRENGTH_SET_DETAILS_TABLE_DAO dao, ExecutorService executor, ExerciseModel currentExercise, long exId) {
             weight.setText(set.getStrength_set_weight() == 0 ? "" : String.valueOf(set.getStrength_set_weight()));
             reps.setText(set.getStrength_set_rep() == 0 ? "" : String.valueOf(set.getStrength_set_rep()));
 
-
-            // Очистим фон от ошибок при повторном биндинге
-            weight.setBackgroundResource(R.drawable.edit_text_back2); // Заменить на свой дефолтный фон
+            weight.setBackgroundResource(R.drawable.edit_text_back2);
             reps.setBackgroundResource(R.drawable.edit_text_back2);
 
-            isSelected.setOnCheckedChangeListener(null); // убрать listener, чтобы не триггерился при setChecked
+            isSelected.setOnCheckedChangeListener(null);
             isSelected.setChecked(isFinished);
 
             liner.setBackgroundResource(isFinished ? R.drawable.card_border3 : R.drawable.card_border2);
@@ -221,51 +220,53 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     boolean repsEmpty = reps.getText().toString().trim().isEmpty();
 
                     if (weightEmpty || repsEmpty) {
-                        if (weightEmpty) {
-                            weight.setBackgroundResource(R.drawable.edit_text_back3); // Подсветка красным
-                        }
-                        if (repsEmpty) {
-                            reps.setBackgroundResource(R.drawable.edit_text_back3);
-                        }
-
-                        isSelected.setChecked(false); // Откатываем чекбокс
+                        if (weightEmpty) weight.setBackgroundResource(R.drawable.edit_text_back3);
+                        if (repsEmpty) reps.setBackgroundResource(R.drawable.edit_text_back3);
+                        isSelected.setChecked(false);
                         return;
                     }
 
                     set.setStrength_set_state("finished");
-                    executor.execute(() -> dao.updateStrengthSet(set));
-
-                    itemView.post(() -> {
-                        liner.setBackgroundResource(R.drawable.card_border3);
-                        weight.setEnabled(false);
-                        reps.setEnabled(false);
-                        MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                    executor.execute(() -> {
+                        dao.updateStrengthSet(set, exId);
+                        itemView.post(() -> {
+                            liner.setBackgroundResource(R.drawable.card_border3);
+                            weight.setEnabled(false);
+                            reps.setEnabled(false);
+                            MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                        });
                     });
                 } else {
                     set.setStrength_set_state("active");
-                    executor.execute(() -> dao.updateStrengthSet(set));
-
-                    itemView.post(() -> {
-                        liner.setBackgroundResource(R.drawable.card_border2);
-                        weight.setEnabled(true);
-                        reps.setEnabled(true);
-                        MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                    executor.execute(() -> {
+                        dao.updateStrengthSet(set, exId);
+                        itemView.post(() -> {
+                            liner.setBackgroundResource(R.drawable.card_border2);
+                            weight.setEnabled(true);
+                            reps.setEnabled(true);
+                            MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                        });
                     });
                 }
             });
 
-            // Watchers
             weight.addTextChangedListener(new SimpleTextWatcher(s -> {
                 double value = parseDoubleSafe(s);
-                weight.setBackgroundResource(R.drawable.edit_text_back2);
                 set.setStrength_set_weight(value);
-                executor.execute(() -> dao.updateStrengthSet(set));
+                weight.setBackgroundResource(R.drawable.edit_text_back2);
+                executor.execute(() -> {
+                    dao.updateStrengthSet(set, exId);
+                    MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                });
             }));
             reps.addTextChangedListener(new SimpleTextWatcher(s -> {
                 int value = parseIntSafe(s);
-                reps.setBackgroundResource(R.drawable.edit_text_back2);
                 set.setStrength_set_rep(value);
-                executor.execute(() -> dao.updateStrengthSet(set));
+                reps.setBackgroundResource(R.drawable.edit_text_back2);
+                executor.execute(() -> {
+                    dao.updateStrengthSet(set, exId);
+                    MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                });
             }));
         }
     }
@@ -285,17 +286,16 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             liner = itemView.findViewById(R.id.foodCaloriesContainer_D_LL);
         }
 
-        public void bind(CardioSetModel set, boolean isFinished, CARDIO_SET_DETAILS_TABLE_DAO dao, ExecutorService executor, ExerciseModel currentExercise) {
+        public void bind(CardioSetModel set, boolean isFinished, CARDIO_SET_DETAILS_TABLE_DAO dao, ExecutorService executor, ExerciseModel currentExercise, long exId) {
             time.setText(set.getCardio_set_time() == 0 ? "" : String.valueOf(set.getCardio_set_time()));
             distance.setText(set.getCardio_set_distance() == 0 ? "" : String.valueOf(set.getCardio_set_distance()));
             temp.setText(set.getCardio_set_temp() == 0 ? "" : String.valueOf(set.getCardio_set_temp()));
 
-            // Сбросим фон на стандартный (без ошибок)
             time.setBackgroundResource(R.drawable.edit_text_back2);
             distance.setBackgroundResource(R.drawable.edit_text_back2);
             temp.setBackgroundResource(R.drawable.edit_text_back2);
 
-            isSelected.setOnCheckedChangeListener(null); // сброс слушателя перед установкой чекбокса
+            isSelected.setOnCheckedChangeListener(null);
             isSelected.setChecked(isFinished);
 
             liner.setBackgroundResource(isFinished ? R.drawable.card_border3 : R.drawable.card_border2);
@@ -305,108 +305,59 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
             isSelected.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (isChecked) {
-                    boolean timeEmpty = time.getText().toString().trim().isEmpty();
-                    boolean distanceEmpty = distance.getText().toString().trim().isEmpty();
-                    boolean tempEmpty = temp.getText().toString().trim().isEmpty();
-
-                    boolean hasError = false;
-
-                    if (timeEmpty) {
-                        time.setBackgroundResource(R.drawable.edit_text_back3);
-                        hasError = true;
-                    }
-                    if (distanceEmpty) {
-                        distance.setBackgroundResource(R.drawable.edit_text_back3);
-                        hasError = true;
-                    }
-                    if (tempEmpty) {
-                        temp.setBackgroundResource(R.drawable.edit_text_back3);
-                        hasError = true;
-                    }
-
-                    if (hasError) {
-                        isSelected.setChecked(false); // откатываем чекбокс
+                    if (time.getText().toString().trim().isEmpty() || distance.getText().toString().trim().isEmpty() || temp.getText().toString().trim().isEmpty()) {
+                        isSelected.setChecked(false);
                         return;
                     }
-
                     set.setCardio_set_state("finished");
-                    executor.execute(() -> dao.updateCardioSet(set));
-
-                    itemView.post(() -> {
-                        liner.setBackgroundResource(R.drawable.card_border3);
-                        time.setEnabled(false);
-                        distance.setEnabled(false);
-                        temp.setEnabled(false);
-                    });
-
                 } else {
                     set.setCardio_set_state("active");
-                    executor.execute(() -> dao.updateCardioSet(set));
-
-                    itemView.post(() -> {
-                        liner.setBackgroundResource(R.drawable.card_border2);
-                        time.setEnabled(true);
-                        distance.setEnabled(true);
-                        temp.setEnabled(true);
-                    });
                 }
+
+                executor.execute(() -> {
+                    dao.updateCardioSet(set, exId);
+                    itemView.post(() -> {
+                        liner.setBackgroundResource(isChecked ? R.drawable.card_border3 : R.drawable.card_border2);
+                        time.setEnabled(!isChecked);
+                        distance.setEnabled(!isChecked);
+                        temp.setEnabled(!isChecked);
+                        MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                    });
+                });
             });
 
             time.addTextChangedListener(new SimpleTextWatcher(s -> {
                 set.setCardio_set_time(parseIntSafe(s));
-                time.setBackgroundResource(R.drawable.edit_text_back2);
-                executor.execute(() -> dao.updateCardioSet(set));
-                MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                executor.execute(() -> {
+                    dao.updateCardioSet(set, exId);
+                    MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                });
             }));
             distance.addTextChangedListener(new SimpleTextWatcher(s -> {
                 set.setCardio_set_distance(parseDoubleSafe(s));
-                distance.setBackgroundResource(R.drawable.edit_text_back2);
-                executor.execute(() -> dao.updateCardioSet(set));
-                MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                executor.execute(() -> {
+                    dao.updateCardioSet(set, exId);
+                    MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                });
             }));
             temp.addTextChangedListener(new SimpleTextWatcher(s -> {
                 set.setCardio_set_temp(parseDoubleSafe(s));
-                temp.setBackgroundResource(R.drawable.edit_text_back2);
-                executor.execute(() -> dao.updateCardioSet(set));
-                MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                executor.execute(() -> {
+                    dao.updateCardioSet(set, exId);
+                    MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                });
             }));
         }
     }
 
-    // Simple TextWatcher utility
     private static class SimpleTextWatcher implements TextWatcher {
         private final Consumer<String> onTextChanged;
-
-        public SimpleTextWatcher(Consumer<String> onTextChanged) {
-            this.onTextChanged = onTextChanged;
-        }
-
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {}
-
-        @Override
-        public void afterTextChanged(Editable s) {
-            onTextChanged.accept(s.toString());
-        }
+        public SimpleTextWatcher(Consumer<String> onTextChanged) { this.onTextChanged = onTextChanged; }
+        @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+        @Override public void afterTextChanged(Editable s) { onTextChanged.accept(s.toString()); }
     }
 
-    // Helper methods
-    private static double parseDoubleSafe(String s) {
-        try {
-            return Double.parseDouble(s);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
-    private static int parseIntSafe(String s) {
-        try {
-            return Integer.parseInt(s);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
+    private static double parseDoubleSafe(String s) { try { return Double.parseDouble(s); } catch (NumberFormatException e) { return 0; } }
+    private static int parseIntSafe(String s) { try { return Integer.parseInt(s); } catch (NumberFormatException e) { return 0; } }
 }

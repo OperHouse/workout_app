@@ -85,7 +85,7 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
         this.baseExerciseDao = new BASE_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
         this.presetNameDao = new WORKOUT_PRESET_NAME_TABLE_DAO(MainActivity.getAppDataBase());
         this.connectingPresetDao = new CONNECTING_WORKOUT_PRESET_TABLE_DAO(MainActivity.getAppDataBase());
-        this.syncManager = new FirestoreSyncManager();
+        this.syncManager = MainActivity.getSyncManager();
     }
 
     @SuppressLint({"MissingInflatedId", "ClickableViewAccessibility", "RestrictedApi"})

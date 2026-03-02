@@ -113,36 +113,35 @@ public class CARDIO_SET_DETAILS_TABLE_DAO {
         return null;
     }
 
-    // =========================
-    // Обновление кардио-сета
-    // =========================
-    public void updateCardioSet(CardioSetModel set) {
+
+
+    public void updateCardioSet(CardioSetModel set, long exerciseId) {
         ContentValues values = new ContentValues();
-        values.put(AppDataBase.CARDIO_SET_TEMP, set.getCardio_set_temp());
         values.put(AppDataBase.CARDIO_SET_TIME, set.getCardio_set_time());
         values.put(AppDataBase.CARDIO_SET_DISTANCE, set.getCardio_set_distance());
+        values.put(AppDataBase.CARDIO_SET_TEMP, set.getCardio_set_temp());
         values.put(AppDataBase.CARDIO_SET_STATE, set.getCardio_set_state());
-        values.put(AppDataBase.CARDIO_SET_ORDER, set.getCardio_set_order());
 
-        db.update(
-                AppDataBase.CARDIO_SET_DETAILS_TABLE,
-                values,
+        db.update(AppDataBase.CARDIO_SET_DETAILS_TABLE, values,
                 AppDataBase.CARDIO_SET_ID + " = ?",
-                new String[]{String.valueOf(set.getCardio_set_id())}
-        );
+                new String[]{String.valueOf(set.getCardio_set_id())});
+
+        updateParentExerciseTimestamp(exerciseId);
     }
 
-    // =========================
-    // Удаление кардио-сета
-    // =========================
-    public void deleteCardioSet(CardioSetModel set) {
-        if (set == null) return;
-
-        db.delete(
-                AppDataBase.CARDIO_SET_DETAILS_TABLE,
+    public void deleteCardioSet(CardioSetModel set, long exerciseId) {
+        db.delete(AppDataBase.CARDIO_SET_DETAILS_TABLE,
                 AppDataBase.CARDIO_SET_ID + " = ?",
-                new String[]{String.valueOf(set.getCardio_set_id())}
-        );
+                new String[]{String.valueOf(set.getCardio_set_id())});
+
+        updateParentExerciseTimestamp(exerciseId);
+    }
+
+    private void updateParentExerciseTimestamp(long exerciseId) {
+        ContentValues values = new ContentValues();
+        values.put("workout_exercise_last_modified", System.currentTimeMillis());
+        db.update("WORKOUT_EXERCISE_TABLE", values, "workout_exercise_id = ?",
+                new String[]{String.valueOf(exerciseId)});
     }
 
     // =========================

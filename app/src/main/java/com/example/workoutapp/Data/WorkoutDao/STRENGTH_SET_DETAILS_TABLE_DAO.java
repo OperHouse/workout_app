@@ -94,25 +94,41 @@ public class STRENGTH_SET_DETAILS_TABLE_DAO {
         return null;
     }
 
-    // =========================
-    // Обновление силового сета
-    // =========================
-    public void updateStrengthSet(StrengthSetModel set) {
+
+
+    public void updateStrengthSet(StrengthSetModel set, long exerciseId) {
         ContentValues values = new ContentValues();
         values.put(AppDataBase.STRENGTH_SET_WEIGHT, set.getStrength_set_weight());
         values.put(AppDataBase.STRENGTH_SET_REP, set.getStrength_set_rep());
         values.put(AppDataBase.STRENGTH_SET_STATE, set.getStrength_set_state());
 
-        db.update(AppDataBase.STRENGTH_SET_DETAILS_TABLE, values, AppDataBase.STRENGTH_SET_ID + " = ?", new String[]{String.valueOf(set.getStrength_set_id())});
+        // 1. Обновляем данные самого сета
+        db.update(AppDataBase.STRENGTH_SET_DETAILS_TABLE, values,
+                AppDataBase.STRENGTH_SET_ID + " = ?",
+                new String[]{String.valueOf(set.getStrength_set_id())});
+
+        // 2. Обновляем метку времени родительского упражнения
+        updateParentExerciseTimestamp(exerciseId);
     }
 
-    // =========================
-    // Удаление силового сета
-    // =========================
-    public void deleteStrengthSet(StrengthSetModel set) {
-        if (set == null) return;
-        db.delete(AppDataBase.STRENGTH_SET_DETAILS_TABLE, AppDataBase.STRENGTH_SET_ID + " = ?", new String[]{String.valueOf(set.getStrength_set_id())});
+    public void deleteStrengthSet(StrengthSetModel set, long exerciseId) {
+        // Удаляем сет
+        db.delete(AppDataBase.STRENGTH_SET_DETAILS_TABLE,
+                AppDataBase.STRENGTH_SET_ID + " = ?",
+                new String[]{String.valueOf(set.getStrength_set_id())});
+
+        // Обновляем метку времени родителя
+        updateParentExerciseTimestamp(exerciseId);
     }
+
+    // Вспомогательный метод внутри DAO
+    private void updateParentExerciseTimestamp(long exerciseId) {
+        ContentValues values = new ContentValues();
+        values.put("workout_exercise_last_modified", System.currentTimeMillis());
+        db.update("WORKOUT_EXERCISE_TABLE", values, "workout_exercise_id = ?",
+                new String[]{String.valueOf(exerciseId)});
+    }
+
 
     // =========================
     // Удаление всех силовых сетов для упражнения

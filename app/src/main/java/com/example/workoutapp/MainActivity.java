@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity
     private BottomNavigationView bottomNavigationView;
     private List<ExerciseModel> cachedExercises;
 
+
     private FirebaseAuth.AuthStateListener authStateListener;
 
     private ActivityResultLauncher<String[]> healthPermissionLauncher;
@@ -66,7 +67,7 @@ public class MainActivity extends AppCompatActivity
 
         appDataBase = DatabaseProvider.get(this);
         //DatabaseExporter.exportDatabase(this, "WorkoutApp_plain.db");
-        syncManager = new FirestoreSyncManager();
+        syncManager = new FirestoreSyncManager(this);
 
         loadExercisesFromDb();
         setInitialActiveButton();
@@ -258,24 +259,24 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    private void syncDataWithCloud() {
-        // 1. Создаем DAO для доступа к SQLite
-        WORKOUT_EXERCISE_TABLE_DAO dao = new WORKOUT_EXERCISE_TABLE_DAO(appDataBase);
-
-        // 2. Выгружаем все данные из локальной базы
-        List<ExerciseModel> allLocalExercises = dao.getAllExercisesForSync();
-
-        if (allLocalExercises != null && !allLocalExercises.isEmpty()) {
-            // 3. Создаем объект менеджера
-            FirestoreSyncManager syncManager = new FirestoreSyncManager();
-
-            // 4. ВЫЗЫВАЕМ ТОЛЬКО ЭТОТ МЕТОД
-            // Он внутри себя сам всё сгруппирует и вызовет uploadWorkoutSession
-            syncManager.syncAllWorkouts(allLocalExercises);
-
-            Log.d("CloudSync", "Запущена синхронизация для " + allLocalExercises.size() + " записей");
-        }
-    }
+//    private void syncDataWithCloud() {
+//        // 1. Создаем DAO для доступа к SQLite
+//        WORKOUT_EXERCISE_TABLE_DAO dao = new WORKOUT_EXERCISE_TABLE_DAO(appDataBase);
+//
+//        // 2. Выгружаем все данные из локальной базы
+//        List<ExerciseModel> allLocalExercises = dao.getAllExercisesForSync();
+//
+//        if (allLocalExercises != null && !allLocalExercises.isEmpty()) {
+//            // 3. Создаем объект менеджера
+//            FirestoreSyncManager syncManager = new FirestoreSyncManager();
+//
+//            // 4. ВЫЗЫВАЕМ ТОЛЬКО ЭТОТ МЕТОД
+//            // Он внутри себя сам всё сгруппирует и вызовет uploadWorkoutSession
+//            syncManager.syncAllWorkouts(allLocalExercises);
+//
+//            Log.d("CloudSync", "Запущена синхронизация для " + allLocalExercises.size() + " записей");
+//        }
+//    }
 
     @Override
     protected void onResume() {

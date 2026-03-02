@@ -66,6 +66,7 @@ public class AppDataBase extends SQLiteOpenHelper {
     public static final String WORKOUT_EXERCISE_BODY_TYPE = "workout_exercise_body_type";
     public static final String WORKOUT_EXERCISE_DATE = "workout_exercise_data";
     public static final String WORKOUT_EXERCISE_STATE = "workout_exercise_state";
+    public static final String WORKOUT_EXERCISE_LAST_MODIFIED = "workout_exercise_last_modified";
 
     public static final String STRENGTH_SET_DETAILS_TABLE = "strength_set_details_table";
     public static final String STRENGTH_SET_ID = "strength_set_id";
@@ -235,7 +236,8 @@ public class AppDataBase extends SQLiteOpenHelper {
                 + WORKOUT_EXERCISE_TYPE + " TEXT NOT NULL, "
                 + WORKOUT_EXERCISE_BODY_TYPE + " TEXT NOT NULL, "
                 + WORKOUT_EXERCISE_DATE + " TEXT NOT NULL, "
-                + WORKOUT_EXERCISE_STATE + " TEXT NOT NULL);");
+                + WORKOUT_EXERCISE_STATE + " TEXT NOT NULL, "
+                + WORKOUT_EXERCISE_LAST_MODIFIED + " INTEGER DEFAULT 0);");
 
         db.execSQL("CREATE TABLE " + STRENGTH_SET_DETAILS_TABLE + " ("
                 + STRENGTH_SET_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "

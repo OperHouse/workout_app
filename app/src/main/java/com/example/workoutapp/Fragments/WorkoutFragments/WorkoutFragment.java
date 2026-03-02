@@ -181,9 +181,9 @@ public class WorkoutFragment extends Fragment {
                     if (isEmpty) {
                         // Удаляем пустой сет из базы
                         if (set instanceof StrengthSetModel) {
-                            strengthSetDetailsTableDao.deleteStrengthSet((StrengthSetModel) set);
+                            strengthSetDetailsTableDao.deleteStrengthSet((StrengthSetModel) set, (long) elm.getExercise_id());
                         } else if (set instanceof CardioSetModel) {
-                            cardioSetDetailsTableDao.deleteCardioSet((CardioSetModel) set);
+                            cardioSetDetailsTableDao.deleteCardioSet((CardioSetModel) set, (long) elm.getExercise_id());
                         }
 
                         // Удаляем из локального объекта в памяти

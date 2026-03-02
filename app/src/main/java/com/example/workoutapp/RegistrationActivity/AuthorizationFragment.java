@@ -182,7 +182,7 @@ public class AuthorizationFragment extends Fragment {
                                 // 3. Синхронизируем тренировки
                                 WORKOUT_EXERCISE_TABLE_DAO workoutDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
                                 List<ExerciseModel> localExercises = workoutDao.getAllExercisesForSync();
-                                FirestoreSyncManager syncManager = new FirestoreSyncManager();
+                                FirestoreSyncManager syncManager = MainActivity.getSyncManager();
                                 syncManager.startFullSynchronization(localExercises);
 
                                 navigateToMain();

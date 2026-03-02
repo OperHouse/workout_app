@@ -184,6 +184,7 @@ public class WorkoutSessionSync {
         map.put("exerciseBodyType", ex.getExerciseBodyType());
         map.put("ex_Data", ex.getEx_Data());
         map.put("state", ex.getState());
+        map.put("lastModified", ex.getExercise_time_lastModified());
 
         List<Map<String, Object>> setsList = new ArrayList<>();
 
@@ -315,6 +316,13 @@ public class WorkoutSessionSync {
         ex.setExerciseBodyType((String) data.get("exerciseBodyType"));
         ex.setEx_Data((String) data.get("ex_Data"));
         ex.setState((String) data.get("state"));
+
+        if (data.containsKey("lastModified")) {
+            Object lm = data.get("lastModified");
+            if (lm instanceof Number) {
+                ex.setExercise_time_lastModified(((Number) lm).longValue());
+            }
+        }
 
         // Парсим сеты
         List<Object> setsList = new ArrayList<>();

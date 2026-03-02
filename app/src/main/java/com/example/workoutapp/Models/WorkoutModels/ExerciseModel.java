@@ -13,6 +13,7 @@ public class ExerciseModel {
     private String ex_Data = "";
     private String state = "unfinished";
     private String exercise_uid;
+    private long exercise_time_lastModified;
     // Единый список для сетов, который может содержать разные типы объектов
     private List<Object> sets = new ArrayList<>();
 
@@ -164,5 +165,13 @@ public class ExerciseModel {
 
     public void setExercise_uid(String exercise_uid) {
         this.exercise_uid = exercise_uid;
+    }
+
+    public long getExercise_time_lastModified() {
+        return exercise_time_lastModified;
+    }
+
+    public void setExercise_time_lastModified(long exercise_time_lastModified) {
+        this.exercise_time_lastModified = exercise_time_lastModified;
     }
 }

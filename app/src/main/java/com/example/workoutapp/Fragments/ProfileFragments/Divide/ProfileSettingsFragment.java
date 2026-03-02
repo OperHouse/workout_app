@@ -191,7 +191,7 @@ public class ProfileSettingsFragment extends Fragment {
         // 2. Инициализация инструментов
         UserProfileDao userProfileDao = new UserProfileDao(MainActivity.getAppDataBase());
         WeightHistoryDao weightDao = new WeightHistoryDao(MainActivity.getAppDataBase());
-        FirestoreSyncManager syncManager = new FirestoreSyncManager();
+        FirestoreSyncManager syncManager = MainActivity.getSyncManager();
 
         // 3. СОХРАНЕНИЕ ПРОФИЛЯ (Локально + Облако)
         UserProfileModel profile = new UserProfileModel(1, name, height, age);
