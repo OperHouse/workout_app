@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +19,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Data.WorkoutDao.CARDIO_SET_DETAILS_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.STRENGTH_SET_DETAILS_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
@@ -139,7 +139,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
                         cardioCL.setVisibility(View.GONE);
                         innerRecycler.setVisibility(View.GONE);
                     }
-                }, strengthDao, cardioDao, exerciseModel.getExerciseType());
+                }, strengthDao, cardioDao, exerciseModel.getExerciseType(), exerciseModel);
                 innerRecycler.setAdapter(innerAdapter);
                 innerAdapter.attachSwipeToDelete(innerRecycler);
             } else {
@@ -175,6 +175,8 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
 
                     mainHandler.post(() -> {
                         innerAdapter.addSet(newSet);
+                        Log.d("SyncDebug", "Exercise: " + exerciseModel.getExerciseName() + " UID: " + exerciseModel.getExercise_uid());
+                        MainActivity.getSyncManager().updateExerciseSets(exerciseModel);
                         if (wasEmpty) {
                             if ("Время".equalsIgnoreCase(exerciseModel.getExerciseType()) ||
                                     "Кардио".equalsIgnoreCase(exerciseModel.getExerciseType())) {
@@ -188,6 +190,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
                         }
                     });
                 });
+
             });
 
             delEx.setOnClickListener(v -> delConfirmDialog(exerciseModel, getBindingAdapterPosition()));

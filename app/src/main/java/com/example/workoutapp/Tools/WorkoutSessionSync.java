@@ -347,4 +347,29 @@ public class WorkoutSessionSync {
 
         return ex;
     }
+    /**
+     * Обновляет конкретное упражнение (включая все его подходы) в облаке.
+     * Вызывается при добавлении, изменении данных или удалении подхода.
+     */
+    public void updateExerciseSetsInCloud(ExerciseModel exercise) {
+        if (userId == null || exercise == null || exercise.getEx_Data() == null) return;
+
+        String uid = exercise.getExercise_uid();
+        if (uid == null || uid.isEmpty()) return;
+
+        DocumentReference docRef = db.collection("users")
+                .document(userId)
+                .collection("workouts")
+                .document(exercise.getEx_Data());
+
+        // Мы обновляем только одно конкретное упражнение в мапе
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("exercises_map." + uid, convertExerciseToMap(exercise));
+
+        // Используем update, чтобы не затронуть другие поля документа (например, дату или другие упражнения)
+        docRef.update(updates)
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "Подходы упражнения " + exercise.getExerciseName() + " синхронизированы"))
+                .addOnFailureListener(e -> Log.e(TAG, "Ошибка синхронизации подходов: " + e.getMessage()));
+    }
+
 }

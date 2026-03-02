@@ -19,7 +19,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Data.WorkoutDao.CARDIO_SET_DETAILS_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.STRENGTH_SET_DETAILS_TABLE_DAO;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.CardioSetModel;
+import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Models.WorkoutModels.StrengthSetModel;
 import com.example.workoutapp.R;
 
@@ -34,6 +36,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private final int exerciseId;
     private OnSetListChangedListener listener;
     private final Context context;
+    private final ExerciseModel currentExercise;
 
     private static final int VIEW_TYPE_STRENGTH = 1;
     private static final int VIEW_TYPE_CARDIO = 2;
@@ -45,7 +48,8 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private String exerciseType;
 
-    public InnerAdapter(List<Object> setList, Context context, int exerciseId, OnSetListChangedListener listener, STRENGTH_SET_DETAILS_TABLE_DAO strengthDao, CARDIO_SET_DETAILS_TABLE_DAO cardioDao, String exType) {
+    public InnerAdapter(List<Object> setList, Context context, int exerciseId, OnSetListChangedListener listener, STRENGTH_SET_DETAILS_TABLE_DAO strengthDao, CARDIO_SET_DETAILS_TABLE_DAO cardioDao, String exType,
+                        ExerciseModel currentExercise) {
         this.setList = setList;
         this.context = context;
         this.exerciseId = exerciseId;
@@ -53,6 +57,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         this.strengthSetDetailsTableDao = strengthDao;
         this.cardioSetDetailsTableDao = cardioDao;
         setHasStableIds(true);
+        this.currentExercise = currentExercise;
         this.exerciseType = exType;
     }
 
@@ -87,9 +92,9 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         boolean isFinished = "finished".equalsIgnoreCase(getSetState(set));
 
         if (holder instanceof StrengthViewHolder && set instanceof StrengthSetModel) {
-            ((StrengthViewHolder) holder).bind((StrengthSetModel) set, isFinished, strengthSetDetailsTableDao, executor);
+            ((StrengthViewHolder) holder).bind((StrengthSetModel) set, isFinished, strengthSetDetailsTableDao, executor, currentExercise);
         } else if (holder instanceof CardioViewHolder && set instanceof CardioSetModel) {
-            ((CardioViewHolder) holder).bind((CardioSetModel) set, isFinished, cardioSetDetailsTableDao, executor);
+            ((CardioViewHolder) holder).bind((CardioSetModel) set, isFinished, cardioSetDetailsTableDao, executor, currentExercise);
         }
     }
 
@@ -133,6 +138,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             if (position < getItemCount()) {
                 notifyItemRangeChanged(position, getItemCount() - position);
             }
+            MainActivity.getSyncManager().updateExerciseSets(currentExercise);
         }
     }
 
@@ -165,6 +171,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     } else if (set instanceof CardioSetModel) {
                         cardioSetDetailsTableDao.deleteCardioSet((CardioSetModel) set);
                     }
+
                     handler.post(() -> removeSet(position));
                 });
             }
@@ -192,7 +199,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             liner = itemView.findViewById(R.id.foodCaloriesContainer_D_LL);
         }
 
-        public void bind(StrengthSetModel set, boolean isFinished, STRENGTH_SET_DETAILS_TABLE_DAO dao, ExecutorService executor) {
+        public void bind(StrengthSetModel set, boolean isFinished, STRENGTH_SET_DETAILS_TABLE_DAO dao, ExecutorService executor, ExerciseModel currentExercise) {
             weight.setText(set.getStrength_set_weight() == 0 ? "" : String.valueOf(set.getStrength_set_weight()));
             reps.setText(set.getStrength_set_rep() == 0 ? "" : String.valueOf(set.getStrength_set_rep()));
 
@@ -232,6 +239,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                         liner.setBackgroundResource(R.drawable.card_border3);
                         weight.setEnabled(false);
                         reps.setEnabled(false);
+                        MainActivity.getSyncManager().updateExerciseSets(currentExercise);
                     });
                 } else {
                     set.setStrength_set_state("active");
@@ -241,6 +249,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                         liner.setBackgroundResource(R.drawable.card_border2);
                         weight.setEnabled(true);
                         reps.setEnabled(true);
+                        MainActivity.getSyncManager().updateExerciseSets(currentExercise);
                     });
                 }
             });
@@ -276,7 +285,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             liner = itemView.findViewById(R.id.foodCaloriesContainer_D_LL);
         }
 
-        public void bind(CardioSetModel set, boolean isFinished, CARDIO_SET_DETAILS_TABLE_DAO dao, ExecutorService executor) {
+        public void bind(CardioSetModel set, boolean isFinished, CARDIO_SET_DETAILS_TABLE_DAO dao, ExecutorService executor, ExerciseModel currentExercise) {
             time.setText(set.getCardio_set_time() == 0 ? "" : String.valueOf(set.getCardio_set_time()));
             distance.setText(set.getCardio_set_distance() == 0 ? "" : String.valueOf(set.getCardio_set_distance()));
             temp.setText(set.getCardio_set_temp() == 0 ? "" : String.valueOf(set.getCardio_set_temp()));
@@ -347,16 +356,19 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 set.setCardio_set_time(parseIntSafe(s));
                 time.setBackgroundResource(R.drawable.edit_text_back2);
                 executor.execute(() -> dao.updateCardioSet(set));
+                MainActivity.getSyncManager().updateExerciseSets(currentExercise);
             }));
             distance.addTextChangedListener(new SimpleTextWatcher(s -> {
                 set.setCardio_set_distance(parseDoubleSafe(s));
                 distance.setBackgroundResource(R.drawable.edit_text_back2);
                 executor.execute(() -> dao.updateCardioSet(set));
+                MainActivity.getSyncManager().updateExerciseSets(currentExercise);
             }));
             temp.addTextChangedListener(new SimpleTextWatcher(s -> {
                 set.setCardio_set_temp(parseDoubleSafe(s));
                 temp.setBackgroundResource(R.drawable.edit_text_back2);
                 executor.execute(() -> dao.updateCardioSet(set));
+                MainActivity.getSyncManager().updateExerciseSets(currentExercise);
             }));
         }
     }

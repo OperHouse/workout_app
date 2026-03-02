@@ -22,6 +22,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -218,5 +219,28 @@ public class FirestoreSyncManager {
         DailyFoodTrackingDao dao = new DailyFoodTrackingDao(MainActivity.getAppDataBase());
         dailyFoodSync.pullFromCloud(dao);
         dailyFoodSync.pushLocalToCloud(dao);
+    }
+
+
+    /**
+     * Вызывай при любом изменении внутри упражнения:
+     * добавлении/удалении подхода или изменении текста (вес/повторы)
+     */
+    public void updateExerciseSets(ExerciseModel exercise) {
+        if (workoutSessionSync != null) {
+            workoutSessionSync.updateExerciseSetsInCloud(exercise);
+        }
+    }
+
+    public void uploadWorkoutSession(ExerciseModel exercise) {
+        if (workoutSessionSync != null) {
+            // WorkoutSessionSync ожидает WorkoutSessionModel,
+            // поэтому создаем обертку на лету для одной даты
+            List<ExerciseModel> singleExList = Collections.singletonList(exercise);
+            com.example.workoutapp.Models.Helpers.WorkoutSessionModel session =
+                    new com.example.workoutapp.Models.Helpers.WorkoutSessionModel(exercise.getEx_Data(), singleExList);
+
+            workoutSessionSync.uploadWorkoutSession(session);
+        }
     }
 }
