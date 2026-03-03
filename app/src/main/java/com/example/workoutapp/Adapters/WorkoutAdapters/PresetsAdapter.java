@@ -26,7 +26,10 @@ import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.OnWorkoutPresetLongClickListener;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -93,9 +96,12 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsAdapter.MyViewHo
                 WORKOUT_EXERCISE_TABLE_DAO workoutExerciseDao =
                         new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
 
+                List<ExerciseModel> exercisesToSync = new ArrayList<>();
+
                 for (Long baseExId : baseExIds) {
                     // ПРОВЕРКА: получаем объект один раз и проверяем на null
                     BaseExModel exercise = baseExerciseDao.getExerciseById(baseExId);
+                    String workExUid = "WORK_EX_" + java.util.UUID.randomUUID().toString();
 
                     if (exercise != null) {
                         // Добавляем упражнение в текущую тренировку, только если оно существует
@@ -103,10 +109,33 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsAdapter.MyViewHo
                                 exercise.getBase_ex_name(),
                                 exercise.getBase_ex_type(),
                                 exercise.getBase_ex_bodyType(),
-                                exercise.getBase_ex_uid()
+                                workExUid
                         );
+
+                        // 2. Сразу создаем модель для синхронизации
+                        ExerciseModel exModel = new ExerciseModel();
+                        exModel.setExerciseName(exercise.getBase_ex_name());
+                        exModel.setExerciseType(exercise.getBase_ex_type());
+                        exModel.setExerciseBodyType(exercise.getBase_ex_bodyType());
+                        exModel.setExercise_uid(exercise.getBase_ex_uid());
+
+                        // Устанавливаем текущую дату (убедись, что формат совпадает с БД, например "yyyy-MM-dd")
+                        String currentDate = new java.text.SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+                        exModel.setEx_Data(currentDate);
+                        exModel.setState("unfinished");
+                        exModel.setExercise_time_lastModified(System.currentTimeMillis());
+
+                        exercisesToSync.add(exModel);
                     } else {
                         Log.w("PresetsAdapter", "Упражнение с ID " + baseExId + " удалено из базы, пропускаем.");
+                    }
+                }
+
+                if (!exercisesToSync.isEmpty()) {
+                    MainActivity mainActivity = (MainActivity) fragment.getActivity();
+                    if (mainActivity != null) {
+                        mainActivity.getSyncManager().syncAllWorkouts(exercisesToSync);
+                        Log.d("PresetsAdapter", "Отправлено в облако упражнений: " + exercisesToSync.size());
                     }
                 }
 
