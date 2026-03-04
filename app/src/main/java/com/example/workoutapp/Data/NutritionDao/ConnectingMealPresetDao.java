@@ -8,6 +8,8 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.util.Log;
 
+import com.example.workoutapp.Data.Tables.AppDataBase;
+
 import net.sqlcipher.database.SQLiteDatabase;
 
 import java.util.ArrayList;
@@ -36,10 +38,7 @@ public class ConnectingMealPresetDao {
 
     // ========================= GET CONNECTIONS ========================= //
 
-    /**
-     * Получает список eatId для конкретного пресета
-     */
-    public List<Integer> getEatIdsForPreset(int presetId) {
+    public List<Integer> getEatIdsForPreset(long presetId) {
         List<Integer> eatIds = new ArrayList<>();
         Cursor cursor = null;
 
@@ -49,15 +48,12 @@ public class ConnectingMealPresetDao {
                     new String[]{CONNECTING_MEAL_PRESET_FOOD_ID},
                     CONNECTING_MEAL_PRESET_NAME_ID + " = ?",
                     new String[]{String.valueOf(presetId)},
-                    null,
-                    null,
-                    null
+                    null, null, null
             );
 
             if (cursor != null && cursor.moveToFirst()) {
                 do {
-                    int eatId = cursor.getInt(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_PRESET_FOOD_ID));
-                    eatIds.add(eatId);
+                    eatIds.add(cursor.getInt(cursor.getColumnIndexOrThrow(CONNECTING_MEAL_PRESET_FOOD_ID)));
                 } while (cursor.moveToNext());
             }
 
@@ -70,9 +66,6 @@ public class ConnectingMealPresetDao {
 
     // ========================= DELETE CONNECTIONS ========================= //
 
-    /**
-     * Удаляет все связи для конкретного пресета
-     */
     public void deleteAllForPreset(long presetId) {
         db.delete(
                 CONNECTING_MEAL_PRESET_TABLE,
@@ -82,11 +75,23 @@ public class ConnectingMealPresetDao {
         Log.d("ConnectingMealPresetDao", "Deleted all connections for presetId: " + presetId);
     }
 
+    public void deleteAll() {
+        db.delete(CONNECTING_MEAL_PRESET_TABLE, null, null);
+    }
+
+    public void deleteConnectionsByMealUid(String mealUid) {
+        long mealId = getMealIdByUid(mealUid);
+        if (mealId == -1) return;
+
+        db.delete(
+                CONNECTING_MEAL_PRESET_TABLE,
+                CONNECTING_MEAL_PRESET_NAME_ID + " = ?",
+                new String[]{String.valueOf(mealId)}
+        );
+    }
+
     // ========================= CHECK EXISTENCE ========================= //
 
-    /**
-     * Проверяет, существует ли хотя бы одна связь с данным eatId
-     */
     public boolean doesEatIdExist(long eatId) {
         Cursor cursor = null;
         boolean exists = false;
@@ -108,7 +113,23 @@ public class ConnectingMealPresetDao {
 
         return exists;
     }
-    public void deleteAll() {
-        db.delete(CONNECTING_MEAL_PRESET_TABLE, null, null);
+
+    // ========================= HELPERS ========================= //
+
+    private long getMealIdByUid(String mealUid) {
+        Cursor cursor = db.query(
+                AppDataBase.MEAL_PRESET_NAME_TABLE,
+                new String[]{AppDataBase.MEAL_PRESET_NAME_ID},
+                AppDataBase.MEAL_PRESET_UID + " = ?",
+                new String[]{mealUid},
+                null, null, null
+        );
+
+        long id = -1;
+        if (cursor.moveToFirst()) {
+            id = cursor.getLong(0);
+        }
+        cursor.close();
+        return id;
     }
 }

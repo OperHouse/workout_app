@@ -44,11 +44,13 @@ import com.example.workoutapp.Data.NutritionDao.PresetEatDao;
 import com.example.workoutapp.Data.NutritionDao.PresetMealNameDao;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
+import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.NutritionCircleView;
 import com.example.workoutapp.Tools.NutritionMode;
 import com.example.workoutapp.Tools.OnEatItemClickListener;
 import com.example.workoutapp.Tools.OnPresetMealSelectedListener;
+import com.example.workoutapp.Tools.UidGenerator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -899,74 +901,79 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
             }
         });
 
-        updateBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String presetMealName = textInputNameEditText.getText().toString().trim();
+        updateBtn.setOnClickListener(v -> {
+            String presetMealName = textInputNameEditText.getText().toString().trim();
 
+            if (presetMealName.isEmpty()) {
+                errorTV.setVisibility(View.VISIBLE);
+                return;
+            }
 
-                if (presetMealName.isEmpty()) {
-                    errorTV.setVisibility(View.VISIBLE);
-                    return;
-                }
-                if (pressedEat.isEmpty()) {
-                    Toast.makeText(requireContext(), "Выберите элементы!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+            if (pressedEat.isEmpty()) {
+                Toast.makeText(requireContext(), "Выберите элементы!", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
+            long localMealId;
+            String mealUid;
+            List<FoodModel> foodsToSync = new ArrayList<>();
 
-                if (mealId > 0) {
-                    // 1. Обновляем имя пресета
-                    presetMealNameDao.updatePresetName(mealId, presetMealName);
+            if (mealId > 0) {
+                // обновление
+                presetMealNameDao.updatePresetName(mealId, presetMealName);
+                connectingMealPresetDao.deleteAllForPreset(mealId);
 
-                    // 2. Чистим старые связи
-                    connectingMealPresetDao.deleteAllForPreset(mealId);
+                MealModel existingMeal = presetMealNameDao.getMealById(mealId, connectingMealPresetDao, presetEatDao);
+                mealUid = existingMeal != null ? existingMeal.getMeal_uid() : UidGenerator.generateMealPresetUid();
 
-                    // 3. Повторно связываем продукты
-                    for (FoodModel eat : pressedEat) {
-                        FoodModel existing = presetEatDao.findDuplicateFood(eat);
-                        long eatId;
+                for (FoodModel eat : pressedEat) {
+                    FoodModel foodCopy = new FoodModel(eat);
+                    foodCopy.setFood_uid(UidGenerator.generateMealPresetUid());
+                    long eatId = presetEatDao.addPresetFood(foodCopy);
+                    connectingMealPresetDao.addMealPresetConnection(mealId, eatId);
 
-                        if (existing != null) {
-                            eatId = existing.getFood_id();
-                        } else {
-                            presetEatDao.addPresetFood(eat);
-                            eatId = presetEatDao.getLastInsertedPresetFoodId();
-                        }
-
-                        connectingMealPresetDao.addMealPresetConnection(mealId, eatId);
-                    }
-
-                } else {
-                    // 1. Добавляем имя нового пресета
-                    long mealNameId = presetMealNameDao.addMealPresetName(presetMealName);
-
-                    // 2. Связываем продукты
-                    for (FoodModel eat : pressedEat) {
-                        FoodModel existing = presetEatDao.findDuplicateFood(eat);
-                        int eatId;
-
-                        if (existing != null) {
-                            eatId = existing.getFood_id();
-                        } else {
-                            presetEatDao.addPresetFood(eat);
-                            eatId = presetEatDao.getLastInsertedPresetFoodId();
-                        }
-
-                        connectingMealPresetDao.addMealPresetConnection((int) mealNameId, eatId);
-                    }
+                    foodsToSync.add(foodCopy); // добавляем в список для синхронизации
                 }
 
+                localMealId = mealId;
 
-                dialog.dismiss();
-                Bundle result = new Bundle();
-                result.putBoolean("created", true);
-                getParentFragmentManager().setFragmentResult("preset_created", result);
-                FragmentManager fragmentManager = getFragmentManager();
-                assert fragmentManager != null;
-                if (fragmentManager.getBackStackEntryCount() > 0) {
-                    fragmentManager.popBackStack();
+            } else {
+                mealUid = UidGenerator.generateMealPresetUid();
+                // создание нового пресета
+                long mealNameId = presetMealNameDao.addMealPresetName(presetMealName,mealUid);
+
+
+                for (FoodModel eat : pressedEat) {
+                    FoodModel foodCopy = new FoodModel(eat);
+                    foodCopy.setFood_uid(UidGenerator.generateMealPresetUid());
+                    long eatId = presetEatDao.addPresetFood(foodCopy);
+                    connectingMealPresetDao.addMealPresetConnection(mealNameId, eatId);
+
+                    foodsToSync.add(foodCopy);
                 }
+
+                localMealId = mealNameId;
+            }
+
+// создаём MealModel для синхронизации с сервером
+            MealModel mealToSync = new MealModel(
+                    (int) localMealId,
+                    presetMealName,
+                    foodsToSync, // именно этот список, с уникальными food_uid
+                    mealUid
+            );
+
+// загружаем на сервер
+            MainActivity.getSyncManager().syncMealPreset(mealToSync);
+
+            dialog.dismiss();
+            Bundle result = new Bundle();
+            result.putBoolean("created", true);
+            getParentFragmentManager().setFragmentResult("preset_created", result);
+
+            FragmentManager fragmentManager = getFragmentManager();
+            if (fragmentManager != null && fragmentManager.getBackStackEntryCount() > 0) {
+                fragmentManager.popBackStack();
             }
         });
         dialog.show();

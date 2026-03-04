@@ -1,5 +1,7 @@
 package com.example.workoutapp.Models.NutritionModels;
 
+import com.google.firebase.Timestamp;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -10,7 +12,27 @@ public class MealModel {
     private String meal_uid;
     private String mealData = "";
     private List<FoodModel> meal_food_list;
+    private boolean deleted;
+    private long version;
+    private com.google.firebase.Timestamp updatedAt;
 
+    public MealModel() {}
+
+    public MealModel(int meal_name_id, String meal_name, List<FoodModel> meal_food_list, String meal_uid) {
+        this.meal_name_id = meal_name_id;
+        this.meal_name = meal_name;
+        this.meal_uid = meal_uid;
+
+        // Универсальный способ копирования списка еды
+        if (meal_food_list != null) {
+            this.meal_food_list = new ArrayList<>();
+            for (FoodModel food : meal_food_list) {
+                this.meal_food_list.add(new FoodModel(food));
+            }
+        } else {
+            this.meal_food_list = new ArrayList<>();
+        }
+    }
 
     public MealModel(int meal_name_id, String meal_name, List<FoodModel> meal_food_list){
         this.meal_name_id = meal_name_id;
@@ -130,4 +152,35 @@ public class MealModel {
     }
 
 
+    public String getMeal_uid() {
+        return meal_uid;
+    }
+
+    public void setMeal_uid(String meal_uid) {
+        this.meal_uid = meal_uid;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
+    }
+
+    public Timestamp getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

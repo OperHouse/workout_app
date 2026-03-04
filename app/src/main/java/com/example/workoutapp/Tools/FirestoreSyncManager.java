@@ -10,6 +10,7 @@ import com.example.workoutapp.Data.ProfileDao.FoodGainGoalDao;
 import com.example.workoutapp.Data.ProfileDao.GeneralGoalDao;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
+import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.Models.ProfileModels.*;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
@@ -38,6 +39,7 @@ public class FirestoreSyncManager {
     private final DailyFoodSync dailyFoodSync;
     private final WorkoutSessionSync2 workoutSessionSync2;
     private final BaseFoodSync baseFoodSync;
+    private final MealPresetSync mealPresetSync;
 
     private ListenerRegistration foodListener;
 
@@ -60,6 +62,7 @@ public class FirestoreSyncManager {
         this.dailyFoodSync = new DailyFoodSync();
         this.workoutSessionSync2 = new WorkoutSessionSync2();
         this.baseFoodSync = new BaseFoodSync();
+        this.mealPresetSync = new MealPresetSync();
     }
 
     // =====================================================
@@ -128,6 +131,9 @@ public class FirestoreSyncManager {
 
         // ЕДА теперь синкается через realtime listener
         startFoodRealtimeSync();
+
+        Log.d(TAG, "Starting sync of all meal presets...");
+        mealPresetSync.downloadAllOnce();
 
         Log.d(TAG, "Full sync initialized");
     }
@@ -230,5 +236,13 @@ public class FirestoreSyncManager {
 
     public void startWorkoutSync(List<ExerciseModel> exercises) {
         workoutSessionSync2.startWorkoutSync(exercises);
+    }
+
+    public void syncMealPreset(MealModel meal){
+        mealPresetSync.uploadPreset(meal, null);
+    }
+
+    public void deleteMealPreset(MealModel meal){
+        mealPresetSync.deletePreset(meal, null);
     }
 }

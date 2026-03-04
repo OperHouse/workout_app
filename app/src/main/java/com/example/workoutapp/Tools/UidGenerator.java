@@ -33,8 +33,8 @@ public class UidGenerator {
         return "BF_" + UUID.randomUUID().toString();
     }
 
-    public static String generateMealUid() {
-        return "MEAL_" + UUID.randomUUID().toString();
+    public static String generateMealPresetUid() {
+        return "MP_" + UUID.randomUUID().toString();
     }
 
     public static String generateSetUid() {

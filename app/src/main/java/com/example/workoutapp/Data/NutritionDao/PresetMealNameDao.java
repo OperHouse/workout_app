@@ -22,11 +22,35 @@ public class PresetMealNameDao {
     }
 
     // ========================= ADD ========================= //
-    public long addMealPresetName(String name) {
+    public long addMealPresetName(String name, String mealUid) {
         ContentValues values = new ContentValues();
         values.put(AppDataBase.MEAL_PRESET_NAME, name);
+        values.put(AppDataBase.MEAL_PRESET_UID, mealUid); // сохраняем uid сразу
         return db.insert(AppDataBase.MEAL_PRESET_NAME_TABLE, null, values);
     }
+
+    public MealModel getMealById(long mealId, ConnectingMealPresetDao connectionDao, PresetEatDao eatDao) {
+        // Получаем имя пресета
+        String mealName = getMealPresetNameById(mealId);
+        if (mealName == null) return null;
+
+        // Получаем связи
+        List<Integer> eatIds = connectionDao.getEatIdsForPreset((int) mealId);
+
+        // Получаем список FoodModel
+        List<FoodModel> eatList = new ArrayList<>();
+        for (Integer eatId : eatIds) {
+            FoodModel eat = eatDao.getPresetFoodById(eatId);
+            if (eat != null) eatList.add(eat);
+        }
+
+        // Получаем meal_uid
+        String mealUid = getMealUidById(mealId);
+
+        // Создаём MealModel
+        return new MealModel((int) mealId, mealName, eatList, mealUid);
+    }
+
 
     // ========================= DELETE ========================= //
     public void deleteMealPresetName(long id) {
@@ -136,4 +160,106 @@ public class PresetMealNameDao {
         cursor.close();
         return count;
     }
+
+    public long insertOrUpdate(MealModel meal) {
+
+        if (meal == null || meal.getMeal_uid() == null)
+            return -1;
+
+        db.beginTransaction();
+        try {
+            ContentValues values = new ContentValues();
+            values.put(AppDataBase.MEAL_PRESET_NAME, meal.getMeal_name());
+            values.put(AppDataBase.MEAL_PRESET_UID, meal.getMeal_uid()); // <- обязательно правильное поле
+
+            int rows = db.update(
+                    AppDataBase.MEAL_PRESET_NAME_TABLE,
+                    values,
+                    AppDataBase.MEAL_PRESET_UID + " = ?",
+                    new String[]{meal.getMeal_uid()} // <- правильно проверяем по meal_uid
+            );
+
+            long id;
+            if (rows == 0) {
+                id = db.insert(AppDataBase.MEAL_PRESET_NAME_TABLE, null, values);
+            } else {
+                id = getIdByUid(meal.getMeal_uid());
+            }
+
+            db.setTransactionSuccessful();
+            return id;
+
+        } finally {
+            db.endTransaction();
+        }
+    }
+    public void deleteByUid(String mealUid) {
+        db.delete(
+                AppDataBase.MEAL_PRESET_NAME_TABLE,
+                "meal_preset_uid = ?",
+                new String[]{mealUid}
+        );
+    }
+
+    private long getIdByUid(String uid) {
+
+        Cursor cursor = db.query(
+                AppDataBase.MEAL_PRESET_NAME_TABLE,
+                new String[]{"meal_preset_uid"},
+                "meal_uid = ?",
+                new String[]{uid},
+                null, null, null
+        );
+
+        long id = -1;
+
+        if (cursor.moveToFirst()) {
+            id = cursor.getLong(0);
+        }
+
+        cursor.close();
+        return id;
+    }
+
+    /**
+     * Получает meal_uid по ID пресета
+     */
+    public String getMealUidById(long mealId) {
+        String uid = null;
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    AppDataBase.MEAL_PRESET_NAME_TABLE,
+                    new String[]{AppDataBase.MEAL_PRESET_UID},
+                    AppDataBase.MEAL_PRESET_NAME_ID + " = ?",
+                    new String[]{String.valueOf(mealId)},
+                    null, null, null
+            );
+
+            if (cursor != null && cursor.moveToFirst()) {
+                uid = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_PRESET_UID));
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return uid;
+    }
+
+    // ========================= SET UID ========================= //
+
+    /**
+     * Устанавливает meal_uid для пресета
+     */
+    public void setMealUid(long mealId, String mealUid) {
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.MEAL_PRESET_UID, mealUid);
+
+        db.update(
+                AppDataBase.MEAL_PRESET_NAME_TABLE,
+                values,
+                AppDataBase.MEAL_PRESET_NAME_ID + " = ?",
+                new String[]{String.valueOf(mealId)}
+        );
+    }
+
 }
