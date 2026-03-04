@@ -1,17 +1,13 @@
 package com.example.workoutapp.Tools;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.example.workoutapp.Data.ProfileDao.ActivityGoalDao;
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.ProfileDao.DailyFoodTrackingDao;
 import com.example.workoutapp.Data.ProfileDao.FoodGainGoalDao;
 import com.example.workoutapp.Data.ProfileDao.GeneralGoalDao;
-import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
@@ -23,13 +19,11 @@ import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class FirestoreSyncManager {
     private final BaseExerciseSync baseExerciseSync;
@@ -44,6 +38,8 @@ public class FirestoreSyncManager {
     private FoodGoalSync foodGoalSync;
     private DailyActivitySync dailyActivitySync;
     private DailyFoodSync dailyFoodSync;
+
+    private WorkoutSessionSync2 workoutSessionSync2;
     private final Context context;
 
     private boolean isSyncing = false;
@@ -64,6 +60,7 @@ public class FirestoreSyncManager {
         this.foodGoalSync = new FoodGoalSync();
         this.dailyActivitySync = new DailyActivitySync();
         this.dailyFoodSync = new DailyFoodSync();
+        this.workoutSessionSync2 = new WorkoutSessionSync2();
     }
 
     // Сохранил оригинальное название
@@ -87,48 +84,50 @@ public class FirestoreSyncManager {
         syncFoodGoals();
         syncDailyActivity();
         syncDailyFood();
+        startWorkoutSync(localExercises);
 
-        // 2. Запрос к коллекции тренировок
-        db.collection("users").document(userId).collection("workouts")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    retryCount = 0; // Сброс при успехе
+//        // 2. Запрос к коллекции тренировок
+//        db.collection("users").document(userId).collection("workouts")
+//                .get()
+//                .addOnSuccessListener(queryDocumentSnapshots -> {
+//                    retryCount = 0; // Сброс при успехе
+//
+//                    Map<String, DocumentSnapshot> cloudMap = new HashMap<>();
+//                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
+//                        cloudMap.put(doc.getId(), doc);
+//                    }
+//
+//                    workoutSessionSync.startWorkoutSync(localExercises, cloudMap);
+//
+//                    WORKOUT_PRESET_NAME_TABLE_DAO presetDao = new WORKOUT_PRESET_NAME_TABLE_DAO(MainActivity.getAppDataBase());
+//                    presetWorkoutSync.pullPresetsFromCloud(presetDao);
+//                    presetWorkoutSync.pushLocalPresetsToCloud(presetDao);
+//
+//                    isSyncing = false;
+//                    Log.d("SyncManager", "Синхронизация завершена успешно.");
+//                })
+//                .addOnFailureListener(e -> {
+//                    isSyncing = false;
+//                    if (retryCount < MAX_RETRIES) {
+//                        retryCount++;
+//                        long delay = (long) Math.pow(2, retryCount) * 1000;
+//                        Log.w("SyncManager", "Ошибка связи. Повтор через " + delay + "мс");
+//
+//                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+//                            startFullSynchronization(localExercises); // Рекурсивный вызов оригинала
+//                        }, delay);
+//                    } else {
+//                        retryCount = 0;
+//                        Log.e("SyncManager", "Не удалось синхронизировать данные: " + e.getMessage());
+//
+//                        // Сообщение пользователю
+//                        new Handler(Looper.getMainLooper()).post(() ->
+//                                Toast.makeText(context,
+//                                        "Нет связи с сервером. Данные не синхронизированы.",
+//                                        Toast.LENGTH_LONG).show());
+//                    }
+//                });
 
-                    Map<String, DocumentSnapshot> cloudMap = new HashMap<>();
-                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
-                        cloudMap.put(doc.getId(), doc);
-                    }
-
-                    workoutSessionSync.startWorkoutSync(localExercises, cloudMap);
-
-                    WORKOUT_PRESET_NAME_TABLE_DAO presetDao = new WORKOUT_PRESET_NAME_TABLE_DAO(MainActivity.getAppDataBase());
-                    presetWorkoutSync.pullPresetsFromCloud(presetDao);
-                    presetWorkoutSync.pushLocalPresetsToCloud(presetDao);
-
-                    isSyncing = false;
-                    Log.d("SyncManager", "Синхронизация завершена успешно.");
-                })
-                .addOnFailureListener(e -> {
-                    isSyncing = false;
-                    if (retryCount < MAX_RETRIES) {
-                        retryCount++;
-                        long delay = (long) Math.pow(2, retryCount) * 1000;
-                        Log.w("SyncManager", "Ошибка связи. Повтор через " + delay + "мс");
-
-                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                            startFullSynchronization(localExercises); // Рекурсивный вызов оригинала
-                        }, delay);
-                    } else {
-                        retryCount = 0;
-                        Log.e("SyncManager", "Не удалось синхронизировать данные: " + e.getMessage());
-
-                        // Сообщение пользователю
-                        new Handler(Looper.getMainLooper()).post(() ->
-                                Toast.makeText(context,
-                                        "Нет связи с сервером. Данные не синхронизированы.",
-                                        Toast.LENGTH_LONG).show());
-                    }
-                });
     }
 
     // --- Остальные методы БЕЗ изменений в названиях ---
@@ -150,7 +149,7 @@ public class FirestoreSyncManager {
     }
 
     public void deleteExerciseFromCloud(ExerciseModel exercise) {
-        workoutSessionSync.removeExerciseFromCloud(exercise);
+        workoutSessionSync2.removeExerciseFromCloud(exercise);
     }
 
     public void uploadAllBaseExercises(List<BaseExModel> list, boolean isPublic) {
@@ -238,6 +237,23 @@ public class FirestoreSyncManager {
                 = (android.net.ConnectivityManager) context.getSystemService(android.content.Context.CONNECTIVITY_SERVICE);
         android.net.NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+
+
+
+    //======================================================================================================================
+    public void syncSingleExercise(ExerciseModel exercise) {
+        if (exercise == null) return;
+        List<ExerciseModel> list = new ArrayList<>();
+        list.add(exercise);
+        workoutSessionSync2.syncSpecificExercises(list);
+    }public void syncMultipleExercise(List<ExerciseModel> exercises) {
+        if (exercises == null) return;
+        workoutSessionSync2.syncSpecificExercises(exercises);
+    }
+    public void startWorkoutSync(List<ExerciseModel> exercises){
+        workoutSessionSync2.startWorkoutSync(exercises);
     }
 
 }

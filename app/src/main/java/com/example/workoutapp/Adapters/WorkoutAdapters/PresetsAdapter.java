@@ -117,7 +117,7 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsAdapter.MyViewHo
                         exModel.setExerciseName(exercise.getBase_ex_name());
                         exModel.setExerciseType(exercise.getBase_ex_type());
                         exModel.setExerciseBodyType(exercise.getBase_ex_bodyType());
-                        exModel.setExercise_uid(exercise.getBase_ex_uid());
+                        exModel.setExercise_uid(workExUid);
 
                         // Устанавливаем текущую дату (убедись, что формат совпадает с БД, например "yyyy-MM-dd")
                         String currentDate = new java.text.SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
@@ -134,7 +134,7 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsAdapter.MyViewHo
                 if (!exercisesToSync.isEmpty()) {
                     MainActivity mainActivity = (MainActivity) fragment.getActivity();
                     if (mainActivity != null) {
-                        mainActivity.getSyncManager().syncAllWorkouts(exercisesToSync);
+                        mainActivity.getSyncManager().syncMultipleExercise(exercisesToSync);
                         Log.d("PresetsAdapter", "Отправлено в облако упражнений: " + exercisesToSync.size());
                     }
                 }

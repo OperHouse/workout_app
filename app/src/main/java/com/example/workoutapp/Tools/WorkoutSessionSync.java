@@ -257,7 +257,7 @@ public class WorkoutSessionSync {
 
         // Путь к полю внутри мапы пишется через точку
         Map<String, Object> updates = new HashMap<>();
-        updates.put("exercises_map." + uid, com.google.firebase.firestore.FieldValue.delete());
+        updates.put(uid, com.google.firebase.firestore.FieldValue.delete());
 
         docRef.update(updates)
                 .addOnSuccessListener(aVoid -> Log.d(TAG, "Упражнение удалено из облачной карты"))

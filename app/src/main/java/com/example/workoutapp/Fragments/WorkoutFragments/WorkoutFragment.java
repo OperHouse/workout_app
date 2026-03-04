@@ -223,7 +223,7 @@ public class WorkoutFragment extends Fragment {
                 Log.d("SYNC_FINAL", "Отправка на сервер. Кол-во упражнений: " + finalSyncList.size());
 
                 // Отправляем
-                mainActivity.getSyncManager().syncAllWorkouts(finalSyncList);
+                mainActivity.getSyncManager().syncMultipleExercise(finalSyncList);
 
                 // Обновляем UI
                 exList = workoutExerciseTableDao.getExByState("unfinished");

@@ -176,7 +176,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
                     mainHandler.post(() -> {
                         innerAdapter.addSet(newSet);
                         Log.d("SyncDebug", "Exercise: " + exerciseModel.getExerciseName() + " UID: " + exerciseModel.getExercise_uid());
-                        MainActivity.getSyncManager().updateExerciseSets(exerciseModel);
+                        MainActivity.getSyncManager().syncSingleExercise(exerciseModel);
                         if (wasEmpty) {
                             if ("Время".equalsIgnoreCase(exerciseModel.getExerciseType()) ||
                                     "Кардио".equalsIgnoreCase(exerciseModel.getExerciseType())) {
@@ -223,6 +223,7 @@ public class OutsideAdapter extends RecyclerView.Adapter<OutsideAdapter.MyViewHo
                 if (position >= 0 && position < (exerciseModelList != null ? exerciseModelList.size() : 0)) {
                     executor.execute(() -> {
                         workoutExerciseTableDao.deleteExercise(elm);
+                        MainActivity.getSyncManager().deleteExerciseFromCloud(elm);
                         mainHandler.post(() -> {
                             exerciseModelList.remove(position);
                             notifyItemRemoved(position);

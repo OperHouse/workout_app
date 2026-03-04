@@ -17,6 +17,7 @@ import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutFragment;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
+import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.OnExItemClickListener;
 import com.example.workoutapp.Tools.UidGenerator;
@@ -97,13 +98,15 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
                             exerciseUid // <--- Передаем UID
                     );
 
+                    ExerciseModel addEx = workoutExerciseDao.getExByUid(exerciseUid);
+
                     // Обновляем кэш
                     MainActivity mainActivity = (MainActivity) fragment.requireActivity();
                     mainActivity.reloadExercisesFromDb();
 
                     // 3. СИНХРОНИЗАЦИЯ: Отправляем обновленный список упражнений в облако
                     // У MainActivity должен быть доступ к FirestoreSyncManager
-                    mainActivity.getSyncManager().syncAllWorkouts(mainActivity.getCachedExercises());
+                    mainActivity.getSyncManager().syncSingleExercise(addEx);
 
                     // --- Логика переключения фрагментов (без изменений) ---
                     WorkoutFragment workoutFragment = (WorkoutFragment)

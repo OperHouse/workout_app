@@ -139,7 +139,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 notifyItemRangeChanged(position, getItemCount() - position);
             }
             // Синхронизируем удаление
-            MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+            MainActivity.getSyncManager().syncSingleExercise(currentExercise);
         }
     }
 
@@ -233,7 +233,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                             liner.setBackgroundResource(R.drawable.card_border3);
                             weight.setEnabled(false);
                             reps.setEnabled(false);
-                            MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                            MainActivity.getSyncManager().syncSingleExercise(currentExercise);
                         });
                     });
                 } else {
@@ -244,7 +244,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                             liner.setBackgroundResource(R.drawable.card_border2);
                             weight.setEnabled(true);
                             reps.setEnabled(true);
-                            MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                            MainActivity.getSyncManager().syncSingleExercise(currentExercise);
                         });
                     });
                 }
@@ -256,7 +256,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 weight.setBackgroundResource(R.drawable.edit_text_back2);
                 executor.execute(() -> {
                     dao.updateStrengthSet(set, exId);
-                    MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                    MainActivity.getSyncManager().syncSingleExercise(currentExercise);
                 });
             }));
             reps.addTextChangedListener(new SimpleTextWatcher(s -> {
@@ -265,7 +265,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 reps.setBackgroundResource(R.drawable.edit_text_back2);
                 executor.execute(() -> {
                     dao.updateStrengthSet(set, exId);
-                    MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                    MainActivity.getSyncManager().syncSingleExercise(currentExercise);
                 });
             }));
         }
@@ -321,7 +321,7 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                         time.setEnabled(!isChecked);
                         distance.setEnabled(!isChecked);
                         temp.setEnabled(!isChecked);
-                        MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                        MainActivity.getSyncManager().syncSingleExercise(currentExercise);
                     });
                 });
             });
@@ -330,21 +330,21 @@ public class InnerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 set.setCardio_set_time(parseIntSafe(s));
                 executor.execute(() -> {
                     dao.updateCardioSet(set, exId);
-                    MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                    MainActivity.getSyncManager().syncSingleExercise(currentExercise);
                 });
             }));
             distance.addTextChangedListener(new SimpleTextWatcher(s -> {
                 set.setCardio_set_distance(parseDoubleSafe(s));
                 executor.execute(() -> {
                     dao.updateCardioSet(set, exId);
-                    MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                    MainActivity.getSyncManager().syncSingleExercise(currentExercise);
                 });
             }));
             temp.addTextChangedListener(new SimpleTextWatcher(s -> {
                 set.setCardio_set_temp(parseDoubleSafe(s));
                 executor.execute(() -> {
                     dao.updateCardioSet(set, exId);
-                    MainActivity.getSyncManager().updateExerciseSets(currentExercise);
+                    MainActivity.getSyncManager().syncSingleExercise(currentExercise);
                 });
             }));
         }

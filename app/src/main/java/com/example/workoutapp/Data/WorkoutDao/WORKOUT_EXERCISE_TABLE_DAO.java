@@ -416,6 +416,81 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
         return history;
     }
 
+    /**
+     * Полное удаление упражнения и всех его подходов по UID.
+     * Используется при очистке "пустых" старых тренировок в WorkoutSessionSync.
+     */
+    // =========================
+    // Удаление по UID (Для синхронизации)
+    // =========================
+    public void deleteExerciseByUid(String uid) {
+        if (uid == null || uid.isEmpty()) return;
+
+        // 1. Сначала находим внутренний ID упражнения
+        long exerciseId = -1;
+        Cursor cursor = db.query(AppDataBase.WORKOUT_EXERCISE_TABLE,
+                new String[]{AppDataBase.WORKOUT_EXERCISE_ID},
+                AppDataBase.WORKOUT_EXERCISE_UID + " = ?",
+                new String[]{uid}, null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            exerciseId = cursor.getLong(0);
+            cursor.close();
+        }
+
+        if (exerciseId != -1) {
+            db.beginTransaction();
+            try {
+                // 2. Удаляем подходы через существующие DAO (чтобы соблюсти логику)
+                strengthSetDao.deleteSetsForExercise(exerciseId);
+                cardioSetDao.deleteSetsForExercise(exerciseId);
+
+                // 3. Удаляем само упражнение
+                db.delete(AppDataBase.WORKOUT_EXERCISE_TABLE,
+                        AppDataBase.WORKOUT_EXERCISE_ID + " = ?",
+                        new String[]{String.valueOf(exerciseId)});
+
+                db.setTransactionSuccessful();
+                Log.d("DAO", "Удалено упражнение и подходы для UID: " + uid);
+            } catch (Exception e) {
+                Log.e("DAO", "Ошибка удаления по UID: " + e.getMessage());
+            } finally {
+                db.endTransaction();
+            }
+        }
+    }
+
+    /**
+     * Получает полную модель упражнения по его уникальному UID.
+     * @param exerciseUid Строковый UID упражнения.
+     * @return ExerciseModel или null, если упражнение не найдено.
+     */
+    public ExerciseModel getExByUid(String exerciseUid) {
+        if (exerciseUid == null || exerciseUid.isEmpty()) return null;
+
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    AppDataBase.WORKOUT_EXERCISE_TABLE,
+                    null, // Выбираем все колонки
+                    AppDataBase.WORKOUT_EXERCISE_UID + " = ?",
+                    new String[]{exerciseUid},
+                    null, null, null
+            );
+
+            if (cursor != null && cursor.moveToFirst()) {
+                // Используем твой готовый маппер, который подтянет и подходы, и время
+                return mapCursorToExercise(cursor);
+            }
+        } catch (Exception e) {
+            Log.e("DAO", "Ошибка при получении упражнения по UID: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+
+        return null;
+    }
+
 
 
     // Вспомогательные методы getDouble/getInt оставляем без изменений
