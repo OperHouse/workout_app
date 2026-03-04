@@ -9,49 +9,47 @@ import com.example.workoutapp.Data.ProfileDao.DailyFoodTrackingDao;
 import com.example.workoutapp.Data.ProfileDao.FoodGainGoalDao;
 import com.example.workoutapp.Data.ProfileDao.GeneralGoalDao;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
-import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
-import com.example.workoutapp.Models.ProfileModels.DailyFoodTrackingModel;
-import com.example.workoutapp.Models.ProfileModels.FoodGainGoalModel;
-import com.example.workoutapp.Models.ProfileModels.GeneralGoalModel;
-import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
-import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
+import com.example.workoutapp.Models.NutritionModels.FoodModel;
+import com.example.workoutapp.Models.ProfileModels.*;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class FirestoreSyncManager {
-    private final BaseExerciseSync baseExerciseSync;
-    private final WorkoutSessionSync workoutSessionSync;
-    private final ProfileSync profileSync;
-    private final PresetWorkoutSync presetWorkoutSync;
+
+    private static final String TAG = "FirestoreSyncManager";
+
     private final FirebaseFirestore db;
     private final String userId;
-    private final WeightSync weightSync;
-    private ActivityGoalSync activityGoalSync;
-    private GeneralGoalSync generalGoalSync;
-    private FoodGoalSync foodGoalSync;
-    private DailyActivitySync dailyActivitySync;
-    private DailyFoodSync dailyFoodSync;
 
-    private WorkoutSessionSync2 workoutSessionSync2;
+    private final BaseExerciseSync baseExerciseSync;
+    private final ProfileSync profileSync;
+    private final PresetWorkoutSync presetWorkoutSync;
+    private final WeightSync weightSync;
+    private final ActivityGoalSync activityGoalSync;
+    private final GeneralGoalSync generalGoalSync;
+    private final FoodGoalSync foodGoalSync;
+    private final DailyActivitySync dailyActivitySync;
+    private final DailyFoodSync dailyFoodSync;
+    private final WorkoutSessionSync2 workoutSessionSync2;
+    private final BaseFoodSync baseFoodSync;
+
+    private ListenerRegistration foodListener;
+
     private final Context context;
 
-    private boolean isSyncing = false;
-    private int retryCount = 0;
-    private static final int MAX_RETRIES = 5;
-
     public FirestoreSyncManager(Context context) {
+
         this.context = context.getApplicationContext();
         this.db = FirebaseFirestore.getInstance();
         this.userId = FirebaseAuth.getInstance().getUid();
+
         this.baseExerciseSync = new BaseExerciseSync();
-        this.workoutSessionSync = new WorkoutSessionSync();
         this.profileSync = new ProfileSync();
         this.weightSync = new WeightSync();
         this.presetWorkoutSync = new PresetWorkoutSync();
@@ -61,76 +59,82 @@ public class FirestoreSyncManager {
         this.dailyActivitySync = new DailyActivitySync();
         this.dailyFoodSync = new DailyFoodSync();
         this.workoutSessionSync2 = new WorkoutSessionSync2();
+        this.baseFoodSync = new BaseFoodSync();
     }
 
-    // Сохранил оригинальное название
+    // =====================================================
+    // FOOD METHODS (НОВАЯ АРХИТЕКТУРА)
+    // =====================================================
+
+    public void uploadFood(FoodModel food) {
+        if (userId == null) return;
+        baseFoodSync.uploadFood(food, null);
+    }
+
+    public void deleteFood(FoodModel food) {
+        if (userId == null) return;
+        baseFoodSync.deleteFood(food, null);
+    }
+
+    /**
+     * Запуск realtime синхронизации еды.
+     * Вызывать один раз после авторизации.
+     */
+    public void startFoodRealtimeSync() {
+
+        if (userId == null) return;
+
+        if (foodListener != null) {
+            foodListener.remove();
+        }
+
+        foodListener = baseFoodSync.startRealtimeSync(
+                new com.example.workoutapp.Data.NutritionDao.BaseEatDao(
+                        MainActivity.getAppDataBase()
+                )
+        );
+
+        Log.d(TAG, "Food realtime sync started");
+    }
+
+    public void stopFoodRealtimeSync() {
+        if (foodListener != null) {
+            foodListener.remove();
+            foodListener = null;
+        }
+    }
+
+    // =====================================================
+    // ПОЛНАЯ СИНХРОНИЗАЦИЯ (БЕЗ enableNetwork)
+    // =====================================================
+
     public void startFullSynchronization(List<ExerciseModel> localExercises) {
-        if (userId == null || isSyncing) return;
 
-        isSyncing = true;
-        Log.d("SyncManager", "Запущена полная синхронизация (попытка " + (retryCount + 1) + ")");
-//        if (!isNetworkAvailable()) {
-//            Log.d("SyncManager", "Синхронизация отменена: нет интернета");
-//            // Можно сразу показать Toast или просто тихо выйти
-//            return;
-//        }
+        if (userId == null) return;
 
-        // 1. Восстановление справочников
+        Log.d(TAG, "Starting full synchronization...");
+
         baseExerciseSync.restoreUserCustomExercises();
         profileSync.syncProfile();
         weightSync.syncWeightHistory();
+
         syncActivityGoals();
         syncGeneralGoals();
         syncFoodGoals();
         syncDailyActivity();
         syncDailyFood();
+
         startWorkoutSync(localExercises);
 
-//        // 2. Запрос к коллекции тренировок
-//        db.collection("users").document(userId).collection("workouts")
-//                .get()
-//                .addOnSuccessListener(queryDocumentSnapshots -> {
-//                    retryCount = 0; // Сброс при успехе
-//
-//                    Map<String, DocumentSnapshot> cloudMap = new HashMap<>();
-//                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
-//                        cloudMap.put(doc.getId(), doc);
-//                    }
-//
-//                    workoutSessionSync.startWorkoutSync(localExercises, cloudMap);
-//
-//                    WORKOUT_PRESET_NAME_TABLE_DAO presetDao = new WORKOUT_PRESET_NAME_TABLE_DAO(MainActivity.getAppDataBase());
-//                    presetWorkoutSync.pullPresetsFromCloud(presetDao);
-//                    presetWorkoutSync.pushLocalPresetsToCloud(presetDao);
-//
-//                    isSyncing = false;
-//                    Log.d("SyncManager", "Синхронизация завершена успешно.");
-//                })
-//                .addOnFailureListener(e -> {
-//                    isSyncing = false;
-//                    if (retryCount < MAX_RETRIES) {
-//                        retryCount++;
-//                        long delay = (long) Math.pow(2, retryCount) * 1000;
-//                        Log.w("SyncManager", "Ошибка связи. Повтор через " + delay + "мс");
-//
-//                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-//                            startFullSynchronization(localExercises); // Рекурсивный вызов оригинала
-//                        }, delay);
-//                    } else {
-//                        retryCount = 0;
-//                        Log.e("SyncManager", "Не удалось синхронизировать данные: " + e.getMessage());
-//
-//                        // Сообщение пользователю
-//                        new Handler(Looper.getMainLooper()).post(() ->
-//                                Toast.makeText(context,
-//                                        "Нет связи с сервером. Данные не синхронизированы.",
-//                                        Toast.LENGTH_LONG).show());
-//                    }
-//                });
+        // ЕДА теперь синкается через realtime listener
+        startFoodRealtimeSync();
 
+        Log.d(TAG, "Full sync initialized");
     }
 
-    // --- Остальные методы БЕЗ изменений в названиях ---
+    // =====================================================
+    // ОСТАЛЬНЫЕ СИНХРОНИЗАЦИИ
+    // =====================================================
 
     public void syncPresetUpdate(String name, String uid, List<ExerciseModel> exercises) {
         presetWorkoutSync.uploadPreset(name, uid, exercises);
@@ -142,10 +146,6 @@ public class FirestoreSyncManager {
 
     public void syncBaseExerciseChange(String oldName, BaseExModel updatedEx) {
         baseExerciseSync.syncBaseExerciseChange(oldName, updatedEx);
-    }
-
-    public void syncAllWorkouts(List<ExerciseModel> allExercises) {
-        workoutSessionSync.syncAllWorkouts(allExercises);
     }
 
     public void deleteExerciseFromCloud(ExerciseModel exercise) {
@@ -171,9 +171,9 @@ public class FirestoreSyncManager {
     }
 
     public void syncActivityGoals() {
-        ActivityGoalDao goalDao = new ActivityGoalDao(MainActivity.getAppDataBase());
-        activityGoalSync.pullGoalsFromCloud(goalDao);
-        activityGoalSync.pushLocalGoalsToCloud(goalDao);
+        ActivityGoalDao dao = new ActivityGoalDao(MainActivity.getAppDataBase());
+        activityGoalSync.pullGoalsFromCloud(dao);
+        activityGoalSync.pushLocalGoalsToCloud(dao);
     }
 
     public void uploadGeneralGoal(GeneralGoalModel newGoal) {
@@ -181,21 +181,19 @@ public class FirestoreSyncManager {
     }
 
     public void syncGeneralGoals() {
-        GeneralGoalDao goalDao = new GeneralGoalDao(MainActivity.getAppDataBase());
-        generalGoalSync.pullGoalsFromCloud(goalDao);
-        generalGoalSync.pushLocalGoalsToCloud(goalDao);
+        GeneralGoalDao dao = new GeneralGoalDao(MainActivity.getAppDataBase());
+        generalGoalSync.pullGoalsFromCloud(dao);
+        generalGoalSync.pushLocalGoalsToCloud(dao);
     }
 
     public void uploadFoodGoal(FoodGainGoalModel newGoal) {
-        FoodGainGoalDao goalDao = new FoodGainGoalDao(MainActivity.getAppDataBase());
-        foodGoalSync.pullGoalsFromCloud(goalDao);
-        foodGoalSync.pushLocalGoalsToCloud(goalDao);
+        foodGoalSync.uploadGoal(newGoal);
     }
 
     public void syncFoodGoals() {
-        FoodGainGoalDao goalDao = new FoodGainGoalDao(MainActivity.getAppDataBase());
-        foodGoalSync.pullGoalsFromCloud(goalDao);
-        foodGoalSync.pushLocalGoalsToCloud(goalDao);
+        FoodGainGoalDao dao = new FoodGainGoalDao(MainActivity.getAppDataBase());
+        foodGoalSync.pullGoalsFromCloud(dao);
+        foodGoalSync.pushLocalGoalsToCloud(dao);
     }
 
     public void uploadDailyActivity(DailyActivityTrackingModel model) {
@@ -218,42 +216,19 @@ public class FirestoreSyncManager {
         dailyFoodSync.pushLocalToCloud(dao);
     }
 
-    public void updateExerciseSets(ExerciseModel exercise) {
-        if (workoutSessionSync != null) {
-            workoutSessionSync.updateExerciseSetsInCloud(exercise);
-        }
-    }
-
-    public void uploadWorkoutSession(ExerciseModel exercise) {
-        if (workoutSessionSync != null) {
-            List<ExerciseModel> singleExList = Collections.singletonList(exercise);
-            com.example.workoutapp.Models.Helpers.WorkoutSessionModel session =
-                    new com.example.workoutapp.Models.Helpers.WorkoutSessionModel(exercise.getEx_Data(), singleExList);
-            workoutSessionSync.uploadWorkoutSession(session);
-        }
-    }
-    private boolean isNetworkAvailable() {
-        android.net.ConnectivityManager connectivityManager
-                = (android.net.ConnectivityManager) context.getSystemService(android.content.Context.CONNECTIVITY_SERVICE);
-        android.net.NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
-
-
-
-
-    //======================================================================================================================
     public void syncSingleExercise(ExerciseModel exercise) {
         if (exercise == null) return;
         List<ExerciseModel> list = new ArrayList<>();
         list.add(exercise);
         workoutSessionSync2.syncSpecificExercises(list);
-    }public void syncMultipleExercise(List<ExerciseModel> exercises) {
+    }
+
+    public void syncMultipleExercise(List<ExerciseModel> exercises) {
         if (exercises == null) return;
         workoutSessionSync2.syncSpecificExercises(exercises);
     }
-    public void startWorkoutSync(List<ExerciseModel> exercises){
+
+    public void startWorkoutSync(List<ExerciseModel> exercises) {
         workoutSessionSync2.startWorkoutSync(exercises);
     }
-
 }

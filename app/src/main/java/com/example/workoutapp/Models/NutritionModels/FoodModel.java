@@ -1,5 +1,7 @@
 package com.example.workoutapp.Models.NutritionModels;
 
+import com.google.firebase.Timestamp;
+
 public class FoodModel {
     private int food_id;
     private String food_name;
@@ -10,7 +12,9 @@ public class FoodModel {
     private int amount;
     private String measurement_type;
     private String food_uid;
-
+    private boolean deleted;
+    private long version;
+    private Timestamp updatedAt;
 
 
     private boolean isSelected = false;
@@ -61,6 +65,7 @@ public class FoodModel {
         this.amount = other.amount;
         this.measurement_type = other.measurement_type;
         this.isSelected = other.isSelected;
+        this.food_uid = other.food_uid;
     }
 
     public void setFood_id(int food_id) {
@@ -128,6 +133,7 @@ public class FoodModel {
     public void setMeasurement_type(String measurement_type) {
         this.measurement_type = measurement_type;
     }
+    @com.google.firebase.firestore.Exclude
     public boolean getIsSelected() {
         return isSelected;
     }
@@ -151,4 +157,27 @@ public class FoodModel {
     }
 
 
+    public long getVersion() {
+        return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public Timestamp getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

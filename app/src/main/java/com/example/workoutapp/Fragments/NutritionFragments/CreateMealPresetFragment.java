@@ -765,6 +765,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                 } else {
                     foodAdapter.deleteEat(eatToDelete);
                 }
+                MainActivity.getSyncManager().deleteFood(eatToDelete);
                 toggleUIState();
                 r.requestLayout();
                 dialogDeleteEat.dismiss();

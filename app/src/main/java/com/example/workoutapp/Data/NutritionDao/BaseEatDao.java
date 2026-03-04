@@ -9,6 +9,7 @@ import static com.example.workoutapp.Data.Tables.AppDataBase.BASE_FOOD_MEASUREME
 import static com.example.workoutapp.Data.Tables.AppDataBase.BASE_FOOD_NAME;
 import static com.example.workoutapp.Data.Tables.AppDataBase.BASE_FOOD_PROTEIN;
 import static com.example.workoutapp.Data.Tables.AppDataBase.BASE_FOOD_TABLE;
+import static com.example.workoutapp.Data.Tables.AppDataBase.BASE_FOOD_UID;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -127,6 +128,7 @@ public class BaseEatDao {
         values.put(BASE_FOOD_CALORIES, eat.getCalories());
         values.put(BASE_FOOD_AMOUNT, eat.getAmount());
         values.put(BASE_FOOD_MEASUREMENT_TYPE, eat.getMeasurement_type());
+        values.put(BASE_FOOD_UID, eat.getFood_uid());
         return values;
     }
 
@@ -139,8 +141,9 @@ public class BaseEatDao {
         double calories = cursor.getDouble(cursor.getColumnIndexOrThrow(BASE_FOOD_CALORIES));
         int amount = cursor.getInt(cursor.getColumnIndexOrThrow(BASE_FOOD_AMOUNT));
         String measurementType = cursor.getString(cursor.getColumnIndexOrThrow(BASE_FOOD_MEASUREMENT_TYPE));
+        String uid = cursor.getString(cursor.getColumnIndexOrThrow(BASE_FOOD_UID));
 
-        return new FoodModel(id, name, protein, fat, carb, calories, amount, measurementType);
+        return new FoodModel(id, name, protein, fat, carb, calories, amount, measurementType, uid);
     }
 
     public void deleteAll() {
@@ -153,5 +156,76 @@ public class BaseEatDao {
         if (cursor.moveToFirst()) count = cursor.getLong(0);
         cursor.close();
         return count;
+    }
+
+    /**
+     * Проверяет, существует ли продукт с таким UID в локальной базе.
+     * Это предотвращает дублирование при загрузке из облака.
+     */
+    public boolean isFoodUidExists(String uid) {
+        if (uid == null || uid.isEmpty()) return false;
+
+        Cursor cursor = null;
+        try {
+            cursor = db.query(
+                    BASE_FOOD_TABLE,
+                    new String[]{BASE_FOOD_ID},
+                    BASE_FOOD_UID + " = ?",
+                    new String[]{uid},
+                    null, null, null
+            );
+            return cursor != null && cursor.getCount() > 0;
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+    }
+
+    // ======================================================
+// INSERT OR UPDATE (UPSERT)
+// ======================================================
+
+    public void insertOrUpdate(FoodModel food) {
+
+        if (food == null || food.getFood_uid() == null) return;
+
+        db.beginTransaction();
+        try {
+
+            ContentValues values = getContentValues(food);
+
+            // Пытаемся обновить
+            int rows = db.update(
+                    BASE_FOOD_TABLE,
+                    values,
+                    BASE_FOOD_UID + " = ?",
+                    new String[]{food.getFood_uid()}
+            );
+
+            // Если ничего не обновилось — вставляем
+            if (rows == 0) {
+                db.insert(BASE_FOOD_TABLE, null, values);
+            }
+
+            db.setTransactionSuccessful();
+
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+
+    // ======================================================
+// DELETE BY UID
+// ======================================================
+
+    public void deleteByUid(String uid) {
+
+        if (uid == null) return;
+
+        db.delete(
+                BASE_FOOD_TABLE,
+                BASE_FOOD_UID + " = ?",
+                new String[]{uid}
+        );
     }
 }

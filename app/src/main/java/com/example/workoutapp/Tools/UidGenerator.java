@@ -29,8 +29,8 @@ public class UidGenerator {
         return "DFT_" + UUID.randomUUID().toString();
     }
 
-    public static String generateFoodUid() {
-        return "FOOD_" + UUID.randomUUID().toString();
+    public static String generateBaseFoodUid() {
+        return "BF_" + UUID.randomUUID().toString();
     }
 
     public static String generateMealUid() {
