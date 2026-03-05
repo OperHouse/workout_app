@@ -389,29 +389,42 @@ public class SelectionMealPresetsFragment extends Fragment implements OnPresetMe
         deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 int presetId = presetToDelete.getMeal_name_id();
-                List<Integer> eatIds = connectingMealPresetDao.getEatIdsForPreset(presetId);
+
+                String mealUid =
+                        presetMealNameDao.getMealUidById(presetId);
+
+                presetToDelete.setMeal_uid(mealUid);
+
+                // 1️⃣ Сначала отправляем soft delete в облако
+                MainActivity.getSyncManager().deleteMealPreset(presetToDelete);
+
+                List<Integer> eatIds =
+                        connectingMealPresetDao.getEatIdsForPreset(presetId);
+
                 connectingMealPresetDao.deleteAllForPreset(presetId);
                 presetMealNameDao.deleteMealPresetName(presetId);
 
-
-                for(Integer id: eatIds){
-                    if(!connectingMealPresetDao.doesEatIdExist(id)){
+                for (Integer id : eatIds) {
+                    if (!connectingMealPresetDao.doesEatIdExist(id)) {
                         presetEatDao.deletePresetFood(id);
                     }
                 }
 
+                // 3️⃣ Обновление адаптера
                 if (!searchText.isEmpty()) {
                     presetMealAdapter.removePresetElm(presetToDelete);
                     presetMealAdapter.setFilteredList(searchText);
-                }else {
+                } else {
                     presetMealAdapter.removePresetElm(presetToDelete);
                     presetMealAdapter.notifyDataSetChanged();
                 }
 
-                if(presetMealAdapter.getItemCount() == 0){
+                if (presetMealAdapter.getItemCount() == 0) {
                     textPressedBtn.setVisibility(View.VISIBLE);
                 }
+
                 r.requestLayout();
                 dialogDeleteEat.dismiss();
             }

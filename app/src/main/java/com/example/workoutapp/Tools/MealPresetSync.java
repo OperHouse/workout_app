@@ -20,6 +20,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.SetOptions;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class MealPresetSync {
@@ -100,28 +101,51 @@ public class MealPresetSync {
 
     public void deletePreset(MealModel meal, @Nullable SyncCallback callback) {
 
-        if (getUid() == null || meal == null) return;
+        if (getUid() == null || meal == null || meal.getMeal_uid() == null) {
 
-        DocumentReference ref = getCollection().document(meal.getMeal_uid());
+            Log.e(TAG, "Delete aborted: invalid data");
+
+            if (callback != null)
+                callback.onFailure("Invalid data");
+
+            return;
+        }
+
+        DocumentReference ref =
+                getCollection().document(meal.getMeal_uid());
 
         db.runTransaction(transaction -> {
 
-            DocumentSnapshot snapshot = transaction.get(ref);
-            if (!snapshot.exists()) return null;
+            Long currentVersion = null;
 
-            Long v = snapshot.getLong("version");
-            long newVersion = v != null ? v + 1 : 1;
+            try {
+                DocumentSnapshot snapshot = transaction.get(ref);
+                currentVersion = snapshot.getLong("version");
+            } catch (Exception ignored) {}
 
-            transaction.update(ref,
-                    "deleted", true,
-                    "version", newVersion,
-                    "updatedAt", FieldValue.serverTimestamp());
+            long newVersion = currentVersion != null
+                    ? currentVersion + 1
+                    : 1;
+
+            transaction.set(ref, new HashMap<String, Object>() {{
+                put("deleted", true);
+                put("version", newVersion);
+                put("updatedAt", FieldValue.serverTimestamp());
+            }}, SetOptions.merge());
 
             return null;
 
         }).addOnSuccessListener(unused -> {
+
+            Log.d(TAG, "Preset soft-deleted in cloud: "
+                    + meal.getMeal_uid());
+
             if (callback != null) callback.onSuccess();
+
         }).addOnFailureListener(e -> {
+
+            Log.e(TAG, "Delete failed: " + e.getMessage());
+
             if (callback != null) callback.onFailure(e.getMessage());
         });
     }

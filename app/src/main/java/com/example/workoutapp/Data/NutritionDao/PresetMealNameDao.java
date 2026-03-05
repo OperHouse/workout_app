@@ -124,26 +124,30 @@ public class PresetMealNameDao {
             ConnectingMealPresetDao connectionDao,
             PresetEatDao eatDao
     ) {
+
         List<MealModel> presetMeals = new ArrayList<>();
         List<MealNameModel> mealNames = getAllMealPresetNames();
 
         for (MealNameModel meal : mealNames) {
+
             int mealId = meal.getMeal_name_id();
             String name = meal.getMeal_name();
 
-            // Получаем связи
+            String mealUid = getMealUidById(mealId);
+
             List<Integer> eatIds = connectionDao.getEatIdsForPreset(mealId);
 
-            // Получаем FoodModel по id
             List<FoodModel> eatList = new ArrayList<>();
-                for (Integer eatId : eatIds) {
+            for (Integer eatId : eatIds) {
                 FoodModel eat = eatDao.getPresetFoodById(eatId);
                 if (eat != null) {
                     eatList.add(eat);
                 }
             }
 
-            presetMeals.add(new MealModel(mealId, name, eatList));
+            presetMeals.add(
+                    new MealModel(mealId, name, "", eatList, mealUid)
+            );
         }
 
         return presetMeals;
@@ -205,8 +209,8 @@ public class PresetMealNameDao {
 
         Cursor cursor = db.query(
                 AppDataBase.MEAL_PRESET_NAME_TABLE,
-                new String[]{"meal_preset_uid"},
-                "meal_uid = ?",
+                new String[]{AppDataBase.MEAL_PRESET_NAME_ID},
+                AppDataBase.MEAL_PRESET_UID + " = ?",
                 new String[]{uid},
                 null, null, null
         );
