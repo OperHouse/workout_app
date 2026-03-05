@@ -24,6 +24,7 @@ import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.OnPresetMealLongClickListener;
 import com.example.workoutapp.Tools.OnPresetMealSelectedListener;
+import com.example.workoutapp.Tools.UidGenerator;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -105,40 +106,94 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
             });
 
             holder.itemView.setOnClickListener(v -> {
+
                 if (fragment instanceof SelectionMealPresetsFragment) {
+
                     this.mealNameDao = new MealNameDao(MainActivity.getAppDataBase());
+
                     String formattedDate = "";
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         LocalDate currentDate = LocalDate.now();
-                        formattedDate = currentDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                        formattedDate = currentDate.format(
+                                DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                     }
 
-                    preset.setMealData(formattedDate); // Устанавливаем дату в модель
+                    preset.setMealData(formattedDate);
                     String presetName = preset.getMeal_name();
 
-                    boolean exists = mealNameDao.checkIfMealExist(presetName,formattedDate);
+                    boolean exists =
+                            mealNameDao.checkIfMealExist(
+                                    presetName,
+                                    formattedDate);
 
                     if (!exists) {
-                        // Сохраняем объект
-                        this.mealFoodDao = new MealFoodDao(MainActivity.getAppDataBase());
-                        this.connectingMealDao = new ConnectingMealDao(MainActivity.getAppDataBase());
 
-                        mealNameDao.insertMealName(preset.getMeal_name(), formattedDate);
-                        int meal_Id = (int) mealNameDao.getLastInsertedMealNameId();
-                        // Добавляем еду и сохраняем полученные IDs
-                        List<Long> insertedEatIds = new ArrayList<>();
-                        for (FoodModel eat : preset.getMeal_food_list()) {
-                            long id = mealFoodDao.addSingleFood(eat); // новый метод
+                        this.mealFoodDao =
+                                new MealFoodDao(MainActivity.getAppDataBase());
+                        this.connectingMealDao =
+                                new ConnectingMealDao(MainActivity.getAppDataBase());
+                        String mealUid = UidGenerator.generateMealUid();
+
+                        // 1️⃣ Создаём meal локально
+                        mealNameDao.insertMealName(
+                                preset.getMeal_name(),
+                                formattedDate,
+                                mealUid);
+
+                        int meal_Id =
+                                (int) mealNameDao.getLastInsertedMealNameId();
+
+                        // 2️⃣ Копируем еду
+                        List<Long> insertedEatIds =
+                                new ArrayList<>();
+
+                        for (FoodModel eat :
+                                preset.getMeal_food_list()) {
+
+                            long id =
+                                    mealFoodDao.addSingleFood(eat);
+
                             insertedEatIds.add(id);
                         }
 
-                        // Связываем mealId с этими eatId
-                        connectingMealDao.connecting(meal_Id, insertedEatIds);
+                        connectingMealDao.connecting(
+                                meal_Id,
+                                insertedEatIds);
+
+                        // =========================================
+                        // 🔥 СИНХРОНИЗАЦИЯ
+                        // =========================================
+
+
+
+                        // ВАЖНО: сохранить uid в локальной таблице!
+                        mealNameDao.setMealUid(meal_Id, mealUid);
+
+                        MealModel meal =
+                                new MealModel(
+                                        meal_Id,
+                                        preset.getMeal_name(),
+                                        formattedDate,
+                                        preset.getMeal_food_list(),
+                                        mealUid
+                                );
+
+                        meal.setDeleted(false);
+                        meal.setVersion(1);
+
+                        MainActivity.getSyncManager().uploadMeal(meal);
+
+                        // =========================================
 
                         selectionListener.onPresetMealSelected();
-                        fragment.getParentFragmentManager().popBackStack();
+                        fragment.getParentFragmentManager()
+                                .popBackStack();
+
                     } else {
-                        Toast.makeText(context, "Такой приём пищи уже добавлен!", Toast.LENGTH_SHORT).show();
+
+                        Toast.makeText(context,
+                                "Такой приём пищи уже добавлен!",
+                                Toast.LENGTH_SHORT).show();
                     }
                 }
             });

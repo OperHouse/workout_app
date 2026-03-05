@@ -40,10 +40,12 @@ public class FirestoreSyncManager {
     private final WorkoutSessionSync2 workoutSessionSync2;
     private final BaseFoodSync baseFoodSync;
     private final MealPresetSync mealPresetSync;
+    private final MealSync mealSync;
 
     private ListenerRegistration foodListener;
 
     private final Context context;
+
 
     public FirestoreSyncManager(Context context) {
 
@@ -63,6 +65,7 @@ public class FirestoreSyncManager {
         this.workoutSessionSync2 = new WorkoutSessionSync2();
         this.baseFoodSync = new BaseFoodSync();
         this.mealPresetSync = new MealPresetSync();
+        this.mealSync = new MealSync();
     }
 
     // =====================================================
@@ -244,5 +247,8 @@ public class FirestoreSyncManager {
 
     public void deleteMealPreset(MealModel meal){
         mealPresetSync.deletePreset(meal, null);
+    }
+    public void uploadMeal(MealModel meal){
+        mealSync.uploadMeal(meal, null);
     }
 }

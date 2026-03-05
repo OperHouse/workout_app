@@ -34,6 +34,7 @@ public class MealFoodDao {
         values.put(AppDataBase.MEAL_FOOD_CALORIES, food.getCalories());
         values.put(AppDataBase.MEAL_FOOD_AMOUNT, food.getAmount());
         values.put(AppDataBase.MEAL_FOOD_MEASUREMENT_TYPE, food.getMeasurement_type());
+        values.put(AppDataBase.MEAL_FOOD_UID, food.getFood_uid());
 
         long id = db.insert(AppDataBase.MEAL_FOOD_TABLE, null, values);
         Log.d("MealFoodDao", "Inserted food with id: " + id);
@@ -76,7 +77,8 @@ public class MealFoodDao {
                             cursor.getDouble(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_CARB)),
                             cursor.getDouble(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_CALORIES)),
                             cursor.getInt(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_AMOUNT)),
-                            cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_MEASUREMENT_TYPE))
+                            cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_MEASUREMENT_TYPE)),
+                            cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_UID))
                     );
                     foodList.add(food);
                 } while (cursor.moveToNext());
@@ -102,6 +104,7 @@ public class MealFoodDao {
         values.put(AppDataBase.MEAL_FOOD_CALORIES, food.getCalories());
         values.put(AppDataBase.MEAL_FOOD_AMOUNT, food.getAmount());
         values.put(AppDataBase.MEAL_FOOD_MEASUREMENT_TYPE, food.getMeasurement_type());
+        values.put(AppDataBase.MEAL_FOOD_UID, food.getFood_uid());
 
         db.update(
                 AppDataBase.MEAL_FOOD_TABLE,

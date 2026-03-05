@@ -374,15 +374,39 @@ public class NutritionFragment extends Fragment {
         });
 
         createMealBtn.setOnClickListener(v -> {
+
             String mealName = nameMeal_ET.getText().toString().trim();
+
             if (mealName.isEmpty()) {
                 tvErrorName.setText("Пожалуйста, введите название приёма пищи");
                 tvErrorName.setVisibility(View.VISIBLE);
-            } else {
-                mealNameDao.insertMealName(mealName, date);
-                updateMealList(date);
-                dialog.dismiss();
+                return;
             }
+            String mealUid = UidGenerator.generateMealUid();
+
+            // 1️⃣ Сохраняем локально
+            long localId = mealNameDao.insertMealName(mealName, date, mealUid);
+
+            // 2️⃣ Создаем UID
+
+
+            // 3️⃣ Создаем пустой MealModel
+            MealModel meal = new MealModel(
+                    (int) localId,
+                    mealName,
+                    date,
+                    new ArrayList<>(),
+                    mealUid
+            );
+
+            meal.setDeleted(false);
+            meal.setVersion(1);
+
+            MainActivity.getSyncManager().uploadMeal(meal);
+
+            // 5️⃣ Обновляем UI
+            updateMealList(date);
+            dialog.dismiss();
         });
 
         dialog.show();

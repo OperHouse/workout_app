@@ -955,7 +955,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                 localMealId = mealNameId;
             }
 
-// создаём MealModel для синхронизации с сервером
+            // создаём MealModel для синхронизации с сервером
             MealModel mealToSync = new MealModel(
                     (int) localMealId,
                     presetMealName,
@@ -963,7 +963,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                     mealUid
             );
 
-// загружаем на сервер
+            // загружаем на сервер
             MainActivity.getSyncManager().syncMealPreset(mealToSync);
 
             dialog.dismiss();

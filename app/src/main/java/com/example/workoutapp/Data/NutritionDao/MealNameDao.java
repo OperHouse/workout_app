@@ -25,10 +25,11 @@ public class MealNameDao {
     /**
      * Добавляет название приёма пищи и возвращает ID новой записи
      */
-    public long insertMealName(String name, String date) {
+    public long insertMealName(String name, String date, String uid) {
         ContentValues values = new ContentValues();
         values.put(AppDataBase.MEAL_NAME, name);
         values.put(AppDataBase.MEAL_DATA, date);
+        values.put(AppDataBase.MEAL_NAME_UID, uid);
 
         long id = db.insert(AppDataBase.MEAL_NAME_TABLE, null, values);
         Log.d("MealNameDao", "Inserted meal name with id: " + id);
@@ -204,5 +205,25 @@ public class MealNameDao {
         if (cursor.moveToFirst()) count = cursor.getLong(0);
         cursor.close();
         return count;
+    }
+
+    // ========================= SET UID ========================= //
+
+    public void setMealUid(long id, String uid) {
+
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.MEAL_NAME_UID, uid);
+
+        int rows = db.update(
+                AppDataBase.MEAL_NAME_TABLE,
+                values,
+                AppDataBase.MEAL_NAME_ID + " = ?",
+                new String[]{String.valueOf(id)}
+        );
+
+        Log.d("MealNameDao",
+                "setMealUid for id: " + id +
+                        ", uid: " + uid +
+                        ", rows updated: " + rows);
     }
 }
