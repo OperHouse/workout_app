@@ -30,25 +30,55 @@ public class PresetMealNameDao {
     }
 
     public MealModel getMealById(long mealId, ConnectingMealPresetDao connectionDao, PresetEatDao eatDao) {
-        // Получаем имя пресета
+
+        // имя пресета
         String mealName = getMealPresetNameById(mealId);
         if (mealName == null) return null;
 
-        // Получаем связи
+        // дата
+        String mealDate = getMealDateById(mealId);
+
+        // связи
         List<Integer> eatIds = connectionDao.getEatIdsForPreset((int) mealId);
 
-        // Получаем список FoodModel
+        // список еды
         List<FoodModel> eatList = new ArrayList<>();
         for (Integer eatId : eatIds) {
             FoodModel eat = eatDao.getPresetFoodById(eatId);
             if (eat != null) eatList.add(eat);
         }
 
-        // Получаем meal_uid
+        // uid
         String mealUid = getMealUidById(mealId);
 
-        // Создаём MealModel
-        return new MealModel((int) mealId, mealName, eatList, mealUid);
+        return new MealModel((int) mealId, mealName, mealUid, mealDate, eatList);
+    }
+
+    public String getMealDateById(long id) {
+
+        String date = "";
+        Cursor cursor = null;
+
+        try {
+            cursor = db.query(
+                    AppDataBase.MEAL_PRESET_NAME_TABLE,
+                    new String[]{AppDataBase.MEAL_DATA},
+                    AppDataBase.MEAL_PRESET_NAME_ID + " = ?",
+                    new String[]{String.valueOf(id)},
+                    null,
+                    null,
+                    null
+            );
+
+            if (cursor.moveToFirst()) {
+                date = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_DATA));
+            }
+
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+
+        return date;
     }
 
 
@@ -132,6 +162,8 @@ public class PresetMealNameDao {
 
             int mealId = meal.getMeal_name_id();
             String name = meal.getMeal_name();
+            String date = meal.getMealData();
+
 
             String mealUid = getMealUidById(mealId);
 
@@ -146,7 +178,7 @@ public class PresetMealNameDao {
             }
 
             presetMeals.add(
-                    new MealModel(mealId, name, "", eatList, mealUid)
+                    new MealModel(mealId, name,  mealUid, date, eatList)
             );
         }
 
@@ -265,5 +297,7 @@ public class PresetMealNameDao {
                 new String[]{String.valueOf(mealId)}
         );
     }
+
+
 
 }

@@ -118,6 +118,7 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
             public void onFoodUpdated(FoodModel updated) {
                 mealElm.updateFood(updated); // метод внутри MealModel
                 notifyItemChanged(position);
+                MainActivity.getSyncManager().uploadMeal(mealElm);
             }
 
             @Override
@@ -129,6 +130,8 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
                 if (fragment instanceof NutritionFragment) {
                     ((NutritionFragment) fragment).syncDailyTotals();
                 }
+
+                MainActivity.getSyncManager().uploadMeal(mealElm);
             }
         });
 
@@ -177,6 +180,8 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
             dialogDeleteMeal.dismiss();
 
             int mealId = elm.getMeal_name_id();
+
+            MainActivity.getSyncManager().deleteMeal(elm);
 
             // DAO
             ConnectingMealDao connectingMealDao = new ConnectingMealDao(MainActivity.getAppDataBase());

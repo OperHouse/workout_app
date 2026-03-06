@@ -182,6 +182,7 @@ public class NutritionFragment extends Fragment {
             MealModel meal = new MealModel(
                     mealId,
                     mealName.getMeal_name(),
+                    mealName.getMeal_uid(),
                     mealName.getMealData(),
                     foodMealDao.getMealFoodsByIds(connectingMealDao.getFoodIdsForMeal(mealId))
             );
@@ -320,6 +321,7 @@ public class NutritionFragment extends Fragment {
             MealModel meal = new MealModel(
                     mealId,
                     mealName.getMeal_name(),
+                    mealName.getMeal_uid(),
                     mealName.getMealData(),
                     foodMealDao.getMealFoodsByIds(
                             connectingMealDao.getFoodIdsForMeal(mealId)
@@ -394,9 +396,10 @@ public class NutritionFragment extends Fragment {
             MealModel meal = new MealModel(
                     (int) localId,
                     mealName,
+                    mealUid,
                     date,
-                    new ArrayList<>(),
-                    mealUid
+                    new ArrayList<>()
+
             );
 
             meal.setDeleted(false);
@@ -443,7 +446,13 @@ public class NutritionFragment extends Fragment {
             String name = mealName.getMeal_name();
             String mealData = mealName.getMealData();
             // Создаем новый MealModel с текущим списком foodModels
-            MealModel meal = new MealModel(mealId, name, mealData, foodMealDao.getMealFoodsByIds(connectingMealDao.getFoodIdsForMeal(mealId)));
+            MealModel meal = new MealModel(
+                    mealId,
+                    name,
+                    mealName.getMeal_uid(),
+                    mealData,
+                    foodMealDao.getMealFoodsByIds(connectingMealDao.getFoodIdsForMeal(mealId))
+            );
             mealList.add(new MealModel(meal)); // Добавляем в новый список
         }
     }

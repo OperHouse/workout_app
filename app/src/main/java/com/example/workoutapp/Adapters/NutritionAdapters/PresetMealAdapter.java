@@ -173,9 +173,9 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
                                 new MealModel(
                                         meal_Id,
                                         preset.getMeal_name(),
+                                        mealUid,
                                         formattedDate,
-                                        preset.getMeal_food_list(),
-                                        mealUid
+                                        preset.getMeal_food_list()
                                 );
 
                         meal.setDeleted(false);

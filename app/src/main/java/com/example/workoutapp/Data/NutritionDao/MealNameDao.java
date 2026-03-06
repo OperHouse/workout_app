@@ -5,6 +5,8 @@ import android.database.Cursor;
 import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
+import com.example.workoutapp.Models.NutritionModels.FoodModel;
+import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.Models.NutritionModels.MealNameModel;
 
 import net.sqlcipher.database.SQLiteDatabase;
@@ -73,7 +75,8 @@ public class MealNameDao {
                 mealModel = new MealNameModel(
                         cursor.getInt(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_NAME_ID)),
                         cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_NAME)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_DATA))
+                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_DATA)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_NAME_UID))
                 );
             }
         } finally {
@@ -147,7 +150,8 @@ public class MealNameDao {
                     MealNameModel model = new MealNameModel(
                             cursor.getInt(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_NAME_ID)),
                             cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_NAME)),
-                            cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_DATA))
+                            cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_DATA)),
+                            cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_NAME_UID))
                     );
                     nameList.add(model);
                 } while (cursor.moveToNext());
@@ -226,4 +230,32 @@ public class MealNameDao {
                         ", uid: " + uid +
                         ", rows updated: " + rows);
     }
+
+    public MealModel getMealById(long mealId, ConnectingMealDao connectionDao, MealFoodDao foodDao) {
+        // Получаем модель названия еды (MealNameModel)
+        MealNameModel mealNameModel = getMealNameModelById(mealId);
+        if (mealNameModel == null) return null;
+
+        String mealName = mealNameModel.getMeal_name();
+        String mealDate = mealNameModel.getMealData();
+        String mealUid = mealNameModel.getMeal_uid();
+
+        // Получаем список ID еды, связанных с этим приёмом пищи
+        List<Long> foodIds = connectionDao.getFoodIdsForMeal((int) mealId);
+
+        // Формируем список FoodModel через существующий метод
+        List<FoodModel> foodList = new ArrayList<>();
+        for (Long foodId : foodIds) {
+            List<FoodModel> foods = foodDao.getMealFoodsByIds(
+                    List.of(foodId) // передаём один ID в список
+            );
+            if (!foods.isEmpty()) {
+                foodList.add(foods.get(0));
+            }
+        }
+
+        // Возвращаем MealModel
+        return new MealModel((int) mealId, mealName, mealUid, mealDate, foodList);
+    }
+
 }

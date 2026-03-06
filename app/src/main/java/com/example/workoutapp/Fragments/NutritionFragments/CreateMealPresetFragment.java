@@ -40,6 +40,7 @@ import com.example.workoutapp.Data.NutritionDao.BaseEatDao;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealPresetDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
+import com.example.workoutapp.Data.NutritionDao.MealNameDao;
 import com.example.workoutapp.Data.NutritionDao.PresetEatDao;
 import com.example.workoutapp.Data.NutritionDao.PresetMealNameDao;
 import com.example.workoutapp.MainActivity;
@@ -351,16 +352,29 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
             public void onClick(View v) {
 
                 if (currentMode == NutritionMode.ADD_MEAL) {
-                    // Получаем выбранные продукты
+
                     List<FoodModel> selected = foodAdapter.getPressedEat();
+
                     if (selected.isEmpty()) {
                         Toast.makeText(requireContext(), "Выберите еду для добавления", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-
                     ConnectingMealDao connectingMealDao = new ConnectingMealDao(MainActivity.getAppDataBase());
                     MealFoodDao mealFoodDao = new MealFoodDao(MainActivity.getAppDataBase());
+
+                    for (FoodModel food : selected) {
+                        connectingMealDao.connectingSingleFood(mealId, mealFoodDao.addSingleFood(food));
+                    }
+
+                    // получаем обновлённый meal
+                    MealNameDao mealNameDao = new MealNameDao(MainActivity.getAppDataBase());
+                    MealModel meal = mealNameDao.getMealById(mealId, connectingMealDao, mealFoodDao);
+
+                    // синк обновления
+                    MainActivity.getSyncManager().uploadMeal(meal);
+
+
                     for (FoodModel food : selected) {
                         connectingMealDao.connectingSingleFood(mealId, mealFoodDao.addSingleFood(food));
                     }
@@ -916,6 +930,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
 
             long localMealId;
             String mealUid;
+            String date;
             List<FoodModel> foodsToSync = new ArrayList<>();
 
             if (mealId > 0) {
@@ -924,6 +939,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                 connectingMealPresetDao.deleteAllForPreset(mealId);
 
                 MealModel existingMeal = presetMealNameDao.getMealById(mealId, connectingMealPresetDao, presetEatDao);
+                date = existingMeal.getMealData();
                 mealUid = existingMeal != null ? existingMeal.getMeal_uid() : UidGenerator.generateMealPresetUid();
 
                 for (FoodModel eat : pressedEat) {
@@ -941,6 +957,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                 mealUid = UidGenerator.generateMealPresetUid();
                 // создание нового пресета
                 long mealNameId = presetMealNameDao.addMealPresetName(presetMealName,mealUid);
+                date = presetMealNameDao.getMealDateById(mealNameId);
 
 
                 for (FoodModel eat : pressedEat) {
@@ -955,12 +972,14 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                 localMealId = mealNameId;
             }
 
-            // создаём MealModel для синхронизации с сервером
+
             MealModel mealToSync = new MealModel(
                     (int) localMealId,
                     presetMealName,
-                    foodsToSync, // именно этот список, с уникальными food_uid
-                    mealUid
+                    mealUid,
+                    date,
+                    foodsToSync
+
             );
 
             // загружаем на сервер

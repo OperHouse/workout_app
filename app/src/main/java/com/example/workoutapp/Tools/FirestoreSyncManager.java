@@ -251,4 +251,8 @@ public class FirestoreSyncManager {
     public void uploadMeal(MealModel meal){
         mealSync.uploadMeal(meal, null);
     }
+
+    public void deleteMeal(MealModel meal) {
+        mealSync.deleteMeal(meal, null);
+    }
 }
