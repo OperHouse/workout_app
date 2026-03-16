@@ -19,7 +19,7 @@ import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutFragment;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Tools.EncryptionTools.DatabaseProvider;
-import com.example.workoutapp.Tools.FirestoreSyncManager;
+import com.example.workoutapp.Tools.SyncTools.FirestoreSyncManager;
 import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthConnectHelper;
 import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthConnectReader;
 import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthPermissions;

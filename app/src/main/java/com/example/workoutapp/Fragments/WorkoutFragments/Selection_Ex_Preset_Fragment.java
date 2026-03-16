@@ -45,7 +45,7 @@ import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.Tools.FirestoreSyncManager;
+import com.example.workoutapp.Tools.SyncTools.FirestoreSyncManager;
 import com.example.workoutapp.Tools.UidGenerator;
 import com.example.workoutapp.Tools.WorkoutMode;
 

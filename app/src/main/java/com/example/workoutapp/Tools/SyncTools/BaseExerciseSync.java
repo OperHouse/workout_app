@@ -1,4 +1,4 @@
-package com.example.workoutapp.Tools;
+package com.example.workoutapp.Tools.SyncTools;
 
 import static android.content.ContentValues.TAG;
 

@@ -1,8 +1,9 @@
-package com.example.workoutapp.Tools;
+package com.example.workoutapp.Tools.SyncTools;
 
 import android.util.Log;
 import com.example.workoutapp.Data.ProfileDao.FoodGainGoalDao;
 import com.example.workoutapp.Models.ProfileModels.FoodGainGoalModel;
+import com.example.workoutapp.Tools.UidGenerator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;

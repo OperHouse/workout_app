@@ -1,14 +1,29 @@
-package com.example.workoutapp.Tools;
+package com.example.workoutapp.Tools.SyncTools;
 
 import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
+import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
+import com.example.workoutapp.Data.NutritionDao.MealNameDao;
+import com.example.workoutapp.MainActivity;
+import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.example.workoutapp.Models.NutritionModels.MealModel;
+import com.example.workoutapp.Tools.UidGenerator;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.*;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.SetOptions;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MealSync {
 
@@ -23,11 +38,13 @@ public class MealSync {
 
     public interface SyncCallback {
         void onSuccess();
+
         void onFailure(String error);
     }
 
     public interface MealsListener {
         void onMealsChanged(List<MealModel> meals);
+
         void onError(String error);
     }
 
@@ -235,32 +252,60 @@ public class MealSync {
     // FIRST LOAD (ALL DATA)
     // =====================================================
 
-    public void loadAllMeals(MealsListener listener) {
+    public void loadAllMeals() {
+        // Инициализация DAO
+        MealNameDao nameDao = new MealNameDao(MainActivity.getAppDataBase());
+        MealFoodDao foodDao = new MealFoodDao(MainActivity.getAppDataBase());
+        ConnectingMealDao connectionDao = new ConnectingMealDao(MainActivity.getAppDataBase());
 
         if (getUid() == null) return;
 
         getMealsCollection()
+                .whereEqualTo("deleted", false)
                 .get()
                 .addOnSuccessListener(snapshots -> {
+                    if (snapshots == null) return;
 
-                    List<MealModel> list =
-                            new ArrayList<>();
-
-                    for (DocumentSnapshot doc
-                            : snapshots.getDocuments()) {
-
-                        MealModel meal =
-                                doc.toObject(
-                                        MealModel.class);
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        MealModel meal = doc.toObject(MealModel.class);
 
                         if (meal != null) {
-                            list.add(meal);
+                            // 1. Сохраняем прием пищи (Meal Name)
+                            // ВАЖНО: Добавь в MealNameDao проверку на существующий UID,
+                            // чтобы не создавать дубли при каждой загрузке.
+                            long localMealId = nameDao.insertMealName(
+                                    meal.getMeal_name(),
+                                    meal.getMealData(),
+                                    meal.getMeal_uid()
+                            );
+
+                            if (localMealId == -1) {
+                                Log.e(TAG, "Ошибка: Прием пищи не сохранен (возможно, уже есть)");
+                                // Если прием пищи уже есть, нужно получить его существующий ID,
+                                // иначе связи не запишутся.
+                                continue;
+                            }
+
+                            // 2. Сохраняем продукты
+                            if (meal.getMeal_food_list() != null) {
+                                for (FoodModel food : meal.getMeal_food_list()) {
+
+                                    // Добавляем еду и получаем её ID (здесь сработает твоя проверка на UID)
+                                    long fId = foodDao.addSingleFood(food);
+
+                                    // 3. Записываем связь, только если fId валидный
+                                    if (fId != -1) {
+                                        connectionDao.connectingSingleFood(localMealId, fId);
+                                        Log.d(TAG, "Связь создана: Meal " + localMealId + " -> Food " + fId);
+                                    } else {
+                                        Log.e(TAG, "Не удалось сохранить еду: " + food.getFood_name());
+                                    }
+                                }
+                            }
                         }
                     }
-
-                    listener.onMealsChanged(list);
-
-                }).addOnFailureListener(e ->
-                        listener.onError(e.getMessage()));
+                    Log.d(TAG, "Синхронизация всех приемов пищи завершена");
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "Ошибка loadAllMeals: " + e.getMessage()));
     }
 }

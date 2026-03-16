@@ -1,4 +1,4 @@
-package com.example.workoutapp.Tools;
+package com.example.workoutapp.Tools.SyncTools;
 
 import android.content.Context;
 import android.util.Log;
@@ -14,6 +14,8 @@ import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.Models.ProfileModels.*;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
+import com.example.workoutapp.Tools.WeightSync;
+import com.example.workoutapp.Tools.WorkoutSessionSync2;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -138,6 +140,8 @@ public class FirestoreSyncManager {
         Log.d(TAG, "Starting sync of all meal presets...");
         mealPresetSync.downloadAllOnce();
 
+        receiveMealFromServer();
+
         Log.d(TAG, "Full sync initialized");
     }
 
@@ -254,5 +258,9 @@ public class FirestoreSyncManager {
 
     public void deleteMeal(MealModel meal) {
         mealSync.deleteMeal(meal, null);
+    }
+
+    public void receiveMealFromServer(){
+        mealSync.loadAllMeals();
     }
 }

@@ -1,4 +1,4 @@
-package com.example.workoutapp.Tools;
+package com.example.workoutapp.Tools.SyncTools;
 
 import android.util.Log;
 
@@ -15,7 +15,6 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.SetOptions;
-import java.util.Date;
 
 import com.google.firebase.Timestamp;
 import java.util.UUID;

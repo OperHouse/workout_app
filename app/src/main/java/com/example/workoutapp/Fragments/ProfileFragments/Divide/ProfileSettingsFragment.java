@@ -26,7 +26,7 @@ import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.Tools.FirestoreSyncManager;
+import com.example.workoutapp.Tools.SyncTools.FirestoreSyncManager;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
 import com.example.workoutapp.Tools.UidGenerator;
 import com.google.android.material.button.MaterialButton;
