@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
+import com.example.workoutapp.Tools.UidGenerator;
 
 import net.sqlcipher.database.SQLiteDatabase;
 
@@ -26,27 +27,41 @@ public class MealFoodDao {
      * Добавляет один элемент еды и возвращает его ID
      */
     public long addSingleFood(FoodModel food) {
-        // 1. Сначала ищем, есть ли уже такая еда по UID
+        if (food == null) return -1;
+
+        if (food.getFood_uid() == null || food.getFood_uid().isEmpty()) {
+            food.setFood_uid(UidGenerator.generateMealFoodUid() );
+        }
+
+        // 1. ПРОВЕРКА: Если UID пустой, генерируем его или выходим
+        if (food.getFood_uid() == null || food.getFood_uid().isEmpty()) {
+            Log.e("MealFoodDao", "Ошибка: food_uid is NULL для " + food.getFood_name());
+            return -1;
+        }
+
+        // 2. БЕЗОПАСНЫЙ ПОИСК
         Cursor cursor = null;
         try {
             cursor = db.query(
                     AppDataBase.MEAL_FOOD_TABLE,
                     new String[]{AppDataBase.MEAL_FOOD_ID},
                     AppDataBase.MEAL_FOOD_UID + " = ?",
-                    new String[]{food.getFood_uid()},
+                    new String[]{food.getFood_uid()}, // Теперь мы уверены, что тут не null
                     null, null, null
             );
 
             if (cursor != null && cursor.moveToFirst()) {
-                long existingId = cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_ID));
-                Log.d("MealFoodDao", "Food already exists with id: " + existingId);
-                return existingId; // Возвращаем старый ID
+                long id = cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_FOOD_ID));
+                cursor.close();
+                return id;
             }
+        } catch (Exception e) {
+            Log.e("MealFoodDao", "Ошибка при поиске еды: " + e.getMessage());
         } finally {
             if (cursor != null) cursor.close();
         }
 
-        // 2. Если еды нет, вставляем новую
+        // 3. ВСТАВКА (если не нашли)
         ContentValues values = new ContentValues();
         values.put(AppDataBase.MEAL_FOOD_NAME, food.getFood_name());
         values.put(AppDataBase.MEAL_FOOD_PROTEIN, food.getProtein());
@@ -57,9 +72,8 @@ public class MealFoodDao {
         values.put(AppDataBase.MEAL_FOOD_MEASUREMENT_TYPE, food.getMeasurement_type());
         values.put(AppDataBase.MEAL_FOOD_UID, food.getFood_uid());
 
-        // Используем CONFLICT_REPLACE для надежности
         long id = db.insertWithOnConflict(AppDataBase.MEAL_FOOD_TABLE, null, values, SQLiteDatabase.CONFLICT_REPLACE);
-        Log.d("MealFoodDao", "Inserted new food with id: " + id);
+        Log.d("MealFoodDao", "Inserted food with id: " + id);
         return id;
     }
 

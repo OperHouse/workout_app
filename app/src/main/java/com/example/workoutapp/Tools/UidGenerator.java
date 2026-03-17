@@ -40,4 +40,7 @@ public class UidGenerator {
     public static String generateMealUid() {
         return "M_" + UUID.randomUUID().toString();
     }
+    public static String generateMealFoodUid() {
+        return "MF_" + UUID.randomUUID().toString();
+    }
 }
