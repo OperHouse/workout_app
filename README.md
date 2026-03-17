@@ -25,7 +25,6 @@
 * Отсутствие передачи пользовательских данных на сторонние сервера.
 
 ## 📸 Скриншоты
-<img width="574" height="1256" alt="studio64_WlDY1BSg9R" src="https://github.com/user-attachments/assets/d546f520-19c0-4997-b52f-051989296538" />
-<img width="598" height="1255" alt="studio64_6hyfo9ASEc" src="https://github.com/user-attachments/assets/82790c03-6686-41f6-a4b1-70e9fd38b3d3" />
+<img width="574" height="1256" alt="studio64_WlDY1BSg9R" src="https://github.com/user-attachments/assets/d546f520-19c0-4997-b52f-051989296538" /> <img width="598" height="1255" alt="studio64_6hyfo9ASEc" src="https://github.com/user-attachments/assets/82790c03-6686-41f6-a4b1-70e9fd38b3d3" />
 
 
