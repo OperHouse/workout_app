@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/amount_dialog_root_CL"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="10dp"
+    android:background="@drawable/card_border"
+    android:padding="10dp">
+
+    <!-- Кнопка закрытия -->
+    <ImageButton
+        android:id="@+id/nutrition_close_D_BTN"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:background="@drawable/ic_close_foreground"
+        android:elevation="4dp"
+        android:translationZ="4dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Заголовок -->
+    <TextView
+        android:id="@+id/nutrition_title_D_TV"
+        style="@style/TextStyle.Big.Bold"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="10dp"
+        android:maxLines="2"
+        android:text="@string/add"
+        app:layout_constraintEnd_toStartOf="@+id/nutrition_close_D_BTN"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/nutrition_image_D_IV"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_marginTop="10dp"
+        android:visibility="gone"
+        android:background="@drawable/immage_eat_foreground"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/nutrition_title_D_TV">
+
+    </ImageView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/dialog_CD"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:elevation="8dp"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardCornerRadius="17dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/nutrition_image_D_IV">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="5dp"
+            android:layout_marginStart="5dp"
+            android:background="@drawable/card_border4_blue">
+
+
+            <!-- NutritionCircleView -->
+            <com.example.workoutapp.Tools.NutritionCircleView
+                android:id="@+id/nutrition_circle_D_CUSTOM"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Белки -->
+            <View
+                android:id="@+id/nutrition_protein_color_D_VIEW"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="25dp"
+                android:background="@color/protein_red"
+                app:layout_constraintStart_toEndOf="@id/nutrition_circle_D_CUSTOM"
+                app:layout_constraintTop_toTopOf="@id/nutrition_circle_D_CUSTOM" />
+
+            <TextView
+                android:id="@+id/nutrition_protein_label_D_TV"
+                style="@style/TextStyle.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="@string/protein"
+                app:layout_constraintStart_toEndOf="@id/nutrition_protein_color_D_VIEW"
+                app:layout_constraintTop_toTopOf="@id/nutrition_protein_color_D_VIEW" />
+
+            <!-- Жиры -->
+            <View
+                android:id="@+id/nutrition_fat_color_D_VIEW"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginTop="10dp"
+                android:background="@color/fat_yellow"
+                app:layout_constraintStart_toStartOf="@id/nutrition_protein_color_D_VIEW"
+                app:layout_constraintTop_toBottomOf="@id/nutrition_protein_color_D_VIEW" />
+
+            <TextView
+                android:id="@+id/nutrition_fat_label_D_TV"
+                style="@style/TextStyle.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="@string/fat"
+                app:layout_constraintStart_toEndOf="@id/nutrition_fat_color_D_VIEW"
+                app:layout_constraintTop_toTopOf="@id/nutrition_fat_color_D_VIEW" />
+
+            <!-- Углеводы -->
+            <View
+                android:id="@+id/nutrition_carb_color_D_VIEW"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginTop="10dp"
+                android:background="@color/carb_green"
+                app:layout_constraintStart_toStartOf="@id/nutrition_fat_color_D_VIEW"
+                app:layout_constraintTop_toBottomOf="@id/nutrition_fat_color_D_VIEW" />
+
+            <TextView
+                android:id="@+id/nutrition_carb_label_D_TV"
+                style="@style/TextStyle.Small"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="@string/carb"
+                app:layout_constraintStart_toEndOf="@id/nutrition_carb_color_D_VIEW"
+                app:layout_constraintTop_toTopOf="@id/nutrition_carb_color_D_VIEW" />
+
+            <!-- Калории -->
+            <TextView
+                android:id="@+id/nutrition_calories_label_D_TV"
+                style="@style/TextStyle.Small"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/calories"
+                app:layout_constraintStart_toStartOf="@id/nutrition_carb_color_D_VIEW"
+                app:layout_constraintTop_toBottomOf="@id/nutrition_carb_label_D_TV" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- Текст "Количество пищи" -->
+    <TextView
+        android:id="@+id/nutrition_hint_D_TV"
+        style="@style/TextStyle.Small"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/amount_label"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/dialog_CD" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/fragment_create_food_amound_food_TIL"
+        style="@style/CustomTextInputLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:hint="Количество пищи"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/nutrition_hint_D_TV">
+
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/fragment_create_food_amound_food_TIET"
+            style="@style/CustomTextInputEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/nutritionD_error_TV"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:text="@string/error_amount_food"
+        android:textColor="@color/red"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/fragment_create_food_amound_food_TIL" />
+
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/fragment_create_food_amound_food_dropdown_TIL"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:hint="Количество пищи"
+        android:textColorHint="@color/light_gray2"
+        android:visibility="gone"
+        app:boxBackgroundColor="@color/background_1"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="@color/white"
+        app:hintTextColor="@color/white"
+        app:layout_constraintTop_toBottomOf="@+id/nutritionD_error_TV">
+
+        <AutoCompleteTextView
+            android:id="@+id/fragment_create_food_amound_food_dropdown_TIET"
+            style="ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:cursorVisible="false"
+            android:dropDownHeight="150dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:inputType="none"
+            android:paddingStart="10dp"
+            android:popupBackground="@color/light_gray2"
+            android:textColor="@color/white" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/nutrition_D_error_drop_down_TV"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:text="@string/error_amount_drop_down_food"
+        android:textColor="@color/red"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/fragment_create_food_amound_food_dropdown_TIL" />
+
+
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/fragment_create_food_name_food_TIL"
+        style="@style/CustomTextInputLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:visibility="gone"
+        android:hint="Название пресета"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/fragment_create_food_amound_food_dropdown_TIL">
+
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/fragment_create_food_name_food_TIET"
+            style="@style/CustomTextInputEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/nutritionD_error_preset_name_TV"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:text="@string/error_name_workout_preset"
+        android:textColor="@color/red"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/fragment_create_food_name_food_TIL" />
+
+    <!-- Кнопка -->
+    <Button
+        android:id="@+id/nutrition_create_D_BTN"
+        style="@style/BigButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:text="@string/add_food"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/nutritionD_error_preset_name_TV" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

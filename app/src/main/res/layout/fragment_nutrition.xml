@@ -1,14 +1,250 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/workout_root_NSV"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".NutritionFragment">
+    android:layout_height="wrap_content"
+    android:fillViewport="true"
+    android:scrollbarStyle="insideInset"
+    android:scrollbars="vertical"
+    android:background="@color/background_1"
+    tools:context=".Fragments.NutritionFragments.NutritionFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="wrap_content">
 
-</FrameLayout>
+        <TextView
+            android:id="@+id/nutrition_fragment_date_TV"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:gravity="start|center"
+            android:text="Date"
+            android:textColor="@color/white"
+            android:visibility="visible"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/nutrition_fragment_hint_TV"
+            android:layout_width="150dp"
+            android:layout_height="30dp"
+            android:gravity="start|center"
+            android:text="@string/nutrition_hint_title"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:visibility="visible"
+            app:layout_constraintStart_toStartOf="@+id/nutrition_fragment_date_TV"
+            app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_date_TV">
+
+        </TextView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/nutrition_fragment_card_CV"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            app:cardBackgroundColor="#1C1E2D"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="8dp"
+            app:strokeColor="@color/light_gray2"
+            app:strokeWidth="2dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_hint_TV">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <!-- КРУГ + ЦЕНТРАЛЬНЫЙ ТЕКСТ -->
+                <FrameLayout
+                    android:layout_width="260dp"
+                    android:layout_height="260dp">
+
+                    <com.example.workoutapp.Tools.CalorieRingView
+                        android:id="@+id/ringView"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/goalText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Цель: 1 337 Ккал"
+                            android:textColor="#4DA3FF"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/remainingText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="осталось 228 ккал"
+                            android:textColor="#A0A0A0"
+                            android:textSize="14sp" />
+
+                    </LinearLayout>
+                </FrameLayout>
+
+
+                <!-- БЖУ -->
+                <LinearLayout
+                    android:layout_marginTop="16dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <include
+                        layout="@layout/stat_item_protein"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="6dp"/>
+
+                    <include
+                        layout="@layout/stat_item_fat"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginHorizontal="3dp"/>
+
+                    <include
+                        layout="@layout/stat_item_carbs"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="6dp"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/nutrition_warning_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/bg_warning_light"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="10dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="8dp"
+                        android:src="@drawable/ic_warning" />
+
+                    <TextView
+                        android:id="@+id/nutrition_hint_settings_TV"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Установлены цели по умолчанию. Вы можете изменить их в Настройках — Цели питания."
+                        android:textColor="@color/yellow"
+                        android:textSize="12sp"
+                        android:lineSpacingExtra="2dp" />
+                </LinearLayout>
+
+            </LinearLayout>
+
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/nutrition_fragment_title_TV"
+            style="@style/TextStyle.Big.Bold"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:text="@string/nutrition_meals_title"
+            app:layout_constraintBottom_toBottomOf="@+id/nutrition_fragment_add_meal_Btn"
+            app:layout_constraintEnd_toStartOf="@+id/nutrition_fragment_add_meal_Btn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/nutrition_fragment_add_meal_Btn">
+
+        </TextView>
+
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/nutrition_fragment_add_meal_Btn"
+            style="@style/SmallButtonWithIc_Plus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:gravity="start|center_vertical"
+            android:text="@string/add_meal_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_card_CV" />
+
+        <ImageView
+            android:id="@+id/nutrition_fragment_image_IV"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_marginTop="52dp"
+            android:background="@drawable/immage_eat_foreground"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_title_TV">
+
+        </ImageView>
+
+        <TextView
+            android:id="@+id/nutrition_fragment_title2_TV"
+            style="@style/TextStyle.Big.Bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:gravity="start|center"
+            android:text="@string/nutrition_tracking_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_image_IV">
+
+        </TextView>
+
+        <TextView
+            android:id="@+id/nutrition_fragment_hint2_TV"
+            style="@style/TextStyle.Small"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:gravity="start|center"
+            android:text="@string/nutrition_tracking_hint"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_title2_TV">
+
+        </TextView>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/nutrition_fragment_meal_RV"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="10dp"
+            android:scrollbars="none"
+            app:layout_constraintTop_toBottomOf="@+id/nutrition_fragment_hint2_TV"
+            tools:listitem="@layout/outside_meal_elm_card">
+
+
+        </androidx.recyclerview.widget.RecyclerView>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.core.widget.NestedScrollView>

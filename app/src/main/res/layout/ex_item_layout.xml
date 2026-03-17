@@ -1,77 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_marginRight="10dp"
     android:layout_marginLeft="10dp"
-    android:layout_marginTop="5dp">
+    android:layout_marginTop="5dp"
+    android:elevation="8dp"
+    android:paddingTop="8dp"
+    android:layout_marginBottom="8dp"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="19dp">
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/card_border">
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/exercise_CARD_CL"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:paddingBottom="10dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginBottom="5dp"
+            android:background="@drawable/card_border">
 
 
             <TextView
-                android:id="@+id/nameEx"
-                android:layout_width="wrap_content"
+                android:id="@+id/exercise_name_CARD_TV"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:gravity="left|center"
-                android:textStyle="bold"
+                android:layout_marginStart="10dp"
                 android:layout_marginTop="10dp"
-                android:textColor="@color/white"
-                android:layout_marginStart="15dp"
-                android:text="Поднятие гантелей на бицепс"
+                android:layout_marginEnd="10dp"
+                android:gravity="left|center"
+                android:text="@string/plug"
+                android:maxLines="2"
+                android:ellipsize="end"
+                style="@style/TextStyle.Small.Bold"
+                app:layout_constraintEnd_toStartOf="@+id/imageExerciseType_CARD_IV"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
             </TextView>
 
-            <TextView
-                android:id="@+id/exType"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="left|center"
-                android:textStyle="bold"
-                android:textColor="@color/white"
-                android:layout_marginTop="10dp"
-                android:layout_marginLeft="5dp"
-                android:text="(Гантели)"
-                app:layout_constraintStart_toEndOf="@+id/nameEx"
-                app:layout_constraintTop_toTopOf="parent">
-
-            </TextView>
 
             <TextView
-                android:id="@+id/bodyPart"
+                android:id="@+id/bodyPart_CARD_TV"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="15dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="5dp"
                 android:gravity="left|center"
-                android:text="Руки"
+                android:text="@string/plug"
                 android:textColor="@color/white"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/nameEx">
+                app:layout_constraintStart_toStartOf="@+id/exercise_name_CARD_TV"
+                app:layout_constraintTop_toBottomOf="@+id/exercise_name_CARD_TV">
 
             </TextView>
 
             <ImageView
-                android:id="@+id/imageExType"
+                android:id="@+id/imageExerciseType_CARD_IV"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                android:layout_marginRight="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginTop="7dp"
+                android:layout_marginBottom="0dp"
                 android:background="@drawable/ic_dumbebell_foreground">
 
             </ImageView>
@@ -79,6 +74,4 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>

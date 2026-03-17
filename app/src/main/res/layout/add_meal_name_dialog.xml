@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="10dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:background="@drawable/card_border"
+        android:layout_height="match_parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="30dp">
+
+
+            <ImageButton
+                android:id="@+id/nutrition_close_D_BTN"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="16dp"
+                android:background="@drawable/ic_close_foreground"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+            </ImageButton>
+
+            <TextView
+                android:id="@+id/nutrition_title_D_TV"
+                android:layout_width="wrap_content"
+                android:layout_height="30dp"
+                android:layout_marginRight="-40dp"
+                android:layout_marginTop="10dp"
+                android:gravity="start|center"
+                android:text="Создание приема пищи"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toStartOf="@+id/nutrition_close_D_BTN"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+            </TextView>
+
+            <ImageView
+                android:id="@+id/nutrition_image_D_IV"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:background="@drawable/immage_eat_foreground"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/detailsLayout">
+
+            </ImageView>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/detailsLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="25dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/nutrition_title_D_TV">
+
+
+                <com.example.workoutapp.Tools.NutritionCircleView
+                    android:id="@+id/nutrition_circle_D_CUSTOM"
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:layout_marginStart="10dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+
+                <!-- Белки -->
+                <View
+                    android:id="@+id/nutrition_protein_color_D_VIEW"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="20dp"
+                    android:background="@color/protein_red"
+                    app:layout_constraintStart_toEndOf="@+id/nutrition_circle_D_CUSTOM"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/nutrition_protein_label_D_TV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Белки"
+                    android:textColor="@color/white"
+                    app:layout_constraintStart_toEndOf="@id/nutrition_protein_color_D_VIEW"
+                    app:layout_constraintTop_toTopOf="@id/nutrition_protein_color_D_VIEW" />
+
+                <!-- Жиры -->
+                <View
+                    android:id="@+id/nutrition_fat_color_D_VIEW"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@color/fat_yellow"
+                    app:layout_constraintStart_toStartOf="@+id/nutrition_protein_color_D_VIEW"
+                    app:layout_constraintTop_toBottomOf="@id/nutrition_protein_color_D_VIEW" />
+
+                <TextView
+                    android:id="@+id/nutrition_fat_label_D_TV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Жиры"
+                    android:textColor="@color/white"
+                    app:layout_constraintStart_toEndOf="@id/nutrition_fat_color_D_VIEW"
+                    app:layout_constraintTop_toTopOf="@id/nutrition_fat_color_D_VIEW" />
+
+                <!-- Углеводы -->
+                <View
+                    android:id="@+id/nutrition_carb_color_D_VIEW"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@color/carb_green"
+                    app:layout_constraintStart_toStartOf="@+id/nutrition_fat_color_D_VIEW"
+                    app:layout_constraintTop_toBottomOf="@id/nutrition_fat_color_D_VIEW" />
+
+                <TextView
+                    android:id="@+id/nutrition_carb_label_D_TV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Углеводы"
+                    android:textColor="@color/white"
+                    app:layout_constraintStart_toEndOf="@id/nutrition_carb_color_D_VIEW"
+                    app:layout_constraintTop_toTopOf="@id/nutrition_carb_color_D_VIEW" />
+
+                <TextView
+                    android:id="@+id/nutrition_calories_label_D_TV"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Калории:"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    app:layout_constraintStart_toStartOf="@+id/nutrition_carb_color_D_VIEW"
+                    app:layout_constraintTop_toBottomOf="@id/nutrition_carb_label_D_TV" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+            <TextView
+                android:id="@+id/nutrition_hint_D_TV"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:gravity="start|center"
+                android:text="Название приема пищи"
+                android:textColor="@color/white"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/nutrition_image_D_IV">
+
+            </TextView>
+
+            <EditText
+                android:id="@+id/editText"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/edit_text_back"
+                android:hint="Пример названия: Завтрак"
+                android:paddingStart="10dp"
+                android:textColor="@color/white"
+                android:textColorHint="@color/light_gray2"
+                android:textSize="16sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/nutrition_hint_D_TV">
+
+            </EditText>
+
+
+            <Button
+                android:id="@+id/nutrition_create_D_BTN"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="15dp"
+                android:layout_marginEnd="10dp"
+                style="@style/SmallButton"
+                android:text="@string/create_nutrition"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/editText">
+
+            </Button>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,180 +1,273 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/workout_root_NSV"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:scrollbars = "vertical"
-    android:scrollbarStyle="insideInset"
+    android:layout_height="wrap_content"
     android:fillViewport="true"
-    tools:context=".WorkoutFragment.WorkoutFragment">
+    android:scrollbarStyle="insideInset"
+    android:scrollbars="vertical"
+    tools:context=".Fragments.WorkoutFragments.WorkoutFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toStartOf="@+id/workout_date_TV"
+        app:layout_constraintStart_toStartOf="@+id/workout_date_TV">
 
         <TextView
-            android:id="@+id/dateTextWorkout"
+            android:id="@+id/workout_date_TV"
+            style="@style/TextStyle.Small"
             android:layout_width="wrap_content"
-            android:layout_height="30dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
             android:gravity="start|center"
-            android:text="Date"
-            android:textColor="@color/white"
-            android:visibility="visible"
+            android:text="@string/date"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/WorkoutTextView"
+            android:id="@+id/workout_title_TV"
+            style="@style/TextStyle.Big.Bold"
             android:layout_width="150dp"
             android:layout_height="30dp"
             android:gravity="start|center"
-            android:text="Тренировки"
-            android:textColor="@color/white"
-            android:textSize="20sp"
-            android:visibility="visible"
-            app:layout_constraintStart_toStartOf="@+id/dateTextWorkout"
-            app:layout_constraintTop_toBottomOf="@+id/dateTextWorkout">
-        </TextView>
+            android:text="@string/title_workouts"
+            app:layout_constraintStart_toStartOf="@+id/workout_date_TV"
+            app:layout_constraintTop_toBottomOf="@+id/workout_date_TV" />
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cardView"
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/workout_activity_CV"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="10dp"
-            app:cardBackgroundColor="#555252"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="10dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="#1C1E2D"
+            app:cardCornerRadius="24dp"
+            android:layout_margin="12dp"
+            app:cardElevation="8dp"
+            app:strokeColor="@color/light_gray2"
+            app:strokeWidth="2dp"
+            app:layout_constraintTop_toBottomOf="@+id/workout_title_TV"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/WorkoutTextView">
+            app:layout_constraintEnd_toEndOf="parent">
 
-        </androidx.cardview.widget.CardView>
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="20dp">
+
+                <LinearLayout
+                    android:id="@+id/food_equivalent_LL"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <ImageView
+                        android:id="@+id/card_food_icon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_donut" />
+
+                    <TextView
+                        android:id="@+id/card_food_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="x0"
+                        android:textColor="@color/white"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/activityTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Активность"
+                    android:textColor="@color/white"
+                    android:textSize="18sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <com.example.workoutapp.Tools.ActivityRingView
+                    android:id="@+id/activityRing"
+                    android:layout_width="180dp"
+                    android:layout_height="180dp"
+                    app:layout_constraintBottom_toBottomOf="@+id/linearLayout"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/linearLayout" />
+
+                <LinearLayout
+                    android:id="@+id/linearLayout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/activityRing"
+                    app:layout_constraintTop_toBottomOf="@+id/activityTitle">
+
+                    <include
+                        android:id="@+id/statSteps"
+                        layout="@layout/item_activity_stat"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="6dp"/>
+
+                    <include
+                        android:id="@+id/statBurned"
+                        layout="@layout/item_activity_stat"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="6dp"/>
+
+                    <include
+                        android:id="@+id/statDistance"
+                        layout="@layout/item_activity_stat"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/activity_warning_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_warning_light"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="20dp"
+                    android:orientation="horizontal"
+                    android:padding="10dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/linearLayout">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="8dp"
+                        android:src="@drawable/ic_warning" />
+
+                    <TextView
+                        android:id="@+id/nutrition_hint_settings_TV"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:lineSpacingExtra="2dp"
+                        android:text="Установлены цели по умолчанию. Вы можете изменить их в Настройках — Цели активности."
+                        android:textColor="@color/yellow"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <TextView
-            android:id="@+id/textView3"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:layout_marginTop="30dp"
+            android:id="@+id/workout_ex_title_TV"
+            style="@style/TextStyle.Big.Bold"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:text="Ваши Упражнения"
-            android:textColor="@color/white"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:visibility="visible"
-            android:layout_marginEnd="10dp"
+            android:text="@string/title_exercises"
+            app:layout_constraintBottom_toBottomOf="@+id/workout_add_ex_BTN"
+            app:layout_constraintEnd_toStartOf="@+id/workout_add_ex_BTN"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cardView">
+            app:layout_constraintTop_toTopOf="@+id/workout_add_ex_BTN">
 
         </TextView>
 
-        <Button
-            android:id="@+id/addExBtn"
-            android:layout_width="125dp"
-            android:layout_height="36dp"
-            android:layout_marginTop="30dp"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/workout_add_ex_BTN"
+            style="@style/SmallButtonWithIc_Plus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginEnd="10dp"
-            android:background="@drawable/btn_1"
-            android:drawableStart="@drawable/ic_plus"
-            android:drawablePadding="4dp"
-            android:elegantTextHeight="true"
-            android:gravity="start|center_vertical"
-            android:paddingStart="4dp"
-            android:paddingEnd="6dp"
-            android:text="Добавить упражнение"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="13sp"
-            android:textStyle="normal"
-            app:layout_constraintBottom_toBottomOf="@+id/textView3"
+            android:layout_marginTop="10dp"
+            android:text="@string/add_exercise"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cardView">
+            app:layout_constraintTop_toBottomOf="@+id/workout_activity_CV" />
 
-        </Button>
-
-        <View
-            android:id="@+id/view"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="70dp"
-            app:layout_constraintTop_toBottomOf="@+id/cardView"
-            tools:layout_editor_absoluteX="-10dp">
-
-        </View>
 
         <ImageView
-            android:id="@+id/imageView"
+            android:id="@+id/workout_image_D_IV"
             android:layout_width="200dp"
             android:layout_height="200dp"
-            android:layout_marginTop="108dp"
+            android:layout_marginTop="52dp"
             android:background="@drawable/ic_workout_image"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cardView">
+            app:layout_constraintTop_toBottomOf="@+id/workout_ex_title_TV">
 
         </ImageView>
 
         <TextView
-            android:id="@+id/textView1"
+            android:id="@+id/workout_title_D_TV"
+            style="@style/TextStyle.Big.Bold"
             android:layout_width="wrap_content"
-            android:layout_height="30dp"
-            android:gravity="start|center"
-            android:text="Начни свою тренировку!"
-            android:textColor="@color/white"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:visibility="visible"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:text="@string/message_start_workout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/imageView">
+            app:layout_constraintTop_toBottomOf="@+id/workout_image_D_IV">
 
         </TextView>
 
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/workout_hint_D_TV"
+            style="@style/TextStyle.Small"
             android:layout_width="wrap_content"
-            android:layout_height="30dp"
-            android:gravity="start|center"
-            android:textColor="@color/white"
-            android:text="Жми '+ Добавить упражнение' чтобы начать"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:text="@string/message_add_exercise_prompt"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView1">
+            app:layout_constraintTop_toBottomOf="@+id/workout_title_D_TV">
 
         </TextView>
 
-        <Button
-            android:id="@+id/pastWorkBtn"
-            android:layout_width="match_parent"
-            android:layout_height="36dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:layout_marginBottom="50dp"
-            android:background="@drawable/btn_2"
-            android:text="Прошлые тренировки"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView2">
-
-        </Button>
-
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/WorkoutRecyclerView"
+            android:id="@+id/workout_list_RV"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@+id/view">
+            android:layout_marginTop="20dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:scrollbars="none"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/workout_hint_D_TV"
+            tools:listitem="@layout/ex_item_workout_layout">
 
 
         </androidx.recyclerview.widget.RecyclerView>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/workout_finish_BTN"
+            style="@style/BigButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="10dp"
+            android:text="@string/finish_workout"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/workout_list_RV">
 
+        </com.google.android.material.button.MaterialButton>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</ScrollView>
+</androidx.core.widget.NestedScrollView>

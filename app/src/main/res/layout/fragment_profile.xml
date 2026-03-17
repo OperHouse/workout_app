@@ -1,14 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ProfileFragment">
+    android:id="@+id/nestedScrollView"
+    android:scrollbars = "vertical"
+    android:scrollbarStyle="insideInset"
+    android:fillViewport="true"
+    android:background="#2E3042"
+    tools:context=".Fragments.ProfileFragments.ProfileFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <!-- Вложенный ConstraintLayout для адаптивности -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="wrap_content">
 
-</FrameLayout>
+        <!-- Заголовок с датой -->
+        <TextView
+            android:id="@+id/dateTextProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:gravity="start|center"
+            android:text="Date"
+            android:textColor="@color/white"
+            android:visibility="visible"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Приветствие пользователя -->
+        <TextView
+            android:id="@+id/profile_fragment_name_TV"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_marginStart="10dp"
+            android:gravity="start|center"
+            android:text="Приветствуем Пользователь!"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/dateTextProfile" />
+
+
+        <!-- Кнопка с фотографией профиля -->
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/profile_fragment_photo_IB"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="10dp"
+            android:padding="2dp"
+            android:scaleType="centerCrop"
+            android:layout_marginStart="10dp"
+            android:src="@drawable/ic_user_profile"
+            app:strokeColor="@color/light_gray2"
+            app:strokeWidth="2dp"
+            app:shapeAppearanceOverlay="@style/CircleImage"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/profile_fragment_name_TV"  />
+
+
+        <TextView
+            android:id="@+id/profile_fragment_age_TV"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_marginStart="20dp"
+            android:gravity="start|center"
+            android:text="Возраст:"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toEndOf="@+id/profile_fragment_photo_IB"
+            app:layout_constraintTop_toTopOf="@+id/profile_fragment_photo_IB" />
+
+        <TextView
+            android:id="@+id/profile_fragment_height_TV"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:gravity="start|center"
+            android:text="Рост:"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toStartOf="@+id/profile_fragment_age_TV"
+            app:layout_constraintTop_toBottomOf="@+id/profile_fragment_age_TV" />
+
+
+        <!-- Горизонтальная линия -->
+        <View
+            android:id="@+id/divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="20dp"
+            android:background="@android:color/darker_gray"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/profile_fragment_photo_IB" />
+
+
+
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/group_RV"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:clipToPadding="false"
+            android:layout_marginTop="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/divider">
+
+        </androidx.recyclerview.widget.RecyclerView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.core.widget.NestedScrollView>
