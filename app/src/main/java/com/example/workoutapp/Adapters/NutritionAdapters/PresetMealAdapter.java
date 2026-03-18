@@ -14,6 +14,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.Data.ChangeElmDao;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
@@ -143,7 +144,7 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
                         int meal_Id =
                                 (int) mealNameDao.getLastInsertedMealNameId();
 
-                        // 2️⃣ Копируем еду
+                        // Копируем еду
                         List<Long> insertedEatIds =
                                 new ArrayList<>();
 
@@ -161,10 +162,8 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
                                 insertedEatIds);
 
                         // =========================================
-                        // 🔥 СИНХРОНИЗАЦИЯ
+                        // СИНХРОНИЗАЦИЯ
                         // =========================================
-
-
 
                         // ВАЖНО: сохранить uid в локальной таблице!
                         mealNameDao.setMealUid(meal_Id, mealUid);
@@ -180,6 +179,9 @@ public class PresetMealAdapter extends RecyclerView.Adapter<PresetMealAdapter.Pr
 
                         meal.setDeleted(false);
                         meal.setVersion(1);
+
+                        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+                        changeDao.enqueue(mealUid, "meal");
 
                         MainActivity.getSyncManager().uploadMeal(meal);
 

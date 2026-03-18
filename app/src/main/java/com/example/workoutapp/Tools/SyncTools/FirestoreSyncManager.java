@@ -3,7 +3,14 @@ package com.example.workoutapp.Tools.SyncTools;
 import android.content.Context;
 import android.util.Log;
 
+import com.example.workoutapp.Data.ChangeElmDao;
 import com.example.workoutapp.Data.DeletionQueueDao;
+import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
+import com.example.workoutapp.Data.NutritionDao.ConnectingMealPresetDao;
+import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
+import com.example.workoutapp.Data.NutritionDao.MealNameDao;
+import com.example.workoutapp.Data.NutritionDao.PresetEatDao;
+import com.example.workoutapp.Data.NutritionDao.PresetMealNameDao;
 import com.example.workoutapp.Data.ProfileDao.ActivityGoalDao;
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.ProfileDao.DailyFoodTrackingDao;
@@ -146,6 +153,7 @@ public class FirestoreSyncManager {
 
         Log.d(TAG, "Starting full synchronization...");
         processPendingDeletions();
+        processPendingChanges();
 
         baseExerciseSync.restoreUserCustomExercises();
         profileSync.syncProfile();
@@ -353,13 +361,6 @@ public class FirestoreSyncManager {
         workoutSessionSync2.startWorkoutSync(exercises);
     }
 
-    public void syncMealPreset(MealModel meal){
-        if (!isNetworkAvailable()) {
-            showNoInternetDialog();
-            return;
-        }
-        mealPresetSync.uploadPreset(meal, null);
-    }
 
     public void deleteMealPreset(MealModel meal){
         if (!isNetworkAvailable()) {
@@ -368,12 +369,50 @@ public class FirestoreSyncManager {
         }
         mealPresetSync.deletePreset(meal, null);
     }
-    public void uploadMeal(MealModel meal){
+
+
+    public void uploadMeal(MealModel meal) {
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+
         if (!isNetworkAvailable()) {
-            showNoInternetDialog();
+            // Если интернета нет, просто кладем в очередь.
+            // Когда интернет появится, processPendingChanges всё отправит.
+            changeDao.enqueue(meal.getMeal_uid(), "meal");
             return;
         }
-        mealSync.uploadMeal(meal, null);
+
+        // Если интернет есть, отправляем сразу и чистим очередь на всякий случай
+        mealSync.uploadMeal(meal, new MealSync.SyncCallback() {
+            @Override
+            public void onSuccess() { changeDao.removeFromQueue(meal.getMeal_uid()); }
+            @Override
+            public void onFailure(String error) { changeDao.enqueue(meal.getMeal_uid(), "meal"); }
+        });
+    }
+
+    public void syncMealPreset(MealModel meal) {
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+        Log.d("DEBUG_SYNC", "1. syncMealPreset вызвана для: " + meal.getMeal_uid());
+
+        if (!isNetworkAvailable()) {
+            Log.d("DEBUG_SYNC", "2. Интернета нет, только очередь");
+            changeDao.enqueue(meal.getMeal_uid(), "meal_preset");
+            return;
+        }
+
+        Log.d("DEBUG_SYNC", "3. Интернет есть, вызываю mealPresetSync.uploadPreset");
+        mealPresetSync.uploadPreset(meal, new MealPresetSync.SyncCallback() {
+            @Override
+            public void onSuccess() {
+                Log.d("DEBUG_SYNC", "4. УСПЕХ на сервере!");
+                changeDao.removeFromQueue(meal.getMeal_uid());
+            }
+            @Override
+            public void onFailure(String error) {
+                Log.e("DEBUG_SYNC", "4. ОШИБКА: " + error);
+                changeDao.enqueue(meal.getMeal_uid(), "meal_preset");
+            }
+        });
     }
 
     public void deleteMeal(MealModel meal) {
@@ -401,16 +440,89 @@ public class FirestoreSyncManager {
         for (DeletionTask task : pendingTasks) {
             final String currentUid = task.uid; // Фиксируем UID для лямбды
             final String currentType = task.type;
-            if ("meal".equals(currentType)) {
-                db.collection("users").document(userId)
-                        .collection("meal_diary").document(currentUid)
-                        .delete()
-                        .addOnSuccessListener(aVoid -> {
-                            // Используем фиксированный UID
-                            queueDao.removeFromQueue(currentUid);
-                            Log.d(TAG, "Удалено с сервера и из очереди: " + currentUid);
-                        })
-                        .addOnFailureListener(e -> Log.e(TAG, "Ошибка сервера для " + currentUid, e));
+            String collectionPath;
+            if ("meal_preset".equals(currentType)) {
+                collectionPath = "meal_presets";
+            } else if ("food".equals(currentType)) {
+                collectionPath = "base_food";
+            } else {
+                collectionPath = "meal_diary";
+            }
+
+            db.collection("users").document(userId)
+                    .collection(collectionPath).document(currentUid)
+                    .delete()
+                    .addOnSuccessListener(aVoid -> {
+                        queueDao.removeFromQueue(currentUid);
+                        Log.d(TAG, "Удалено из облака (" + currentType + "): " + currentUid);
+                    })
+                    .addOnFailureListener(e -> Log.e(TAG, "Ошибка удаления в облаке: " + currentUid, e));
+        }
+
+    }
+
+    public void processPendingChanges() {
+        if (!isNetworkAvailable() || userId == null) return;
+
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+        List<ChangeElmDao.ChangeTask> tasks = changeDao.getAllTasks();
+
+        if (tasks.isEmpty()) return;
+
+        Log.d(TAG, "Найдено изменений для синхронизации: " + tasks.size());
+
+        for (ChangeElmDao.ChangeTask task : tasks) {
+            final String uid = task.uid;
+
+            if ("meal".equals(task.type)) {
+                // 1. Собираем модель приема пищи из локальной БД
+                MealNameDao mealNameDao = new MealNameDao(MainActivity.getAppDataBase());
+                ConnectingMealDao connDao = new ConnectingMealDao(MainActivity.getAppDataBase());
+                MealFoodDao foodDao = new MealFoodDao(MainActivity.getAppDataBase());
+
+                MealModel meal = mealNameDao.getMealByUid(uid, connDao, foodDao);
+
+                if (meal != null) {
+                    // Вызываем твою функцию (я добавил callback, чтобы удалить из очереди при успехе)
+                    mealSync.uploadMeal(meal, new MealSync.SyncCallback() {
+                        @Override
+                        public void onSuccess() {
+                            changeDao.removeFromQueue(uid);
+                            Log.d(TAG, "Прием пищи синхронизирован: " + uid);
+                        }
+                        @Override
+                        public void onFailure(String error) {
+                            Log.e(TAG, "Ошибка синхронизации приема пищи: " + error);
+                        }
+                    });
+                } else {
+                    // Если модели нет в БД (удалена), просто чистим очередь изменений
+                    changeDao.removeFromQueue(uid);
+                }
+
+            } else if ("meal_preset".equals(task.type)) {
+                // 2. Собираем модель пресета
+                PresetMealNameDao presetDao = new PresetMealNameDao(MainActivity.getAppDataBase());
+                ConnectingMealPresetDao connPresetDao = new ConnectingMealPresetDao(MainActivity.getAppDataBase());
+                PresetEatDao presetEatDao = new PresetEatDao(MainActivity.getAppDataBase());
+
+                MealModel preset = presetDao.getPresetMealByUid(uid, connPresetDao, presetEatDao);
+
+                if (preset != null) {
+                    mealPresetSync.uploadPreset(preset, new MealPresetSync.SyncCallback() {
+                        @Override
+                        public void onSuccess() {
+                            changeDao.removeFromQueue(uid);
+                            Log.d(TAG, "Пресет синхронизирован: " + uid);
+                        }
+                        @Override
+                        public void onFailure(String error) {
+                            Log.e(TAG, "Ошибка синхронизации пресета: " + error);
+                        }
+                    });
+                } else {
+                    changeDao.removeFromQueue(uid);
+                }
             }
         }
     }

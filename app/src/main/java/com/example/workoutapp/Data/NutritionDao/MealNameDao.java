@@ -38,6 +38,34 @@ public class MealNameDao {
         return id;
     }
 
+    public MealModel getMealByUid(String uid, ConnectingMealDao connectionDao, MealFoodDao foodDao) {
+        MealModel mealModel = null;
+        Cursor cursor = null;
+        try {
+            // 1. Ищем запись в таблице по UID
+            cursor = db.query(
+                    AppDataBase.MEAL_NAME_TABLE,
+                    null,
+                    AppDataBase.MEAL_NAME_UID + " = ?",
+                    new String[]{uid},
+                    null, null, null
+            );
+
+            if (cursor != null && cursor.moveToFirst()) {
+                // 2. Достаем локальный ID
+                int mealId = cursor.getInt(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_NAME_ID));
+
+                // 3. Используем твой готовый метод для сборки всей модели с продуктами
+                mealModel = getMealById(mealId, connectionDao, foodDao);
+            }
+        } catch (Exception e) {
+            Log.e("MealNameDao", "Error getMealByUid: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return mealModel;
+    }
+
     // ========================= DELETE ========================= //
 
     public void deleteMealName(long id) {

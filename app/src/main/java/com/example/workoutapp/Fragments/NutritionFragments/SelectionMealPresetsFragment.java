@@ -35,6 +35,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Adapters.NutritionAdapters.FoodAdapter;
 import com.example.workoutapp.Adapters.NutritionAdapters.PresetMealAdapter;
+import com.example.workoutapp.Data.ChangeElmDao;
+import com.example.workoutapp.Data.DeletionQueueDao;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealPresetDao;
 import com.example.workoutapp.Data.NutritionDao.PresetEatDao;
 import com.example.workoutapp.Data.NutritionDao.PresetMealNameDao;
@@ -389,20 +391,22 @@ public class SelectionMealPresetsFragment extends Fragment implements OnPresetMe
         deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 int presetId = presetToDelete.getMeal_name_id();
 
-                String mealUid =
-                        presetMealNameDao.getMealUidById(presetId);
+                // 1. Получаем UID пресета
+                String mealUid = presetMealNameDao.getMealUidById(presetId);
 
-                presetToDelete.setMeal_uid(mealUid);
+                // 2. ЗАПИСЫВАЕМ В ОЧЕРЕДЬ НА УДАЛЕНИЕ
+                // Делаем это ПЕРЕД локальным удалением, чтобы данные точно попали в БД очереди
+                if (mealUid != null && !mealUid.isEmpty()) {
+                    DeletionQueueDao queueDao = new DeletionQueueDao(MainActivity.getAppDataBase());
+                    ChangeElmDao changeElmDao = new ChangeElmDao(MainActivity.getAppDataBase());
+                    queueDao.enqueue(mealUid, "meal_preset");
+                    changeElmDao.removeFromQueue(mealUid);
+                }
 
-                // 1️⃣ Сначала отправляем soft delete в облако
-                MainActivity.getSyncManager().deleteMealPreset(presetToDelete);
-
-                List<Integer> eatIds =
-                        connectingMealPresetDao.getEatIdsForPreset(presetId);
-
+                // 3. ЛОКАЛЬНОЕ УДАЛЕНИЕ (SQLite)
+                List<Integer> eatIds = connectingMealPresetDao.getEatIdsForPreset(presetId);
                 connectingMealPresetDao.deleteAllForPreset(presetId);
                 presetMealNameDao.deleteMealPresetName(presetId);
 
@@ -412,18 +416,21 @@ public class SelectionMealPresetsFragment extends Fragment implements OnPresetMe
                     }
                 }
 
-                // 3️⃣ Обновление адаптера
+                // 4. ОБНОВЛЕНИЕ АДАПТЕРА
+                presetMealAdapter.removePresetElm(presetToDelete);
                 if (!searchText.isEmpty()) {
-                    presetMealAdapter.removePresetElm(presetToDelete);
                     presetMealAdapter.setFilteredList(searchText);
                 } else {
-                    presetMealAdapter.removePresetElm(presetToDelete);
                     presetMealAdapter.notifyDataSetChanged();
                 }
 
                 if (presetMealAdapter.getItemCount() == 0) {
                     textPressedBtn.setVisibility(View.VISIBLE);
                 }
+
+                // 5. ПОПЫТКА СИНХРОНИЗАЦИИ С ОБЛАКОМ
+                // Метод сам проверит интернет внутри
+                MainActivity.getSyncManager().processPendingDeletions();
 
                 r.requestLayout();
                 dialogDeleteEat.dismiss();

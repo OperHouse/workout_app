@@ -18,6 +18,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.Data.ChangeElmDao;
 import com.example.workoutapp.Data.DeletionQueueDao;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
@@ -117,25 +118,39 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
         innerFoodAdapter.setOnMealUpdatedListener(new OnMealUpdatedListener() {
             @Override
             public void onFoodUpdated(FoodModel updated) {
-                mealElm.updateFood(updated); // метод внутри MealModel
+                // 1. Обновляем модель локально (в памяти адаптера)
+                mealElm.updateFood(updated);
                 notifyItemChanged(position);
+
+               ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+               changeDao.enqueue(mealElm.getMeal_uid(), "meal");
+
+                // 3. Пытаемся отправить сразу
                 MainActivity.getSyncManager().uploadMeal(mealElm);
             }
 
             @Override
             public void onFoodDeleted(int foodId, int mealID) {
+                // 1. Удаляем еду из модели адаптера
                 mealElm.removeFoodById(foodId);
                 notifyItemChanged(position);
+
+                // 2. Удаляем из локальной БД (SQLite) через метод фрагмента
                 ((NutritionFragment) fragment).removeFoodFromMealByID(foodId, mealID);
 
                 if (fragment instanceof NutritionFragment) {
                     ((NutritionFragment) fragment).syncDailyTotals();
                 }
 
+                ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+                changeDao.enqueue(mealElm.getMeal_uid(), "meal");
+
+                // 4. Пытаемся отправить на сервер
                 MainActivity.getSyncManager().uploadMeal(mealElm);
             }
         });
 
+        // Кнопка удаления ВСЕГО приема пищи (вызывает диалог, который мы правили ранее)
         holder.deleteMeal_BTN.setOnClickListener(v -> delConfirmDialog(mealElm, position));
 
     }
@@ -186,7 +201,9 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
             // 1. СРАЗУ ЗАПИСЫВАЕМ В ОЧЕРЕДЬ НА УДАЛЕНИЕ (до локального удаления)
             if (mealUid != null && !mealUid.isEmpty()) {
                 DeletionQueueDao queueDao = new DeletionQueueDao(MainActivity.getAppDataBase());
+                ChangeElmDao changeElmDao = new ChangeElmDao(MainActivity.getAppDataBase());
                 queueDao.enqueue(mealUid, "meal");
+                changeElmDao.removeFromQueue(mealUid);
             }
 
             // 2. ЛОКАЛЬНОЕ УДАЛЕНИЕ (DAO)

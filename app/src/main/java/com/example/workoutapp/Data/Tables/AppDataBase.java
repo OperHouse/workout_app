@@ -211,6 +211,11 @@ public class AppDataBase extends SQLiteOpenHelper {
     public static final String DELETION_UID = "deletion_uid";
     public static final String DELETION_TYPE = "deletion_type";
 
+    public static final String CHANGE_ELM_TABLE = "change_elm_table";
+    public static final String CHANGE_ELM_ID = "change_elm_id";
+    public static final String CHANGE_ELM_UID = "change_elm_uid";
+    public static final String CHANGE_ELM_TYPE = "change_elm_type";
+
     // ======================== СОЗДАНИЕ ТАБЛИЦ ======================== //
 
     @Override
@@ -362,6 +367,11 @@ public class AppDataBase extends SQLiteOpenHelper {
                 + DELETION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + DELETION_UID + " TEXT NOT NULL, "
                 + DELETION_TYPE + " TEXT NOT NULL)");
+
+        db.execSQL("CREATE TABLE " + CHANGE_ELM_TABLE + " ("
+                + CHANGE_ELM_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + CHANGE_ELM_UID + " TEXT UNIQUE, "
+                + CHANGE_ELM_TYPE + " TEXT NOT NULL)");
     }
 
 
@@ -389,6 +399,7 @@ public class AppDataBase extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + FOOD_GAIN_GOAL_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + DAILY_FOOD_TRACKING_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + DELETION_QUEUE_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + CHANGE_ELM_TABLE);
         onCreate(db);
     }
 }

@@ -36,6 +36,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Adapters.NutritionAdapters.FoodAdapter;
+import com.example.workoutapp.Data.ChangeElmDao;
 import com.example.workoutapp.Data.NutritionDao.BaseEatDao;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealPresetDao;
@@ -350,9 +351,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         createPresetBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 if (currentMode == NutritionMode.ADD_MEAL) {
-
                     List<FoodModel> selected = foodAdapter.getPressedEat();
 
                     if (selected.isEmpty()) {
@@ -362,31 +361,43 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
 
                     ConnectingMealDao connectingMealDao = new ConnectingMealDao(MainActivity.getAppDataBase());
                     MealFoodDao mealFoodDao = new MealFoodDao(MainActivity.getAppDataBase());
+                    MealNameDao mealNameDao = new MealNameDao(MainActivity.getAppDataBase());
 
+                    // 1. Добавляем выбранную еду в локальную БД
                     for (FoodModel food : selected) {
-                        connectingMealDao.connectingSingleFood(mealId, mealFoodDao.addSingleFood(food));
+                        // Создаем копию объекта, чтобы не испортить исходные данные в адаптере/справочнике
+                        FoodModel foodCopy = new FoodModel(food);
+
+                        // Генерируем новый уникальный UID именно для этого приёма пищи
+                        String newMealFoodUid = UidGenerator.generateMealFoodUid();
+                        foodCopy.setFood_uid(newMealFoodUid);
+
+                        // Сохраняем в таблицу продуктов и связываем с приемом пищи
+                        long newFoodId = mealFoodDao.addSingleFood(foodCopy);
+                        connectingMealDao.connectingSingleFood(mealId, newFoodId);
                     }
 
-                    // получаем обновлённый meal
-                    MealNameDao mealNameDao = new MealNameDao(MainActivity.getAppDataBase());
+                    // 2. Получаем обновлённый meal со всеми продуктами (включая только что добавленные)
                     MealModel meal = mealNameDao.getMealById(mealId, connectingMealDao, mealFoodDao);
 
-                    // синк обновления
-                    MainActivity.getSyncManager().uploadMeal(meal);
+                    if (meal != null) {
+                        // 3. ЗАПИСЬ В ОЧЕРЕДЬ ИЗМЕНЕНИЙ (на случай оффлайна)
+                        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+                        changeDao.enqueue(meal.getMeal_uid(), "meal");
 
-
-                    for (FoodModel food : selected) {
-                        connectingMealDao.connectingSingleFood(mealId, mealFoodDao.addSingleFood(food));
+                        // 4. Пытаемся отправить в облако сразу
+                        MainActivity.getSyncManager().uploadMeal(meal);
                     }
+
+                    // Убираем лишний второй цикл, который был здесь раньше
 
                     onPresetMealSelected();
                     requireActivity().getOnBackPressedDispatcher().onBackPressed();
 
                 } else {
+                    // Режим создания нового пресета (шаблона)
                     showAddPresetNameDialog();
                 }
-
-
             }
         });
 
@@ -773,15 +784,34 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
         deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // 1. Получаем UID еды перед удалением из локальной БД
+                String foodUid = eatToDelete.getFood_uid();
 
+                // 2. ЗАПИСЫВАЕМ В ОЧЕРЕДЬ (на случай отсутствия интернета)
+                if (foodUid != null && !foodUid.isEmpty()) {
+                    com.example.workoutapp.Data.DeletionQueueDao queueDao =
+                            new com.example.workoutapp.Data.DeletionQueueDao(MainActivity.getAppDataBase());
+
+                    // Указываем тип "food", чтобы менеджер знал, в какой коллекции искать документ
+                    queueDao.enqueue(foodUid, "food");
+                }
+
+                // 3. ЛОКАЛЬНОЕ УДАЛЕНИЕ (SQLite)
                 baseEatDao.deleteEat(eatToDelete.getFood_id());
+
+                // Обновление адаптера
                 if (!searchText.isEmpty()) {
                     foodAdapter.removeEatElm(eatToDelete);
                     foodAdapter.setFilteredList(searchText);
                 } else {
                     foodAdapter.deleteEat(eatToDelete);
                 }
-                MainActivity.getSyncManager().deleteFood(eatToDelete);
+
+                // 4. ПОПЫТКА СИНХРОНИЗАЦИИ
+                // Вместо прямого вызова MainActivity.getSyncManager().deleteFood(eatToDelete);
+                // Мы запускаем обработчик очереди
+                MainActivity.getSyncManager().processPendingDeletions();
+
                 toggleUIState();
                 r.requestLayout();
                 dialogDeleteEat.dismiss();
@@ -981,7 +1011,8 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                     foodsToSync
 
             );
-
+            ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+            changeDao.enqueue(mealUid, "meal_preset");
             // загружаем на сервер
             MainActivity.getSyncManager().syncMealPreset(mealToSync);
 

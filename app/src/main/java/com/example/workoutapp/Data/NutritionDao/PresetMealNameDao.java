@@ -2,6 +2,7 @@ package com.example.workoutapp.Data.NutritionDao;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.util.Log;
 
 import com.example.workoutapp.Data.Tables.AppDataBase;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
@@ -36,7 +37,7 @@ public class PresetMealNameDao {
         if (mealName == null) return null;
 
         // дата
-        String mealDate = getMealDateById(mealId);
+        String mealDate = "";
 
         // связи
         List<Integer> eatIds = connectionDao.getEatIdsForPreset((int) mealId);
@@ -52,6 +53,33 @@ public class PresetMealNameDao {
         String mealUid = getMealUidById(mealId);
 
         return new MealModel((int) mealId, mealName, mealUid, mealDate, eatList);
+    }
+
+    public MealModel getPresetMealByUid(String uid, ConnectingMealPresetDao connectionDao, PresetEatDao foodDao) {
+        MealModel mealModel = null;
+        Cursor cursor = null;
+        try {
+            // 1. Ищем пресет в таблице пресетов по UID
+            cursor = db.query(
+                    AppDataBase.MEAL_PRESET_NAME_TABLE,
+                    null,
+                    AppDataBase.MEAL_PRESET_UID + " = ?",
+                    new String[]{uid},
+                    null, null, null
+            );
+
+            if (cursor != null && cursor.moveToFirst()) {
+                // 2. Достаем локальный ID пресета
+                int presetId = cursor.getInt(cursor.getColumnIndexOrThrow(AppDataBase.MEAL_PRESET_NAME_ID));
+
+                mealModel = getMealById(presetId, connectionDao, foodDao);
+            }
+        } catch (Exception e) {
+            Log.e("PresetMealNameDao", "Error getPresetMealByUid: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return mealModel;
     }
 
     public String getMealDateById(long id) {

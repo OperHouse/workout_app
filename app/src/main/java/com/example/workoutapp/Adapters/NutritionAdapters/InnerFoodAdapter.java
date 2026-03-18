@@ -291,7 +291,8 @@ public class InnerFoodAdapter  extends RecyclerView.Adapter<InnerFoodAdapter.Inn
                 original.getCarb() * multiplier,
                 original.getCalories() * multiplier,
                 newAmount,
-                original.getMeasurement_type()
+                original.getMeasurement_type(),
+                original.getFood_uid()
         );
     }
 

@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.workoutapp.Adapters.NutritionAdapters.OutsideMealAdapter;
+import com.example.workoutapp.Data.ChangeElmDao;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
@@ -376,7 +377,6 @@ public class NutritionFragment extends Fragment {
         });
 
         createMealBtn.setOnClickListener(v -> {
-
             String mealName = nameMeal_ET.getText().toString().trim();
 
             if (mealName.isEmpty()) {
@@ -384,30 +384,33 @@ public class NutritionFragment extends Fragment {
                 tvErrorName.setVisibility(View.VISIBLE);
                 return;
             }
+
+            // 1. Генерация UID
             String mealUid = UidGenerator.generateMealUid();
 
-            // 1️⃣ Сохраняем локально
+            // 2. Локальное сохранение в SQLite
             long localId = mealNameDao.insertMealName(mealName, date, mealUid);
 
-            // 2️⃣ Создаем UID
-
-
-            // 3️⃣ Создаем пустой MealModel
+            // 3. Формирование модели (пока пустой список еды)
             MealModel meal = new MealModel(
                     (int) localId,
                     mealName,
                     mealUid,
                     date,
                     new ArrayList<>()
-
             );
 
             meal.setDeleted(false);
             meal.setVersion(1);
 
+            // СИНХРОНИЗАЦИЯ С ОЧЕРЕДЬЮ
+            // Сначала записываем в таблицу изменений, чтобы не потерять данные
+            ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+            changeDao.enqueue(mealUid, "meal");
+
+            // Пытаемся отправить сразу
             MainActivity.getSyncManager().uploadMeal(meal);
 
-            // 5️⃣ Обновляем UI
             updateMealList(date);
             dialog.dismiss();
         });
