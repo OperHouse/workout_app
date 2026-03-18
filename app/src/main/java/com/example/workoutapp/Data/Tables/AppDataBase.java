@@ -205,6 +205,12 @@ public class AppDataBase extends SQLiteOpenHelper {
     public static final String FOOD_GAIN_GOAL_UID = "food_gain_goal_uid";
     public static final String DAILY_FOOD_TRACKING_UID = "daily_food_tracking_uid";
 
+    //Для удаления чего-либо
+    public static final String DELETION_QUEUE_TABLE = "deletion_queue_table";
+    public static final String DELETION_ID = "deletion_id";
+    public static final String DELETION_UID = "deletion_uid";
+    public static final String DELETION_TYPE = "deletion_type";
+
     // ======================== СОЗДАНИЕ ТАБЛИЦ ======================== //
 
     @Override
@@ -351,6 +357,11 @@ public class AppDataBase extends SQLiteOpenHelper {
                 + DAILY_FOOD_TRACKING_DATE + " TEXT NOT NULL, "
                 + TRACKING_CALORIES + " INTEGER NOT NULL, " + TRACKING_PROTEIN + " REAL, "
                 + TRACKING_FAT + " REAL, " + TRACKING_CARB + " REAL);");
+
+        db.execSQL("CREATE TABLE " + DELETION_QUEUE_TABLE + " ("
+                + DELETION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + DELETION_UID + " TEXT NOT NULL, "
+                + DELETION_TYPE + " TEXT NOT NULL)");
     }
 
 
@@ -377,6 +388,7 @@ public class AppDataBase extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + ACTIVITY_GOAL_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + FOOD_GAIN_GOAL_TABLE);
         db.execSQL("DROP TABLE IF EXISTS " + DAILY_FOOD_TRACKING_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + DELETION_QUEUE_TABLE);
         onCreate(db);
     }
 }

@@ -18,6 +18,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.workoutapp.Data.DeletionQueueDao;
 import com.example.workoutapp.Data.NutritionDao.ConnectingMealDao;
 import com.example.workoutapp.Data.NutritionDao.MealFoodDao;
 import com.example.workoutapp.Data.NutritionDao.MealNameDao;
@@ -179,11 +180,16 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
         deleteBtn.setOnClickListener(v -> {
             dialogDeleteMeal.dismiss();
 
-            int mealId = elm.getMeal_name_id();
+            String mealUid = elm.getMeal_uid(); // Нам нужен UID для очереди
+            int mealId = (int) elm.getMeal_name_id();
 
-            MainActivity.getSyncManager().deleteMeal(elm);
+            // 1. СРАЗУ ЗАПИСЫВАЕМ В ОЧЕРЕДЬ НА УДАЛЕНИЕ (до локального удаления)
+            if (mealUid != null && !mealUid.isEmpty()) {
+                DeletionQueueDao queueDao = new DeletionQueueDao(MainActivity.getAppDataBase());
+                queueDao.enqueue(mealUid, "meal");
+            }
 
-            // DAO
+            // 2. ЛОКАЛЬНОЕ УДАЛЕНИЕ (DAO)
             ConnectingMealDao connectingMealDao = new ConnectingMealDao(MainActivity.getAppDataBase());
             MealFoodDao mealFoodDao = new MealFoodDao(MainActivity.getAppDataBase());
             MealNameDao mealNameDao = new MealNameDao(MainActivity.getAppDataBase());
@@ -198,15 +204,19 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
             List<Integer> idsToDelete = foodIds.stream().map(Long::intValue).collect(Collectors.toList());
             mealFoodDao.deleteMealFoodsByIds(idsToDelete);
 
-            // Удаляем сам приём пищи (имя)
+            // Удаляем сам приём пищи (имя) из локальной БД
             mealNameDao.deleteMealName(mealId);
 
-            // Удаляем из адаптера и обновляем
+            // 3. ОБНОВЛЯЕМ ИНТЕРФЕЙС (мгновенно)
             allMealList.remove(position);
             notifyItemRemoved(position);
-            outsideRecyclerView.setAdapter(null);
+            // outsideRecyclerView.setAdapter(null); // Это можно убрать, если refreshAdapter делает свое дело
             ((NutritionFragment) fragment).refreshAdapter();
             ((NutritionFragment) fragment).syncDailyTotals();
+
+            // 4. ЗАПУСКАЕМ ПРОЦЕСС ОЧИСТКИ ОЧЕРЕДИ (попытка удалить с сервера)
+            // Метод сам проверит наличие интернета
+            MainActivity.getSyncManager().processPendingDeletions();
         });
 
         dialogDeleteMeal.show();

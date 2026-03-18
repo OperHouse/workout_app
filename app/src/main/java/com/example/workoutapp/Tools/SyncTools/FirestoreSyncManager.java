@@ -3,15 +3,23 @@ package com.example.workoutapp.Tools.SyncTools;
 import android.content.Context;
 import android.util.Log;
 
+import com.example.workoutapp.Data.DeletionQueueDao;
 import com.example.workoutapp.Data.ProfileDao.ActivityGoalDao;
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.ProfileDao.DailyFoodTrackingDao;
 import com.example.workoutapp.Data.ProfileDao.FoodGainGoalDao;
 import com.example.workoutapp.Data.ProfileDao.GeneralGoalDao;
 import com.example.workoutapp.MainActivity;
+import com.example.workoutapp.Models.DeletionTask;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.example.workoutapp.Models.NutritionModels.MealModel;
-import com.example.workoutapp.Models.ProfileModels.*;
+import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
+import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
+import com.example.workoutapp.Models.ProfileModels.DailyFoodTrackingModel;
+import com.example.workoutapp.Models.ProfileModels.FoodGainGoalModel;
+import com.example.workoutapp.Models.ProfileModels.GeneralGoalModel;
+import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
+import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Tools.WeightSync;
@@ -137,6 +145,7 @@ public class FirestoreSyncManager {
         if (userId == null) return;
 
         Log.d(TAG, "Starting full synchronization...");
+        processPendingDeletions();
 
         baseExerciseSync.restoreUserCustomExercises();
         profileSync.syncProfile();
@@ -157,6 +166,7 @@ public class FirestoreSyncManager {
         mealPresetSync.downloadAllOnce();
 
         receiveMealFromServer();
+
 
         Log.d(TAG, "Full sync initialized");
     }
@@ -380,6 +390,29 @@ public class FirestoreSyncManager {
             return;
         }
         mealSync.loadAllMeals();
+    }
+
+    public void processPendingDeletions() {
+        if (!isNetworkAvailable() || userId == null) return;
+
+        DeletionQueueDao queueDao = new DeletionQueueDao(MainActivity.getAppDataBase());
+        List<DeletionTask> pendingTasks = queueDao.getAllPendingTasks();
+
+        for (DeletionTask task : pendingTasks) {
+            final String currentUid = task.uid; // Фиксируем UID для лямбды
+            final String currentType = task.type;
+            if ("meal".equals(currentType)) {
+                db.collection("users").document(userId)
+                        .collection("meal_diary").document(currentUid)
+                        .delete()
+                        .addOnSuccessListener(aVoid -> {
+                            // Используем фиксированный UID
+                            queueDao.removeFromQueue(currentUid);
+                            Log.d(TAG, "Удалено с сервера и из очереди: " + currentUid);
+                        })
+                        .addOnFailureListener(e -> Log.e(TAG, "Ошибка сервера для " + currentUid, e));
+            }
+        }
     }
 
     private boolean isNetworkAvailable() {
