@@ -2,6 +2,8 @@ package com.example.workoutapp.Tools;
 
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.Helpers.WorkoutSessionModel;
@@ -29,6 +31,11 @@ public class WorkoutSessionSync2 {
     private final FirebaseFirestore db;
     private final String userId;
     private static final String TAG = "WorkoutSessionSync";
+    public interface SyncCallback {
+        void onSuccess();
+        void onFailure(String error);
+    }
+
 
     public WorkoutSessionSync2() {
         this.db = FirebaseFirestore.getInstance();
@@ -96,17 +103,23 @@ public class WorkoutSessionSync2 {
      * Отправляет список конкретных упражнений на сервер.
      * Автоматически группирует их по датам, чтобы не делать лишних запросов.
      */
-    public void syncSpecificExercises(List<ExerciseModel> exercises) {
-        if (userId == null || exercises == null || exercises.isEmpty()) return;
+    public void syncSpecificExercises(List<ExerciseModel> exercises, @Nullable WorkoutSessionSync2.SyncCallback callback) {
+        if (userId == null || exercises == null || exercises.isEmpty()) {
+            if (callback != null) callback.onFailure("No data");
+            return;
+        }
 
         Map<String, List<ExerciseModel>> groupedByDate = groupExercisesByDate(exercises);
+
+        // Счетчик для отслеживания завершения всех запросов
+        int totalDates = groupedByDate.size();
+        java.util.concurrent.atomic.AtomicInteger completedDates = new java.util.concurrent.atomic.AtomicInteger(0);
 
         for (Map.Entry<String, List<ExerciseModel>> entry : groupedByDate.entrySet()) {
             String date = entry.getKey();
             DocumentReference docRef = db.collection("users").document(userId)
                     .collection("workouts").document(date);
 
-            // Создаем вложенную структуру
             Map<String, Object> nestedExercises = new HashMap<>();
             for (ExerciseModel ex : entry.getValue()) {
                 if (ex.getExercise_uid() != null) {
@@ -116,13 +129,25 @@ public class WorkoutSessionSync2 {
 
             Map<String, Object> finalData = new HashMap<>();
             finalData.put("workoutDate", date);
-            finalData.put("workoutTitle", "Workout:" + date);
             finalData.put("exercises_map", nestedExercises);
 
-            // Используем Set с Merge, чтобы добавить упражнения в папку, не затирая другие
             docRef.set(finalData, SetOptions.merge())
-                    .addOnSuccessListener(aVoid -> Log.d(TAG, "Синхронизировано упражнений для " + date))
-                    .addOnFailureListener(e -> Log.e(TAG, "Ошибка синхронизации: " + e.getMessage()));
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d(TAG, "Данные упражнений синхронизированы для даты: " + date);
+
+                        // Когда ВСЕ даты из списка обработаны, вызываем успех
+                        if (completedDates.incrementAndGet() == totalDates) {
+                            if (callback != null) {
+                                callback.onSuccess(); // ВОТ ЭТОТ ВЫЗОВ УДАЛИТ UID ИЗ ТАБЛИЦЫ
+                            }
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Ошибка при синхронизации даты " + date + ": " + e.getMessage());
+                        if (callback != null) {
+                            callback.onFailure(e.getMessage());
+                        }
+                    });
         }
     }
 
@@ -141,50 +166,49 @@ public class WorkoutSessionSync2 {
             String uid = cloudEx.getExercise_uid();
             if (uid == null || uid.isEmpty()) continue;
 
-            // --- 1. ОЧИСТКА ПОДХОДОВ (Для всех упражнений, не важно сколько им дней) ---
-            List<Object> cleanSets = new ArrayList<>();
-            if (cloudEx.getSets() != null) {
-                for (Object set : cloudEx.getSets()) {
-                    if (!isSetEmpty(set)) {
-                        cleanSets.add(set);
-                    }
-                }
-            }
-            cloudEx.setSets(cleanSets); // Заменяем список на чистый
-
-            // --- 2. ПРОВЕРКА: Если упражнение совсем пустое (нет ни одного полезного подхода) ---
-            if (cleanSets.isEmpty()) {
-                Log.d(TAG, "Упражнение " + cloudEx.getExerciseName() + " пустое. Удаляем.");
-                dao.deleteExerciseByUid(uid);
-                removeExerciseFromCloud(cloudEx);
-                continue; // Переходим к следующему упражнению
+            // --- 1. ФИЛЬТРАЦИЯ ПОДХОДОВ ---
+            // Мы оставляем все подходы, чтобы не потерять черновики пользователя.
+            // Если ты всё же хочешь фильтровать совсем "битые" данные,
+            // убедись, что isSetEmpty не слишком строгий.
+            List<Object> currentSets = cloudEx.getSets();
+            if (currentSets == null) {
+                currentSets = new ArrayList<>();
             }
 
             try {
-                Date workoutDate = sdf.parse(session.getWorkoutDate());
+                // Парсим дату сессии
+                String sessionDateStr = session.getWorkoutDate();
+                Date workoutDate = sdf.parse(sessionDateStr);
                 long diffInMs = now - workoutDate.getTime();
                 long diffInDays = TimeUnit.MILLISECONDS.toDays(diffInMs);
 
-                // Правило завершения старых тренировок
+                // --- 2. ПРАВИЛО ЗАВЕРШЕНИЯ СТАРЫХ ТРЕНИРОВОК ---
+                // Если тренировке больше 2 дней и она не завершена — закрываем её.
                 if (diffInDays >= 2) {
                     if (!"finished".equals(cloudEx.getState())) {
                         cloudEx.setState("finished");
+                        // Обновляем статус в облаке (без колбэка, так как это фоновая правка)
                         updateExerciseSetsInCloud(cloudEx);
                     }
                 }
 
-                // Установка даты, если потерялась
-                if (cloudEx.getEx_Data() == null) cloudEx.setEx_Data(session.getWorkoutDate());
+                // Гарантируем наличие даты в модели упражнения
+                if (cloudEx.getEx_Data() == null) {
+                    cloudEx.setEx_Data(sessionDateStr);
+                }
 
-                // Сохранение в локальную БД
+                // --- 3. СОХРАНЕНИЕ В ЛОКАЛЬНУЮ БД ---
+                // Проверяем по LAST_MODIFIED (если в DAO есть такая логика) или просто обновляем.
                 if (dao.isExerciseUidExists(uid)) {
+                    Log.d(TAG, "Обновление упражнения локально: " + cloudEx.getExerciseName());
                     dao.updateFullExerciseFromCloud(cloudEx);
                 } else {
+                    Log.d(TAG, "Добавление нового упражнения из облака: " + cloudEx.getExerciseName());
                     dao.addFullExerciseFromCloud(cloudEx);
                 }
 
             } catch (Exception e) {
-                Log.e(TAG, "Ошибка при обработке даты: " + e.getMessage());
+                Log.e(TAG, "Ошибка при обработке упражнения " + uid + ": " + e.getMessage());
             }
         }
     }
@@ -193,16 +217,16 @@ public class WorkoutSessionSync2 {
      * Вспомогательный метод для проверки конкретного подхода.
      * Возвращает true, если в подходе одни нули.
      */
-    private boolean isSetEmpty(Object setObj) {
-        if (setObj instanceof StrengthSetModel) {
-            StrengthSetModel s = (StrengthSetModel) setObj;
-            return s.getStrength_set_weight() <= 0 && s.getStrength_set_rep() <= 0;
-        } else if (setObj instanceof CardioSetModel) {
-            CardioSetModel c = (CardioSetModel) setObj;
-            return c.getCardio_set_distance() <= 0 && c.getCardio_set_time() <= 0;
-        }
-        return true;
-    }
+//    private boolean isSetEmpty(Object setObj) {
+//        if (setObj instanceof StrengthSetModel) {
+//            StrengthSetModel s = (StrengthSetModel) setObj;
+//            return s.getStrength_set_weight() <= 0 && s.getStrength_set_rep() <= 0;
+//        } else if (setObj instanceof CardioSetModel) {
+//            CardioSetModel c = (CardioSetModel) setObj;
+//            return c.getCardio_set_distance() <= 0 && c.getCardio_set_time() <= 0;
+//        }
+//        return true;
+//    }
 
     public void syncAllWorkouts(List<ExerciseModel> allExercises) {
         if (userId == null || allExercises == null || allExercises.isEmpty()) return;
@@ -256,15 +280,26 @@ public class WorkoutSessionSync2 {
         docRef.update(updates).addOnSuccessListener(aVoid -> Log.d(TAG, "Упражнение " + uid + " обновлено в облаке."));
     }
 
-    public void removeExerciseFromCloud(ExerciseModel exercise) {
-        if (userId == null || exercise == null || exercise.getEx_Data() == null) return;
+    public void removeExerciseFromCloud(ExerciseModel exercise, @Nullable WorkoutSessionSync2.SyncCallback callback) {
+        if (userId == null || exercise == null || exercise.getEx_Data() == null) {
+            if (callback != null) callback.onFailure("Missing data");
+            return;
+        }
         String uid = exercise.getExercise_uid();
         DocumentReference docRef = db.collection("users").document(userId)
                 .collection("workouts").document(exercise.getEx_Data());
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("exercises_map." + uid, FieldValue.delete());
-        docRef.update(updates);
+
+        docRef.update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Удалено из облака: " + uid);
+                    if (callback != null) callback.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onFailure(e.getMessage());
+                });
     }
 
     private Map<String, Object> convertExerciseToMap(ExerciseModel ex) {
@@ -358,4 +393,6 @@ public class WorkoutSessionSync2 {
 
         return ex;
     }
+
+
 }

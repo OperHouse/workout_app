@@ -106,6 +106,7 @@ public class ExAdapter extends RecyclerView.Adapter<ExAdapter.MyViewHolder> {
 
                     // 3. СИНХРОНИЗАЦИЯ: Отправляем обновленный список упражнений в облако
                     // У MainActivity должен быть доступ к FirestoreSyncManager
+
                     mainActivity.getSyncManager().syncSingleExercise(addEx);
 
                     // --- Логика переключения фрагментов (без изменений) ---

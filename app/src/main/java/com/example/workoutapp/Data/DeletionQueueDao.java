@@ -28,6 +28,15 @@ public class DeletionQueueDao {
         Log.d("DeletionQueue", "Enqueued for deletion: " + uid + " (" + type + ")");
     }
 
+    public void enqueue(String uid, String type, String data) {
+        ContentValues values = new ContentValues();
+        values.put(AppDataBase.DELETION_UID, uid);
+        values.put(AppDataBase.DELETION_TYPE, type);
+        values.put(AppDataBase.DELETION_DATA, data);
+        db.insert(AppDataBase.DELETION_QUEUE_TABLE, null, values);
+        Log.d("DeletionQueue", "Enqueued for deletion: " + uid + " (" + type + ")" +  "(" + data + ")");
+    }
+
     public List<DeletionTask> getAllPendingTasks() {
         List<DeletionTask> tasks = new ArrayList<>();
         Cursor cursor = db.query(AppDataBase.DELETION_QUEUE_TABLE, null, null, null, null, null, null);
@@ -38,7 +47,8 @@ public class DeletionQueueDao {
                     do {
                         String uid = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.DELETION_UID));
                         String type = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.DELETION_TYPE));
-                        tasks.add(new DeletionTask(uid, type));
+                        String data = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.DELETION_DATA));
+                        tasks.add(new DeletionTask(uid, type, data));
                     } while (cursor.moveToNext());
                 }
             } finally {

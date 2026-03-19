@@ -479,7 +479,7 @@ public class WORKOUT_EXERCISE_TABLE_DAO {
             );
 
             if (cursor != null && cursor.moveToFirst()) {
-                // Используем твой готовый маппер, который подтянет и подходы, и время
+                // Используем готовый маппер, который подтянет и подходы, и время
                 return mapCursorToExercise(cursor);
             }
         } catch (Exception e) {

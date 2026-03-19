@@ -189,4 +189,56 @@ public class WORKOUT_PRESET_NAME_TABLE_DAO {
             db.endTransaction();
         }
     }
+
+    // =========================
+// Получение полной модели пресета по UID (для синхронизации)
+// =========================
+    public ExerciseModel getPresetByUid(String uid) {
+        if (uid == null || uid.isEmpty()) return null;
+
+        ExerciseModel model = null;
+        Cursor cursor = null;
+
+        try {
+            String[] columns = {
+                    AppDataBase.WORKOUT_PRESET_NAME_ID,
+                    AppDataBase.WORKOUT_PRESET_NAME,
+                    AppDataBase.WORKOUT_PRESET_UID
+            };
+
+            cursor = db.query(
+                    AppDataBase.WORKOUT_PRESET_NAME_TABLE,
+                    columns,
+                    AppDataBase.WORKOUT_PRESET_UID + " = ?",
+                    new String[]{uid},
+                    null, null, null
+            );
+
+            if (cursor != null && cursor.moveToFirst()) {
+                long presetId = cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_PRESET_NAME_ID));
+                String presetName = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_PRESET_NAME));
+                String presetUid = cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.WORKOUT_PRESET_UID));
+
+                // Собираем список упражнений, привязанных к этому пресету
+                List<Long> baseExIds = connectingPresetDao.getBaseExIdsByPresetId(presetId);
+                List<Object> exercises = new ArrayList<>();
+                for (Long baseExId : baseExIds) {
+                    BaseExModel exercise = baseExerciseDao.getExerciseById(baseExId);
+                    if (exercise != null) {
+                        exercises.add(exercise);
+                    }
+                }
+
+                // Создаем модель. В вашей структуре ExerciseModel используется как контейнер для пресета
+                model = new ExerciseModel(presetId, presetName, exercises);
+                model.setExercise_uid(presetUid);
+            }
+        } catch (Exception e) {
+            Log.e("PresetSync", "Ошибка получения пресета по UID: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+
+        return model;
+    }
 }

@@ -2,6 +2,8 @@ package com.example.workoutapp.Tools.SyncTools;
 
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
@@ -26,11 +28,19 @@ public class PresetWorkoutSync {
         this.userId = FirebaseAuth.getInstance().getUid();
     }
 
+    public interface SyncCallback {
+        void onSuccess();
+        void onFailure(String error);
+    }
+
     /**
-     * Отправка или обновление пресета в облаке
+     * Отправка или обновление пресета в облаке (ОБНОВЛЕНО: добавлен callback)
      */
-    public void uploadPreset(String presetName, String presetUid, List<?> exercises) { // Используем <?> (wildcard)
-        if (userId == null || presetUid == null) return;
+    public void uploadPreset(String presetName, String presetUid, List<?> exercises, @Nullable SyncCallback callback) {
+        if (userId == null || presetUid == null) {
+            if (callback != null) callback.onFailure("User ID or UID is null");
+            return;
+        }
 
         DocumentReference docRef = db.collection("users").document(userId)
                 .collection("presets").document(presetUid);
@@ -40,8 +50,6 @@ public class PresetWorkoutSync {
         if (exercises != null) {
             for (Object obj : exercises) {
                 Map<String, Object> map = new HashMap<>();
-
-                // Проверяем, какой объект нам пришел, и достаем данные правильно
                 if (obj instanceof ExerciseModel) {
                     ExerciseModel ex = (ExerciseModel) obj;
                     map.put("exercise_uid", ex.getExercise_uid());
@@ -54,12 +62,8 @@ public class PresetWorkoutSync {
                     map.put("exerciseType", be.getBase_ex_type());
                     map.put("exerciseBodyType", be.getBase_ex_bodyType());
                     map.put("exercise_uid", be.getBase_ex_uid());
-                    // У BaseExModel может не быть UID, это нормально для пресета
                 }
-
-                if (!map.isEmpty()) {
-                    lightExercises.add(map);
-                }
+                if (!map.isEmpty()) lightExercises.add(map);
             }
         }
 
@@ -69,8 +73,14 @@ public class PresetWorkoutSync {
         data.put("exercises_list", lightExercises);
 
         docRef.set(data, SetOptions.merge())
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Пресет синхронизирован: " + presetName))
-                .addOnFailureListener(e -> Log.e(TAG, "Ошибка синхронизации: " + e.getMessage()));
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Пресет синхронизирован: " + presetName);
+                    if (callback != null) callback.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Ошибка синхронизации: " + e.getMessage());
+                    if (callback != null) callback.onFailure(e.getMessage());
+                });
     }
 
     /**
@@ -117,36 +127,45 @@ public class PresetWorkoutSync {
     }
 
     /**
-     * Удаление пресета из облака
+     * Удаление пресета из облака (ОБНОВЛЕНО: добавлен callback)
      */
-    public void deletePresetFromCloud(String presetUid) {
-        if (userId == null || presetUid == null) return;
+    public void deletePresetFromCloud(String presetUid, @Nullable SyncCallback callback) {
+        if (userId == null || presetUid == null) {
+            if (callback != null) callback.onFailure("Invalid data");
+            return;
+        }
 
         db.collection("users").document(userId)
                 .collection("presets")
                 .document(presetUid)
                 .delete()
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Пресет удален из облака"))
-                .addOnFailureListener(e -> Log.e(TAG, "Ошибка удаления пресета: " + e.getMessage()));
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Пресет удален из облака");
+                    if (callback != null) callback.onSuccess(); // СИГНАЛ ДЛЯ ОЧИСТКИ ОЧЕРЕДИ УДАЛЕНИЯ
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Ошибка удаления пресета: " + e.getMessage());
+                    if (callback != null) callback.onFailure(e.getMessage());
+                });
     }
     /**
      * Проходит по всем локальным пресетам и отправляет их в облако
      */
-    public void pushLocalPresetsToCloud(WORKOUT_PRESET_NAME_TABLE_DAO presetDao) {
-        if (userId == null || presetDao == null) return;
-
-        // Получаем список всех пресетов из SQLite
-        List<ExerciseModel> localPresets = presetDao.getAllPresets();
-
-        for (ExerciseModel preset : localPresets) {
-            String uid = preset.getExercise_uid();
-
-            // Отправляем только те, у которых есть UID
-            if (uid != null && !uid.isEmpty()) {
-                // В ExerciseModel пресета в поле sets обычно лежат BaseExModel
-                // Нам нужно привести их к списку для отправки
-                uploadPreset(preset.getExerciseName(), uid, (List<ExerciseModel>)(Object)preset.getSets());
-            }
-        }
-    }
+//    public void pushLocalPresetsToCloud(WORKOUT_PRESET_NAME_TABLE_DAO presetDao) {
+//        if (userId == null || presetDao == null) return;
+//
+//        // Получаем список всех пресетов из SQLite
+//        List<ExerciseModel> localPresets = presetDao.getAllPresets();
+//
+//        for (ExerciseModel preset : localPresets) {
+//            String uid = preset.getExercise_uid();
+//
+//            // Отправляем только те, у которых есть UID
+//            if (uid != null && !uid.isEmpty()) {
+//                // В ExerciseModel пресета в поле sets обычно лежат BaseExModel
+//                // Нам нужно привести их к списку для отправки
+//                uploadPreset(preset.getExerciseName(), uid, (List<ExerciseModel>)(Object)preset.getSets());
+//            }
+//        }
+//    }
 }

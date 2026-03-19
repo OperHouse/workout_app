@@ -124,8 +124,6 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
                 // 1. Перезагружаем список пресетов из базы данных
                 presetsList = presetNameDao.getAllPresets();
                 presetAdapter.updatePresetsList(presetsList);
-
-                // 2. Уведомляем адаптер
                 presetAdapter.notifyDataSetChanged();
 
                 // 3. Обновляем видимость
@@ -617,13 +615,25 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
         });
 
         deleteBtn.setOnClickListener(v -> {
+            // 1. Сохраняем данные перед удалением из локальной БД
             String nameToDelete = exerciseToDelete.getBase_ex_name();
-            baseExerciseDao.deleteExercise(exerciseToDelete.getBase_ex_id());
-            syncManager.syncBaseExerciseChange(nameToDelete, null);
+            long idToDelete = exerciseToDelete.getBase_ex_id();
+
+            // 2. Вызываем новый метод синхронизации удаления (через очереди)
+            // Этот метод внутри себя сделает: enqueue в deletion_queue и попытку delete в Firebase
+            syncManager.deleteBaseExerciseFromCloud(exerciseToDelete);
+
+            // 3. Локальное удаление из SQLite
+            baseExerciseDao.deleteExercise(idToDelete);
+
+            // 4. Обновление UI
             exList.remove(position);
-            exAdapter.deleteExerciseById(exerciseToDelete.getBase_ex_id());
+            exAdapter.deleteExerciseById(idToDelete);
+
             exerciseVisibility(textEx, getString(R.string.hint_add_exercise), exList.isEmpty());
             r.requestLayout();
+
+            // 5. Закрываем диалог
             dialogCreateEx.dismiss();
         });
 
@@ -694,15 +704,29 @@ public class Selection_Ex_Preset_Fragment extends Fragment {
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 edtSearchText.clearFocus();
-                int position = viewHolder.getAdapterPosition();
+                int position = viewHolder.getBindingAdapterPosition();
+
+                if (position == RecyclerView.NO_POSITION) return;
+
                 if (isPreset) {
-                    ExerciseModel item = (ExerciseModel) dataList.get(position);
-                    showDeletePresetConfirmationDialog(item, position, recyclerView);
+                    // ВАЖНО: берем актуальный пресет из списка фрагмента по позиции из адаптера
+                    if (presetsList != null && position < presetsList.size()) {
+                        ExerciseModel item = presetsList.get(position);
+                        showDeletePresetConfirmationDialog(item, position, presetRecycler);
+                    } else {
+                        presetAdapter.notifyItemChanged(position); // Возвращаем свайп назад, если данных нет
+                    }
                 } else {
-                    BaseExModel item = (BaseExModel) dataList.get(position);
-                    showDeleteConfirmationDialog(item, position, recyclerView);
+                    // ВАЖНО: для обычных упражнений
+                    if (exList != null && position < exList.size()) {
+                        BaseExModel item = exList.get(position);
+                        showDeleteConfirmationDialog(item, position, exRecycler);
+                    } else {
+                        exAdapter.notifyItemChanged(position);
+                    }
                 }
             }
+
 
             @Override
             public void onChildDraw(@NonNull Canvas c, @NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder,

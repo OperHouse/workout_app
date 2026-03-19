@@ -210,6 +210,7 @@ public class AppDataBase extends SQLiteOpenHelper {
     public static final String DELETION_ID = "deletion_id";
     public static final String DELETION_UID = "deletion_uid";
     public static final String DELETION_TYPE = "deletion_type";
+    public static final String DELETION_DATA = "deletion_data";
 
     public static final String CHANGE_ELM_TABLE = "change_elm_table";
     public static final String CHANGE_ELM_ID = "change_elm_id";
@@ -366,7 +367,8 @@ public class AppDataBase extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE " + DELETION_QUEUE_TABLE + " ("
                 + DELETION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + DELETION_UID + " TEXT NOT NULL, "
-                + DELETION_TYPE + " TEXT NOT NULL)");
+                + DELETION_TYPE + " TEXT NOT NULL, "
+                + DELETION_DATA + " TEXT NOT NULL)");
 
         db.execSQL("CREATE TABLE " + CHANGE_ELM_TABLE + " ("
                 + CHANGE_ELM_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "

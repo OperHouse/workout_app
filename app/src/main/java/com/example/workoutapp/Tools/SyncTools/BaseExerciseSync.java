@@ -4,10 +4,13 @@ import static android.content.ContentValues.TAG;
 
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.example.workoutapp.Data.WorkoutDao.BASE_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
@@ -24,6 +27,11 @@ public class BaseExerciseSync {
     public BaseExerciseSync() {
         this.db = FirebaseFirestore.getInstance();
         this.userId = FirebaseAuth.getInstance().getUid();
+    }
+
+    public interface SyncCallback {
+        void onSuccess();
+        void onFailure(String error);
     }
 
     /**
@@ -67,31 +75,80 @@ public class BaseExerciseSync {
                 .addOnFailureListener(e -> Log.e(TAG, "Ошибка массовой синхронизации: " + e.getMessage()));
     }
 
-    public void syncBaseExerciseChange(String oldName, BaseExModel updatedEx) {
-        if (userId == null) return;
+    public void deleteBaseExercise(String uid, @Nullable SyncCallback callback) {
+        if (userId == null || uid == null) {
+            if (callback != null) {
+                callback.onFailure("Invalid data or user not logged in");
+            }
+            return;
+        }
 
-        // В качестве ID документа в Firestore всё еще удобно использовать форматированное имя
-        // (чтобы избежать дубликатов "Отжимания" и "отжимания"), либо сам UID.
-        // Используем UID как имя документа — это самый надежный вариант.
+        // Удаляем ТОЛЬКО из личной коллекции пользователя
+        db.collection("users").document(userId)
+                .collection("custom_exercises").document(uid)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Упражнение удалено из приватного хранилища: " + uid);
+                    if (callback != null) {
+                        callback.onSuccess();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Ошибка удаления из приватного хранилища: " + e.getMessage());
+                    if (callback != null) {
+                        callback.onFailure(e.getMessage());
+                    }
+                });
+    }
+
+    public void syncBaseExerciseChange(String oldName, BaseExModel updatedEx, @Nullable SyncCallback callback) {
+        if (userId == null) {
+            if (callback != null) callback.onFailure("User not logged in");
+            return;
+        }
+
         String docId = updatedEx != null ? updatedEx.getBase_ex_uid() : formatId(oldName);
 
         if (updatedEx == null) {
-            // Удаление
-            db.collection("users").document(userId).collection("custom_exercises").document(docId).delete();
+            // Логика удаления
+            db.collection("users").document(userId)
+                    .collection("custom_exercises").document(docId)
+                    .delete()
+                    .addOnSuccessListener(aVoid -> {
+                        if (callback != null) callback.onSuccess();
+                    })
+                    .addOnFailureListener(e -> {
+                        if (callback != null) callback.onFailure(e.getMessage());
+                    });
             return;
         }
 
         Map<String, Object> cloudData = prepareDataForCloud(updatedEx);
 
-        // 1. Личная коллекция
-        db.collection("users").document(userId)
-                .collection("custom_exercises")
-                .document(docId)
-                .set(cloudData, SetOptions.merge());
+        // Используем WriteBatch, чтобы оба сохранения (в личку и в библиотеку)
+        // прошли как одна транзакция. Это надежнее.
+        com.google.firebase.firestore.WriteBatch batch = db.batch();
 
-        // 2. Общая библиотека (добавляем автора)
+        // 1. Личная коллекция
+        DocumentReference userRef = db.collection("users").document(userId)
+                .collection("custom_exercises").document(docId);
+        batch.set(userRef, cloudData, SetOptions.merge());
+
+        // 2. Общая библиотека
         cloudData.put("authorId", userId);
-        db.collection("library").document(docId).set(cloudData, SetOptions.merge());
+        DocumentReference libraryRef = db.collection("library").document(docId);
+        batch.set(libraryRef, cloudData, SetOptions.merge());
+
+        // Выполняем батч
+        batch.commit()
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("Sync", "Base exercise synced successfully: " + docId);
+                    if (callback != null) callback.onSuccess(); // СИГНАЛ ДЛЯ УДАЛЕНИЯ ИЗ ОЧЕРЕДИ
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("Sync", "Base exercise sync failed", e);
+                    if (callback != null) callback.onFailure(e.getMessage());
+                });
     }
 
     public void restoreUserCustomExercises() {

@@ -208,4 +208,48 @@ public class BASE_EXERCISE_TABLE_DAO {
 
         return id;
     }
+
+    // =========================
+    // Получение упражнения по UID (Добавь этот метод)
+    // =========================
+    public BaseExModel getExByUid(String uid) {
+        if (uid == null || uid.isEmpty()) return null;
+
+        BaseExModel exercise = null;
+        Cursor cursor = null;
+
+        try {
+            String[] columns = {
+                    AppDataBase.BASE_EXERCISE_ID,
+                    AppDataBase.BASE_EXERCISE_NAME,
+                    AppDataBase.BASE_EXERCISE_TYPE,
+                    AppDataBase.BASE_EXERCISE_BODY_TYPE,
+                    AppDataBase.BASE_EXERCISE_UID
+            };
+
+            cursor = db.query(
+                    AppDataBase.BASE_EXERCISE_TABLE,
+                    columns,
+                    AppDataBase.BASE_EXERCISE_UID + " = ?",
+                    new String[]{uid},
+                    null,
+                    null,
+                    null
+            );
+
+            if (cursor != null && cursor.moveToFirst()) {
+                exercise = new BaseExModel(
+                        cursor.getLong(cursor.getColumnIndexOrThrow(AppDataBase.BASE_EXERCISE_ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.BASE_EXERCISE_NAME)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.BASE_EXERCISE_TYPE)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.BASE_EXERCISE_BODY_TYPE)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(AppDataBase.BASE_EXERCISE_UID))
+                );
+            }
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+
+        return exercise;
+    }
 }

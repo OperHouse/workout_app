@@ -372,11 +372,15 @@ public class CreatePresetFragment extends Fragment implements OnExItemClickListe
             // ============================================================
 
             final String REQUEST_KEY = "preset_updated_key";
+
+            // 2. Отправляем результат
             getParentFragmentManager().setFragmentResult(REQUEST_KEY, new Bundle());
 
             dialog.dismiss();
-            FragmentManager fragmentManager = getFragmentManager();
-            if (fragmentManager != null && fragmentManager.getBackStackEntryCount() > 0) {
+
+            // 3. Используем getParentFragmentManager() для закрытия фрагмента
+            FragmentManager fragmentManager = getParentFragmentManager();
+            if (fragmentManager.getBackStackEntryCount() > 0) {
                 fragmentManager.popBackStack();
             }
         });

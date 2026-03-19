@@ -25,6 +25,7 @@ import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
 import com.example.workoutapp.Tools.OnWorkoutPresetLongClickListener;
+import com.example.workoutapp.Tools.UidGenerator;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -101,7 +102,7 @@ public class PresetsAdapter extends RecyclerView.Adapter<PresetsAdapter.MyViewHo
                 for (Long baseExId : baseExIds) {
                     // ПРОВЕРКА: получаем объект один раз и проверяем на null
                     BaseExModel exercise = baseExerciseDao.getExerciseById(baseExId);
-                    String workExUid = "WORK_EX_" + java.util.UUID.randomUUID().toString();
+                    String workExUid = UidGenerator.generateWorkoutExUid();
 
                     if (exercise != null) {
                         // Добавляем упражнение в текущую тренировку, только если оно существует

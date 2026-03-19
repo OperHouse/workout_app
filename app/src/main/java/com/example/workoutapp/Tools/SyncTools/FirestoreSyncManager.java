@@ -16,6 +16,9 @@ import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.ProfileDao.DailyFoodTrackingDao;
 import com.example.workoutapp.Data.ProfileDao.FoodGainGoalDao;
 import com.example.workoutapp.Data.ProfileDao.GeneralGoalDao;
+import com.example.workoutapp.Data.WorkoutDao.BASE_EXERCISE_TABLE_DAO;
+import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
+import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.DeletionTask;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
@@ -62,6 +65,7 @@ public class FirestoreSyncManager {
     private ListenerRegistration foodListener;
 
     private final Context context;
+    private ChangeElmDao changeDao;
 
 
     public FirestoreSyncManager(Context context) {
@@ -83,6 +87,7 @@ public class FirestoreSyncManager {
         this.baseFoodSync = new BaseFoodSync();
         this.mealPresetSync = new MealPresetSync();
         this.mealSync = new MealSync();
+        this.changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
     }
 
     // =====================================================
@@ -155,7 +160,7 @@ public class FirestoreSyncManager {
         processPendingDeletions();
         processPendingChanges();
 
-        baseExerciseSync.restoreUserCustomExercises();
+        //baseExerciseSync.restoreUserCustomExercises();
         profileSync.syncProfile();
         weightSync.syncWeightHistory();
 
@@ -184,35 +189,160 @@ public class FirestoreSyncManager {
     // =====================================================
 
     public void syncPresetUpdate(String name, String uid, List<ExerciseModel> exercises) {
+        if (uid == null) return;
+
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+
+        // 1. Всегда записываем в очередь изменений
+        changeDao.enqueue(uid, "workout_preset");
+
+        // 2. Если интернета нет — выходим, фоновая задача отправит данные позже
         if (!isNetworkAvailable()) {
-            showNoInternetDialog();
+            Log.d(TAG, "Офлайн. Пресет " + name + " сохранен в очередь изменений.");
             return;
         }
-        presetWorkoutSync.uploadPreset(name, uid, exercises);
+
+        // 3. Пытаемся отправить сразу (нужно добавить SyncCallback в PresetWorkoutSync)
+        presetWorkoutSync.uploadPreset(name, uid, exercises, new PresetWorkoutSync.SyncCallback() {
+            @Override
+            public void onSuccess() {
+                // Удаляем из очереди при успехе
+                changeDao.removeFromQueue(uid);
+                Log.d(TAG, "Пресет синхронизирован: " + name);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e(TAG, "Ошибка синхронизации пресета: " + error);
+            }
+        });
     }
 
     public void deletePresetFromCloud(String presetUid) {
+        if (presetUid == null) return;
+
+        DeletionQueueDao deletionQueueDao = new DeletionQueueDao(MainActivity.getAppDataBase());
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+
+        // 1. Кладем в очередь удаления
+        deletionQueueDao.enqueue(presetUid, "workout_preset_delete", "");
+
         if (!isNetworkAvailable()) {
-            showNoInternetDialog();
+            Log.d(TAG, "Офлайн. Запрос на удаление пресета в очереди.");
             return;
         }
-        presetWorkoutSync.deletePresetFromCloud(presetUid);
+
+        // 2. Сразу удаляем из облака
+        presetWorkoutSync.deletePresetFromCloud(presetUid, new PresetWorkoutSync.SyncCallback() {
+            @Override
+            public void onSuccess() {
+                // Очищаем обе таблицы
+                deletionQueueDao.removeFromQueue(presetUid);
+                changeDao.removeFromQueue(presetUid);
+                Log.d(TAG, "Пресет удален из облака и очередей.");
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e(TAG, "Ошибка удаления пресета: " + error);
+            }
+        });
     }
 
     public void syncBaseExerciseChange(String oldName, BaseExModel updatedEx) {
+        if (updatedEx == null || updatedEx.getBase_ex_uid() == null) return;
+
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+        final String uid = updatedEx.getBase_ex_uid();
+
+        // 1. Записываем в очередь (используем строгий нижний регистр для типа)
+        changeDao.enqueue(uid, "base_exercise");
+
         if (!isNetworkAvailable()) {
-            showNoInternetDialog();
+            Log.d(TAG, "Офлайн. Изменение базового упражнения сохранено в очередь.");
             return;
         }
-        baseExerciseSync.syncBaseExerciseChange(oldName, updatedEx);
+
+        // 2. Пытаемся отправить (убедись, что в baseExerciseSync добавлен SyncCallback)
+        baseExerciseSync.syncBaseExerciseChange(oldName, updatedEx, new BaseExerciseSync.SyncCallback() {
+            @Override
+            public void onSuccess() {
+                // Удаляем из таблицы change_elm_table только после подтверждения от сервера
+                changeDao.removeFromQueue(uid);
+                Log.d(TAG, "Библиотека упражнений обновлена: " + uid);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e(TAG, "Ошибка синхронизации базы: " + error);
+            }
+        });
+    }
+
+    public void deleteBaseExerciseFromCloud(BaseExModel exercise) {
+        if (exercise == null || exercise.getBase_ex_uid() == null) {
+            Log.e(TAG, "Удаление отменено: UID пуст");
+            return;
+        }
+
+        final String uid = exercise.getBase_ex_uid();
+        DeletionQueueDao deletionQueueDao = new DeletionQueueDao(MainActivity.getAppDataBase());
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+
+        // 1. ЗАПИСЬ В ТАБЛИЦУ (теперь точно запишет)
+        // Используем "base_ex_delete"
+        deletionQueueDao.enqueue(uid, "base_ex_delete", "");
+        Log.d(TAG, "Записано в очередь удаления: " + uid);
+
+        if (!isNetworkAvailable()) return;
+
+        // 2. СРАЗУ УДАЛЯЕМ (вызываем метод удаления, а не изменения!)
+        baseExerciseSync.deleteBaseExercise(uid, new BaseExerciseSync.SyncCallback() {
+            @Override
+            public void onSuccess() {
+                // Очистка обеих очередей
+                deletionQueueDao.removeFromQueue(uid);
+                changeDao.removeFromQueue(uid);
+                Log.d(TAG, "Успешно удалено из облака и очередей: " + uid);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e(TAG, "Ошибка удаления в Firebase: " + error);
+            }
+        });
     }
 
     public void deleteExerciseFromCloud(ExerciseModel exercise) {
+        if (exercise == null || exercise.getExercise_uid() == null) return;
+
+        DeletionQueueDao deletionQueueDao = new DeletionQueueDao(MainActivity.getAppDataBase());
+        String exerciseUid = exercise.getExercise_uid();
+        String exerciseData = exercise.getEx_Data();
+
+        // 1. Кладем в очередь с пометкой на удаление
+        deletionQueueDao.enqueue(exerciseUid, "Workout_ex_delete", exerciseData);
+
+        // 2. Если сети нет — выходим.
         if (!isNetworkAvailable()) {
-            showNoInternetDialog();
+            Log.d("DEBUG_SYNC", "Нет сети. Запрос на удаление " + exerciseUid + " в очереди.");
             return;
         }
-        workoutSessionSync2.removeExerciseFromCloud(exercise);
+
+        // 3. Пытаемся удалить в Firebase сразу
+        workoutSessionSync2.removeExerciseFromCloud(exercise, new WorkoutSessionSync2.SyncCallback() {
+            @Override
+            public void onSuccess() {
+                // Удаляем задачу из очереди, так как в облаке стерто
+                deletionQueueDao.removeFromQueue(exerciseUid);
+                Log.d("DEBUG_SYNC", "Упражнение удалено из облака: " + exerciseUid);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e("DEBUG_SYNC", "Ошибка удаления из облака: " + error);
+            }
+        });
     }
 
     public void uploadAllBaseExercises(List<BaseExModel> list, boolean isPublic) {
@@ -334,23 +464,77 @@ public class FirestoreSyncManager {
     }
 
     public void syncSingleExercise(ExerciseModel exercise) {
+        if (exercise == null || exercise.getExercise_uid() == null) return;
+
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+        String exerciseUid = exercise.getExercise_uid();
+
+        // 1. Всегда записываем в очередь изменений перед попыткой отправки
+        changeDao.enqueue(exerciseUid, "Workout_ex");
+
+        // 2. Если интернета нет — просто выходим.
+        // Данные уже в безопасности в SQLite, processPendingChanges() отправит их позже.
         if (!isNetworkAvailable()) {
-            showNoInternetDialog();
+            Log.d(TAG, "Сеть недоступна. Упражнение " + exerciseUid + " сохранено в очередь.");
             return;
         }
-        if (exercise == null) return;
+
+        // 3. Если интернет есть — пробуем отправить
         List<ExerciseModel> list = new ArrayList<>();
         list.add(exercise);
-        workoutSessionSync2.syncSpecificExercises(list);
+
+        workoutSessionSync2.syncSpecificExercises(list, new WorkoutSessionSync2.SyncCallback() {
+            @Override
+            public void onSuccess() {
+                // Удаляем из очереди, так как данные на сервере
+                changeDao.removeFromQueue(exerciseUid);
+                Log.d(TAG, "Упражнение синхронизировано: " + exerciseUid);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                // Оставляем в очереди, сработает при следующей проверке
+                Log.e(TAG, "Ошибка синхронизации упражнения: " + error);
+            }
+        });
     }
 
     public void syncMultipleExercise(List<ExerciseModel> exercises) {
+        if (exercises == null || exercises.isEmpty()) return;
+
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+
+        // 1. Добавляем КАЖДОЕ упражнение в очередь изменений
+        for (ExerciseModel ex : exercises) {
+            if (ex.getExercise_uid() != null) {
+                changeDao.enqueue(ex.getExercise_uid(), "Workout_ex");
+            }
+        }
+
+        // 2. Если интернета нет — просто выходим.
+        // Мы уже сохранили всё в SQLite, диалог показывать не нужно.
         if (!isNetworkAvailable()) {
-            showNoInternetDialog();
+            Log.d("DEBUG_SYNC", "Нет сети. " + exercises.size() + " упражнений в очереди.");
             return;
         }
-        if (exercises == null) return;
-        workoutSessionSync2.syncSpecificExercises(exercises);
+
+        // 3. Пытаемся отправить пачкой
+        workoutSessionSync2.syncSpecificExercises(exercises, new WorkoutSessionSync2.SyncCallback() {
+            @Override
+            public void onSuccess() {
+                // Если вся пачка ушла успешно — чистим очередь для всех этих UID
+                for (ExerciseModel ex : exercises) {
+                    changeDao.removeFromQueue(ex.getExercise_uid());
+                }
+                Log.d("DEBUG_SYNC", "Групповая синхронизация завершена успешно.");
+            }
+
+            @Override
+            public void onFailure(String error) {
+                // В случае ошибки ничего не удаляем, очередь разберется позже
+                Log.e("DEBUG_SYNC", "Ошибка групповой синхронизации: " + error);
+            }
+        });
     }
 
     public void startWorkoutSync(List<ExerciseModel> exercises) {
@@ -361,14 +545,6 @@ public class FirestoreSyncManager {
         workoutSessionSync2.startWorkoutSync(exercises);
     }
 
-
-    public void deleteMealPreset(MealModel meal){
-        if (!isNetworkAvailable()) {
-            showNoInternetDialog();
-            return;
-        }
-        mealPresetSync.deletePreset(meal, null);
-    }
 
 
     public void uploadMeal(MealModel meal) {
@@ -415,13 +591,7 @@ public class FirestoreSyncManager {
         });
     }
 
-    public void deleteMeal(MealModel meal) {
-        if (!isNetworkAvailable()) {
-            showNoInternetDialog();
-            return;
-        }
-        mealSync.deleteMeal(meal, null);
-    }
+
 
     public void receiveMealFromServer(){
         if (!isNetworkAvailable()) {
@@ -438,8 +608,65 @@ public class FirestoreSyncManager {
         List<DeletionTask> pendingTasks = queueDao.getAllPendingTasks();
 
         for (DeletionTask task : pendingTasks) {
-            final String currentUid = task.uid; // Фиксируем UID для лямбды
+            final String currentUid = task.uid;
             final String currentType = task.type;
+            final String currentDate = task.data;
+
+            if ("Workout_ex_delete".equals(currentType)) {
+                // Проверяем, есть ли дата для удаления упражнения
+                if (currentDate == null || currentDate.isEmpty()) {
+                    Log.e(TAG, "Пропуск удаления: нет даты для упражнения " + currentUid);
+                    queueDao.removeFromQueue(currentUid); // Чистим битую задачу
+                    continue;
+                }
+
+                // Создаем модель-пустышку для твоей функции removeExerciseFromCloud
+                ExerciseModel dummyEx = new ExerciseModel();
+                dummyEx.setExercise_uid(currentUid);
+                dummyEx.setEx_Data(currentDate);
+
+                workoutSessionSync2.removeExerciseFromCloud(dummyEx, new WorkoutSessionSync2.SyncCallback() {
+                    @Override
+                    public void onSuccess() {
+                        queueDao.removeFromQueue(currentUid);
+                        Log.d(TAG, "Упражнение удалено из облака (очередь): " + currentUid);
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                        Log.e(TAG, "Ошибка удаления упражнения из очереди: " + error);
+                        // Оставляем в очереди для повтора
+                    }
+                });
+
+                continue; // Идем к следующей задаче
+            } else if ("base_ex_delete".equalsIgnoreCase(task.type)) {
+                baseExerciseSync.deleteBaseExercise(currentUid, new BaseExerciseSync.SyncCallback() {
+                    @Override
+                    public void onSuccess() {
+                        queueDao.removeFromQueue(currentUid);
+                        // Также чистим очередь изменений на всякий случай
+                        changeDao.removeFromQueue(currentUid);
+                    }
+                    @Override
+                    public void onFailure(String error) {
+                        Log.e(TAG, "Не удалось удалить базовое упр: " + error);
+                    }
+                });
+                continue;
+            }else if ("workout_preset_delete".equalsIgnoreCase(task.type)) {
+                presetWorkoutSync.deletePresetFromCloud(task.uid, new PresetWorkoutSync.SyncCallback() {
+                    @Override
+                    public void onSuccess() {
+                        queueDao.removeFromQueue(task.uid);
+                        new ChangeElmDao(MainActivity.getAppDataBase()).removeFromQueue(task.uid);
+                    }
+                    @Override
+                    public void onFailure(String error) {}
+                });
+            }
+
+            // --- Старая логика для пресетов и еды (удаление документов целиком) ---
             String collectionPath;
             if ("meal_preset".equals(currentType)) {
                 collectionPath = "meal_presets";
@@ -456,9 +683,8 @@ public class FirestoreSyncManager {
                         queueDao.removeFromQueue(currentUid);
                         Log.d(TAG, "Удалено из облака (" + currentType + "): " + currentUid);
                     })
-                    .addOnFailureListener(e -> Log.e(TAG, "Ошибка удаления в облаке: " + currentUid, e));
+                    .addOnFailureListener(e -> Log.e(TAG, "Ошибка удаления документа: " + currentUid, e));
         }
-
     }
 
     public void processPendingChanges() {
@@ -521,6 +747,84 @@ public class FirestoreSyncManager {
                         }
                     });
                 } else {
+                    changeDao.removeFromQueue(uid);
+                }
+            }   else if ("Workout_ex".equals(task.type)) {
+                // 3. Работаем с упражнениями тренировки
+                // Используем твой WORKOUT_EXERCISE_TABLE_DAO
+                WORKOUT_EXERCISE_TABLE_DAO workoutExDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
+                // Получаем полную модель упражнения (вместе с сетами) по UID из очереди
+                ExerciseModel exercise = workoutExDao.getExByUid(uid);
+
+                if (exercise != null) {
+                    List<ExerciseModel> list = new ArrayList<>();
+                    list.add(exercise);
+
+                    // Отправляем в облако через существующий метод
+                    workoutSessionSync2.syncSpecificExercises(list, new WorkoutSessionSync2.SyncCallback() {
+                        @Override
+                        public void onSuccess() {
+                            // Если в Firebase сохранилось — удаляем из локальной очереди
+                            changeDao.removeFromQueue(uid);
+                            Log.d(TAG, "Упражнение успешно синхронизировано в облако: " + uid);
+                        }
+
+                        @Override
+                        public void onFailure(String error) {
+                            // В случае сетевой ошибки оставляем в очереди до следующего раза
+                            Log.e(TAG, "Ошибка синхронизации упражнения " + uid + ": " + error);
+                        }
+                    });
+                } else {
+                    // Если упражнения нет в базе (например, оно было удалено пользователем совсем),
+                    // просто убираем битую ссылку из очереди.
+                    changeDao.removeFromQueue(uid);
+                }
+            } else if ("base_exercise".equalsIgnoreCase(task.type)) {
+                // 4. НОВОЕ: Базовые упражнения (Библиотека / Custom Exercises)
+                BASE_EXERCISE_TABLE_DAO baseDao = new BASE_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
+                BaseExModel baseEx = baseDao.getExByUid(uid); // Убедись, что такой метод есть в твоем DAO
+
+                if (baseEx != null) {
+                    // Вызываем метод изменения. oldName передаем как текущее имя,
+                    // так как в Firestore ID — это UID, и переименование пройдет корректно.
+                    baseExerciseSync.syncBaseExerciseChange(baseEx.getBase_ex_name(), baseEx, new BaseExerciseSync.SyncCallback() {
+                        @Override
+                        public void onSuccess() {
+                            changeDao.removeFromQueue(uid);
+                            Log.d(TAG, "Базовое упражнение синхронизировано: " + uid);
+                        }
+
+                        @Override
+                        public void onFailure(String error) {
+                            Log.e(TAG, "Ошибка синхронизации базового упр: " + error);
+                        }
+                    });
+                } else {
+                    // Если упражнение удалено из локальной библиотеки, убираем из очереди изменений
+                    changeDao.removeFromQueue(uid);
+                }
+            }else if ("workout_preset".equalsIgnoreCase(task.type)) {
+                WORKOUT_PRESET_NAME_TABLE_DAO presetDao = new WORKOUT_PRESET_NAME_TABLE_DAO(MainActivity.getAppDataBase());
+                // Используем наш новый метод
+                ExerciseModel preset = presetDao.getPresetByUid(uid);
+
+                if (preset != null) {
+                    // Вызываем upload с callback
+                    presetWorkoutSync.uploadPreset(preset.getExerciseName(), uid, preset.getSets(), new PresetWorkoutSync.SyncCallback() {
+                        @Override
+                        public void onSuccess() {
+                            changeDao.removeFromQueue(uid);
+                            Log.d(TAG, "Пресет синхронизирован из очереди: " + uid);
+                        }
+
+                        @Override
+                        public void onFailure(String error) {
+                            Log.e(TAG, "Ошибка фоновой синхронизации пресета: " + error);
+                        }
+                    });
+                } else {
+                    // Если пресета нет в локальной БД (был удален совсем), чистим очередь изменений
                     changeDao.removeFromQueue(uid);
                 }
             }
