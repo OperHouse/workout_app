@@ -17,6 +17,7 @@ import com.example.workoutapp.Data.ProfileDao.DailyFoodTrackingDao;
 import com.example.workoutapp.Data.ProfileDao.FoodGainGoalDao;
 import com.example.workoutapp.Data.ProfileDao.GeneralGoalDao;
 import com.example.workoutapp.Data.ProfileDao.UserProfileDao;
+import com.example.workoutapp.Data.ProfileDao.WeightHistoryDao;
 import com.example.workoutapp.Data.WorkoutDao.BASE_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
@@ -33,7 +34,6 @@ import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
-import com.example.workoutapp.Tools.WeightSync;
 import com.example.workoutapp.Tools.WorkoutSessionSync2;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -154,7 +154,7 @@ public class FirestoreSyncManager {
 
         //baseExerciseSync.restoreUserCustomExercises();
         //profileSync.syncProfile();
-        weightSync.syncWeightHistory();
+        //weightSync.syncWeightHistory();
 
         syncActivityGoals();
         syncGeneralGoals();
@@ -374,13 +374,36 @@ public class FirestoreSyncManager {
     }
 
     public void syncNewWeight(WeightHistoryModel weightEntry) {
+        if (weightEntry == null || weightEntry.getWeight_history_uid() == null) return;
+
+        final String uid = weightEntry.getWeight_history_uid();
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+
+        // 1. Записываем конкретную запись веса в очередь (тип "weight_history")
+        changeDao.enqueue(uid, "weight_history");
+
         if (!isNetworkAvailable()) {
-            showNoInternetDialog();
+            Log.d(TAG, "Офлайн. Запись веса (" + uid + ") сохранена в очередь.");
+            // Здесь не показываем диалог "Нет интернета", чтобы не мешать пользователю,
+            // так как запись уже в очереди и сохранится локально.
             return;
         }
-        if (weightEntry != null) {
-            weightSync.uploadWeightEntry(weightEntry);
-        }
+
+        // 2. Пытаемся отправить в Firebase
+        weightSync.uploadWeightEntry(weightEntry, new WeightSync.SyncCallback() {
+            @Override
+            public void onSuccess() {
+                // Удаляем из очереди только при успехе в облаке
+                changeDao.removeFromQueue(uid);
+                Log.d(TAG, "Синхронизация веса завершена: " + uid);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                // Оставляем в очереди, фоновый процесс попробует снова
+                Log.e(TAG, "Ошибка синхронизации веса: " + error);
+            }
+        });
     }
 
     public void uploadGoal(ActivityGoalModel newGoal) {
@@ -725,6 +748,7 @@ public class FirestoreSyncManager {
                             changeDao.removeFromQueue(uid);
                             Log.d(TAG, "Прием пищи синхронизирован: " + uid);
                         }
+
                         @Override
                         public void onFailure(String error) {
                             Log.e(TAG, "Ошибка синхронизации приема пищи: " + error);
@@ -750,6 +774,7 @@ public class FirestoreSyncManager {
                             changeDao.removeFromQueue(uid);
                             Log.d(TAG, "Пресет синхронизирован: " + uid);
                         }
+
                         @Override
                         public void onFailure(String error) {
                             Log.e(TAG, "Ошибка синхронизации пресета: " + error);
@@ -758,7 +783,7 @@ public class FirestoreSyncManager {
                 } else {
                     changeDao.removeFromQueue(uid);
                 }
-            }   else if ("Workout_ex".equals(task.type)) {
+            } else if ("Workout_ex".equals(task.type)) {
                 // 3. Работаем с упражнениями тренировки
                 // Используем твой WORKOUT_EXERCISE_TABLE_DAO
                 WORKOUT_EXERCISE_TABLE_DAO workoutExDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
@@ -813,7 +838,7 @@ public class FirestoreSyncManager {
                     // Если упражнение удалено из локальной библиотеки, убираем из очереди изменений
                     changeDao.removeFromQueue(uid);
                 }
-            }else if ("workout_preset".equalsIgnoreCase(task.type)) {
+            } else if ("workout_preset".equalsIgnoreCase(task.type)) {
                 WORKOUT_PRESET_NAME_TABLE_DAO presetDao = new WORKOUT_PRESET_NAME_TABLE_DAO(MainActivity.getAppDataBase());
                 // Используем наш новый метод
                 ExerciseModel preset = presetDao.getPresetByUid(uid);
@@ -836,7 +861,7 @@ public class FirestoreSyncManager {
                     // Если пресета нет в локальной БД (был удален совсем), чистим очередь изменений
                     changeDao.removeFromQueue(uid);
                 }
-            }else if ("user_profile".equalsIgnoreCase(task.type)) {
+            } else if ("user_profile".equalsIgnoreCase(task.type)) {
                 UserProfileDao userProfileDao = new UserProfileDao(MainActivity.getAppDataBase());
                 UserProfileModel p = userProfileDao.getProfile();
                 profileSync.uploadProfile(p, new ProfileSync.SyncCallback() {
@@ -844,9 +869,38 @@ public class FirestoreSyncManager {
                     public void onSuccess() {
                         changeDao.removeFromQueue("singleton_profile");
                     }
+
                     @Override
-                    public void onFailure(String e) {}
+                    public void onFailure(String e) {
+                    }
                 });
+            } else if ("weight_history".equalsIgnoreCase(task.type)) {
+                // 6. Работаем с историей веса
+                WeightHistoryDao weightDao = new WeightHistoryDao(MainActivity.getAppDataBase());
+                // Получаем конкретную запись веса по UID из очереди
+                WeightHistoryModel weightEntry = weightDao.getWeightByUid(uid);
+
+                if (weightEntry != null) {
+                    // Отправляем в облако через наш обновленный метод с callback
+                    weightSync.uploadWeightEntry(weightEntry, new WeightSync.SyncCallback() {
+                        @Override
+                        public void onSuccess() {
+                            // Если в Firebase сохранилось — удаляем из локальной очереди
+                            changeDao.removeFromQueue(uid);
+                            Log.d(TAG, "Запись веса успешно синхронизирована: " + uid);
+                        }
+
+                        @Override
+                        public void onFailure(String error) {
+                            // В случае ошибки (например, таймаут) оставляем в очереди до следующего прохода
+                            Log.e(TAG, "Ошибка синхронизации веса " + uid + ": " + error);
+                        }
+                    });
+                } else {
+                    // Если записи веса уже нет в локальной базе (например, была удалена),
+                    // просто убираем битую ссылку из очереди.
+                    changeDao.removeFromQueue(uid);
+                }
             }
         }
     }
@@ -870,6 +924,17 @@ public class FirestoreSyncManager {
             public void onError(String error) {
                 // Если данных в облаке нет, просто остаемся с тем, что есть в локальной БД
                 Log.e("Profile", "Не удалось скачать: " + error);
+            }
+        });
+    }
+    private void loadWeightFromCloud() {
+        weightSync.downloadWeightHistory(new WeightSync.DownloadCallback() {
+            @Override
+            public void onDownloaded(List<WeightHistoryModel> weightList) {
+            }
+
+            @Override
+            public void onError(String error) {
             }
         });
     }

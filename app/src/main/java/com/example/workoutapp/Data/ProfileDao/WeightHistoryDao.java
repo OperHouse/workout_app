@@ -67,4 +67,20 @@ public class WeightHistoryDao {
         model.setWeight_history_value(cursor.getFloat(cursor.getColumnIndexOrThrow(WEIGHT_VALUE)));
         return model;
     }
+
+    public WeightHistoryModel getWeightByUid(String uid) {
+        if (uid == null) return null;
+        WeightHistoryModel weight = null;
+
+        try (Cursor cursor = db.query(WEIGHT_HISTORY_TABLE, null,
+                WEIGHT_UID + " = ?", new String[]{uid},
+                null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                weight = mapCursorToModel(cursor);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return weight;
+    }
 }
