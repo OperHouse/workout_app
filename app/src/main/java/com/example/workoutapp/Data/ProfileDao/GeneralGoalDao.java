@@ -131,4 +131,24 @@ public class GeneralGoalDao {
 
         return values;
     }
+
+    public GeneralGoalModel getGoalByUid(String uid) {
+        if (uid == null) return null;
+        GeneralGoalModel goal = null;
+        Cursor cursor = db.query(GENERAL_GOAL_TABLE, null,
+                "general_goal_uid = ?", new String[]{uid}, null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            goal = new GeneralGoalModel(
+                    cursor.getInt(cursor.getColumnIndexOrThrow(GENERAL_GOAL_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(GENERAL_GLOBAL_GOAL_TEXT)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(GENERAL_GOAL_WORKOUTS_WEEKLY)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(GENERAL_GOAL_FOOD_TRACKING_WEEKLY)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(GENERAL_GOAL_DATE)),
+                    cursor.getString(cursor.getColumnIndexOrThrow("general_goal_uid"))
+            );
+            cursor.close();
+        }
+        return goal;
+    }
 }

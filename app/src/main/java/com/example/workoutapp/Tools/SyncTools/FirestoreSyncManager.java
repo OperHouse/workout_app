@@ -157,7 +157,7 @@ public class FirestoreSyncManager {
         //weightSync.syncWeightHistory();
 
         //syncActivityGoals();
-        syncGeneralGoals();
+        //syncGeneralGoals();
         syncFoodGoals();
         syncDailyActivity();
         syncDailyFood();
@@ -437,21 +437,33 @@ public class FirestoreSyncManager {
     }
 
     public void uploadGeneralGoal(GeneralGoalModel newGoal) {
-        if (!isNetworkAvailable()) {
-            showNoInternetDialog();
-            return;
-        }
-        generalGoalSync.uploadGoal(newGoal);
-    }
+        if (newGoal == null || newGoal.getGeneral_goal_uid() == null) return;
 
-    public void syncGeneralGoals() {
+        final String uid = newGoal.getGeneral_goal_uid();
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+
+        // 1. Записываем в очередь (тип "general_goal")
+        changeDao.enqueue(uid, "general_goal");
+
         if (!isNetworkAvailable()) {
-            showNoInternetDialog();
+            Log.d(TAG, "Офлайн. Общая цель сохранена в очередь.");
             return;
         }
-        GeneralGoalDao dao = new GeneralGoalDao(MainActivity.getAppDataBase());
-        generalGoalSync.pullGoalsFromCloud(dao);
-        generalGoalSync.pushLocalGoalsToCloud(dao);
+
+        // 2. Пытаемся отправить немедленно
+        generalGoalSync.uploadGoal(newGoal, new GeneralGoalSync.SyncCallback() {
+            @Override
+            public void onSuccess() {
+                // Удаляем из очереди только при подтверждении сервером
+                changeDao.removeFromQueue(uid);
+                Log.d(TAG, "Общая цель успешно синхронизирована.");
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e(TAG, "Ошибка синхронизации цели: " + error);
+            }
+        });
     }
 
     public void uploadFoodGoal(FoodGainGoalModel newGoal) {
@@ -932,6 +944,28 @@ public class FirestoreSyncManager {
                 } else {
                     changeDao.removeFromQueue(uid);
                 }
+            }else if ("general_goal".equalsIgnoreCase(task.type)) {
+                // Работаем с общими целями
+                GeneralGoalDao goalDao = new GeneralGoalDao(MainActivity.getAppDataBase());
+                GeneralGoalModel goal = goalDao.getGoalByUid(uid);
+
+                if (goal != null) {
+                    generalGoalSync.uploadGoal(goal, new GeneralGoalSync.SyncCallback() {
+                        @Override
+                        public void onSuccess() {
+                            changeDao.removeFromQueue(uid);
+                            Log.d(TAG, "Общая цель синхронизирована из очереди: " + uid);
+                        }
+
+                        @Override
+                        public void onFailure(String error) {
+                            Log.e(TAG, "Фоновая синхронизация общей цели не удалась: " + error);
+                        }
+                    });
+                } else {
+                    // Если цели больше нет в базе — чистим очередь
+                    changeDao.removeFromQueue(uid);
+                }
             }
         }
     }
@@ -973,6 +1007,19 @@ public class FirestoreSyncManager {
         activityGoalSync.downloadGoals(new ActivityGoalSync.DownloadCallback() {
             @Override
             public void onDownloaded(List<ActivityGoalModel> goals) {
+
+            }
+
+            @Override
+            public void onError(String error) {
+
+            }
+        });
+    }
+    private void loadGeneralGoalsFromCloud() {
+        generalGoalSync.downloadGoals(new GeneralGoalSync.DownloadCallback() {
+            @Override
+            public void onDownloaded(List<GeneralGoalModel> goals) {
 
             }
 
