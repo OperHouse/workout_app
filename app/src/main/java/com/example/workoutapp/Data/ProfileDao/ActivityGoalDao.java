@@ -107,4 +107,20 @@ public class ActivityGoalDao {
         cv.put("activity_goal_uid", uid);
         db.update(ACTIVITY_GOAL_TABLE, cv, ACTIVITY_GOAL_ID + " = ?", new String[]{String.valueOf(id)});
     }
+
+    public ActivityGoalModel getGoalByUid(String uid) {
+        ActivityGoalModel goal = null;
+        Cursor cursor = db.query(ACTIVITY_GOAL_TABLE, null, ACTIVITY_GOAL_UID + " = ?", new String[]{uid}, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            goal = new ActivityGoalModel(
+                    cursor.getInt(cursor.getColumnIndexOrThrow(ACTIVITY_GOAL_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(ACTIVITY_GOAL_DATE)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(ACTIVITY_GOAL_STEPS)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(ACTIVITY_CALORIES_TO_BURN)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(ACTIVITY_GOAL_UID))
+            );
+            cursor.close();
+        }
+        return goal;
+    }
 }

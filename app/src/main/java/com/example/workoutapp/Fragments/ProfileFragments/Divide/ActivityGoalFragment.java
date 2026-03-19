@@ -147,7 +147,7 @@ public class ActivityGoalFragment extends Fragment {
         }
     }
 
-    // 🔹 Загрузка данных из базы в поля
+    // Загрузка данных из базы в поля
     private void loadActivityGoalData() {
         ActivityGoalDao goalDao = new ActivityGoalDao(MainActivity.getAppDataBase());
         ActivityGoalModel lastGoal = goalDao.getLatestGoal();
@@ -162,7 +162,7 @@ public class ActivityGoalFragment extends Fragment {
         }
     }
 
-    // 🔹 Сохранение данных
+    // Сохранение данных
     private void saveActivityGoal() {
         int caloriesToBurn = 0;
         int amountSteps = 0;
@@ -201,7 +201,7 @@ public class ActivityGoalFragment extends Fragment {
         goalDao.addGoal(newGoal); // добавляем в базу
 
         // СИНХРОНИЗАЦИЯ: Отправляем в облако
-        MainActivity.getSyncManager().uploadGoal(newGoal);
+        MainActivity.getSyncManager().uploadActivityGoal(newGoal);
 
         Toast.makeText(requireContext(), "Цели активности сохранены.", Toast.LENGTH_SHORT).show();
 
