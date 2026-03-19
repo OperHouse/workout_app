@@ -16,6 +16,7 @@ import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.ProfileDao.DailyFoodTrackingDao;
 import com.example.workoutapp.Data.ProfileDao.FoodGainGoalDao;
 import com.example.workoutapp.Data.ProfileDao.GeneralGoalDao;
+import com.example.workoutapp.Data.ProfileDao.UserProfileDao;
 import com.example.workoutapp.Data.WorkoutDao.BASE_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
@@ -103,15 +104,6 @@ public class FirestoreSyncManager {
         baseFoodSync.uploadFood(food, null);
     }
 
-    public void deleteFood(FoodModel food) {
-        if (!isNetworkAvailable()) {
-            showNoInternetDialog();
-            return;
-        }
-        if (userId == null) return;
-        baseFoodSync.deleteFood(food, null);
-    }
-
     /**
      * Запуск realtime синхронизации еды.
      * Вызывать один раз после авторизации.
@@ -161,7 +153,7 @@ public class FirestoreSyncManager {
         processPendingChanges();
 
         //baseExerciseSync.restoreUserCustomExercises();
-        profileSync.syncProfile();
+        //profileSync.syncProfile();
         weightSync.syncWeightHistory();
 
         syncActivityGoals();
@@ -354,12 +346,31 @@ public class FirestoreSyncManager {
     }
 
     public void syncProfileUpdate(UserProfileModel profile) {
+        // 2. Ставим в очередь на синхронизацию.
+        // Поскольку запись одна, используем фиксированный ключ "singleton_profile"
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+        final String syncKey = "singleton_profile";
+        changeDao.enqueue(syncKey, "user_profile");
 
         if (!isNetworkAvailable()) {
-            showNoInternetDialog();
+            Log.d("ProfileSync", "Офлайн. Профиль обновлен локально и ждет сети.");
             return;
         }
-        profileSync.uploadProfile(profile);
+
+        // 3. Если сеть есть — отправляем
+        profileSync.uploadProfile(profile, new ProfileSync.SyncCallback() {
+            @Override
+            public void onSuccess() {
+                // Удаляем из очереди, когда Firestore подтвердил получение
+                changeDao.removeFromQueue(syncKey);
+                Log.d("ProfileSync", "Профиль успешно улетел в Firestore");
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e("ProfileSync", "Ошибка сети, профиль остался в очереди: " + error);
+            }
+        });
     }
 
     public void syncNewWeight(WeightHistoryModel weightEntry) {
@@ -639,7 +650,7 @@ public class FirestoreSyncManager {
                     }
                 });
 
-                continue; // Идем к следующей задаче
+                continue;
             } else if ("base_ex_delete".equalsIgnoreCase(task.type)) {
                 baseExerciseSync.deleteBaseExercise(currentUid, new BaseExerciseSync.SyncCallback() {
                     @Override
@@ -665,8 +676,6 @@ public class FirestoreSyncManager {
                     public void onFailure(String error) {}
                 });
             }
-
-            // --- Старая логика для пресетов и еды (удаление документов целиком) ---
             String collectionPath;
             if ("meal_preset".equals(currentType)) {
                 collectionPath = "meal_presets";
@@ -827,8 +836,42 @@ public class FirestoreSyncManager {
                     // Если пресета нет в локальной БД (был удален совсем), чистим очередь изменений
                     changeDao.removeFromQueue(uid);
                 }
+            }else if ("user_profile".equalsIgnoreCase(task.type)) {
+                UserProfileDao userProfileDao = new UserProfileDao(MainActivity.getAppDataBase());
+                UserProfileModel p = userProfileDao.getProfile();
+                profileSync.uploadProfile(p, new ProfileSync.SyncCallback() {
+                    @Override
+                    public void onSuccess() {
+                        changeDao.removeFromQueue("singleton_profile");
+                    }
+                    @Override
+                    public void onFailure(String e) {}
+                });
             }
         }
+    }
+
+
+
+
+    private void loadProfileFromCloud() {
+        // Показываем какой-нибудь ProgressBar
+        profileSync.downloadProfile(new ProfileSync.DownloadCallback() {
+            @Override
+            public void onDownloaded(UserProfileModel profile) {
+                // Обновляем поля на экране
+//                edtName.setText(profile.getUserName());
+//                edtHeight.setText(String.valueOf(profile.getUserHeight()));
+//                edtAge.setText(String.valueOf(profile.getUserAge()));
+                Log.d("Profile", "Данные обновлены из облака");
+            }
+
+            @Override
+            public void onError(String error) {
+                // Если данных в облаке нет, просто остаемся с тем, что есть в локальной БД
+                Log.e("Profile", "Не удалось скачать: " + error);
+            }
+        });
     }
 
     private boolean isNetworkAvailable() {

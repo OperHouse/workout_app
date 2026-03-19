@@ -20,6 +20,53 @@ public class ProfileSync {
         this.userId = FirebaseAuth.getInstance().getUid();
     }
 
+    public interface DownloadCallback {
+        void onDownloaded(UserProfileModel profile);
+        void onError(String error);
+    }
+
+    public interface SyncCallback {
+        void onSuccess();
+
+        void onFailure(String error);
+    }
+
+
+    /**
+     * Метод только для скачивания данных из облака.
+     */
+    public void downloadProfile(DownloadCallback callback) {
+        if (userId == null) {
+            if (callback != null) callback.onError("User not logged in");
+            return;
+        }
+
+        db.collection("users").document(userId).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists() && doc.get("name") != null) {
+                        UserProfileModel cloudProfile = new UserProfileModel(
+                                0,
+                                doc.getString("name"),
+                                doc.getDouble("height") != null ? doc.getDouble("height").floatValue() : 0,
+                                doc.getLong("age") != null ? doc.getLong("age").intValue() : 0,
+                                userId // передаем UID из Auth, так как в документе его может не быть
+                        );
+
+                        // Сохраняем локально
+                        UserProfileDao dao = new UserProfileDao(MainActivity.getAppDataBase());
+                        dao.insertOrUpdateProfile(cloudProfile);
+
+                        if (callback != null) callback.onDownloaded(cloudProfile);
+                    } else {
+                        if (callback != null) callback.onError("No profile data in cloud");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) callback.onError(e.getMessage());
+                });
+    }
+
+
     /**
      * Полная синхронизация: решаем, нужно ли скачивать данные или отправлять локальные.
      */
@@ -44,7 +91,7 @@ public class ProfileSync {
             } else {
                 // 2. В ОБЛАКЕ ПУСТО — отправляем локальные данные, если они есть
                 if (localProfile != null && localProfile.getUserName() != null && !localProfile.getUserName().trim().isEmpty()) {
-                    uploadProfile(localProfile);
+                    uploadProfile(localProfile, null);
                     Log.d("ProfileSync", "Локальные данные отправлены в пустое облако");
                 }
             }
@@ -54,8 +101,15 @@ public class ProfileSync {
     /**
      * Отправка профиля на сервер.
      */
-    public void uploadProfile(UserProfileModel profile) {
-        if (userId == null || profile == null) return;
+
+    /**
+     * Отправка профиля на сервер с поддержкой Callback.
+     */
+    public void uploadProfile(UserProfileModel profile, SyncCallback callback) {
+        if (userId == null || profile == null) {
+            if (callback != null) callback.onFailure("User not logged in or profile null");
+            return;
+        }
 
         Map<String, Object> cloudData = new HashMap<>();
         cloudData.put("name", profile.getUserName());
@@ -65,7 +119,13 @@ public class ProfileSync {
 
         db.collection("users").document(userId)
                 .set(cloudData, SetOptions.merge())
-                .addOnSuccessListener(aVoid -> Log.d("ProfileSync", "Firestore обновлен"))
-                .addOnFailureListener(e -> Log.e("ProfileSync", "Ошибка синхронизации", e));
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("ProfileSync", "Firestore профиль обновлен");
+                    if (callback != null) callback.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ProfileSync", "Ошибка синхронизации профиля", e);
+                    if (callback != null) callback.onFailure(e.getMessage());
+                });
     }
 }
