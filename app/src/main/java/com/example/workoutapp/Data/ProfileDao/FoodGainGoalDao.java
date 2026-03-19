@@ -115,4 +115,25 @@ public class FoodGainGoalDao {
         cv.put("food_gain_goal_uid", uid);
         db.update(FOOD_GAIN_GOAL_TABLE, cv, FOOD_GAIN_GOAL_ID + " = ?", new String[]{String.valueOf(id)});
     }
+
+    public FoodGainGoalModel getGoalByUid(String uid) {
+        if (uid == null) return null;
+        FoodGainGoalModel goal = null;
+        Cursor cursor = db.query(FOOD_GAIN_GOAL_TABLE, null,
+                FOOD_GAIN_GOAL_UID + " = ?", new String[]{uid}, null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            goal = new FoodGainGoalModel(
+                    cursor.getInt(cursor.getColumnIndexOrThrow(FOOD_GAIN_GOAL_ID)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(FOOD_GAIN_GOAL_CALORIES)),
+                    cursor.getFloat(cursor.getColumnIndexOrThrow(FOOD_GAIN_GOAL_PROTEIN)),
+                    cursor.getFloat(cursor.getColumnIndexOrThrow(FOOD_GAIN_GOAL_FAT)),
+                    cursor.getFloat(cursor.getColumnIndexOrThrow(FOOD_GAIN_GOAL_CARB)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(FOOD_GAIN_GOAL_DATE)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(FOOD_GAIN_GOAL_UID))
+            );
+            cursor.close();
+        }
+        return goal;
+    }
 }
