@@ -175,5 +175,40 @@ public class DailyActivityTrackingDao {
         db.update(DAILY_ACTIVITY_TRACKING_TABLE, cv, DAILY_ACTIVITY_TRACKING_ACTIVITY_ID + " = ?", new String[]{String.valueOf(id)});
     }
 
+    // Получение данных по дате (используется для синхронизации и отображения)
+    public DailyActivityTrackingModel getEntryByDate(String date) {
+        DailyActivityTrackingModel model = null;
+        Cursor cursor = null;
+
+        try {
+            cursor = db.query(
+                    DAILY_ACTIVITY_TRACKING_TABLE,
+                    null,
+                    DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE + " = ?",
+                    new String[]{date},
+                    null,
+                    null,
+                    null
+            );
+
+            if (cursor != null && cursor.moveToFirst()) {
+                model = new DailyActivityTrackingModel(
+                        cursor.getInt(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_DATE)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_STEPS)),
+                        cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_CALORIES_BURN)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_UID)),
+                        cursor.getFloat(cursor.getColumnIndexOrThrow(DAILY_ACTIVITY_TRACKING_ACTIVITY_DISTANCE))
+                );
+            }
+        } catch (Exception e) {
+            android.util.Log.e("DailyActivityDao", "Ошибка при получении записи по дате: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+
+        return model;
+    }
+
 
 }

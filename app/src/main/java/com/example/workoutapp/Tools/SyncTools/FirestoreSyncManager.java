@@ -159,7 +159,7 @@ public class FirestoreSyncManager {
         //syncActivityGoals();
         //syncGeneralGoals();
         //syncFoodGoals();
-        syncDailyActivity();
+        //syncDailyActivity();
         //syncDailyFood();
 
         startWorkoutSync(localExercises);
@@ -497,23 +497,35 @@ public class FirestoreSyncManager {
     }
 
     public void uploadDailyActivity(DailyActivityTrackingModel model) {
+        if (model == null || model.getDaily_activity_tracking_date() == null) return;
+
+        final String dateKey = model.getDaily_activity_tracking_date();
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+
+        // 1. Ставим в очередь (тип "daily_activity")
+        changeDao.enqueue(dateKey, "daily_activity");
+
         if (!isNetworkAvailable()) {
-            showNoInternetDialog();
+            Log.d(TAG, "Офлайн. Активность за " + dateKey + " сохранена в очередь.");
             return;
         }
-        dailyActivitySync.uploadEntry(model);
+
+        // 2. Попытка немедленной отправки
+        dailyActivitySync.uploadEntry(model, new DailyActivitySync.SyncCallback() {
+            @Override
+            public void onSuccess() {
+                // Удаляем только после подтверждения сервером
+                changeDao.removeFromQueue(dateKey);
+                Log.d(TAG, "Активность синхронизирована успешно.");
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e(TAG, "Ошибка немедленной синхронизации: " + error);
+            }
+        });
     }
-    //TODO: сделать выгрузку на сервер ежедневной активности и ежедневного отслеживания кбжу
-    //это 4 функции ниже
-    public void syncDailyActivity() {
-        if (!isNetworkAvailable()) {
-            showNoInternetDialog();
-            return;
-        }
-        DailyActivityTrackingDao dao = new DailyActivityTrackingDao(MainActivity.getAppDataBase());
-        dailyActivitySync.pullFromCloud(dao);
-        dailyActivitySync.pushLocalToCloud(dao);
-    }
+
 
     public void uploadDailyFood(DailyFoodTrackingModel model) {
         if (model == null || model.getDaily_food_tracking_date() == null) return;
@@ -1033,6 +1045,28 @@ public class FirestoreSyncManager {
                 } else {
                     changeDao.removeFromQueue(uid);
                 }
+            }else if ("daily_activity".equalsIgnoreCase(task.type)) {
+                // Синхронизация ежедневной активности (uid в данном случае — это дата)
+                DailyActivityTrackingDao activityDao = new DailyActivityTrackingDao(MainActivity.getAppDataBase());
+                DailyActivityTrackingModel entry = activityDao.getEntryByDate(uid);
+
+                if (entry != null) {
+                    dailyActivitySync.uploadEntry(entry, new DailyActivitySync.SyncCallback() {
+                        @Override
+                        public void onSuccess() {
+                            changeDao.removeFromQueue(uid);
+                            Log.d(TAG, "Активность из очереди успешно синхронизирована: " + uid);
+                        }
+
+                        @Override
+                        public void onFailure(String error) {
+                            Log.e(TAG, "Фоновая синхронизация активности не удалась: " + error);
+                        }
+                    });
+                } else {
+                    // Если данных в локальной базе больше нет, удаляем задачу из очереди
+                    changeDao.removeFromQueue(uid);
+                }
             }
         }
     }
@@ -1113,6 +1147,19 @@ public class FirestoreSyncManager {
         dailyFoodSync.downloadEntries(new DailyFoodSync.DownloadCallback() {
             @Override
             public void onDownloaded(List<DailyFoodTrackingModel> entries) {
+
+            }
+
+            @Override
+            public void onError(String error) {
+
+            }
+        });
+    }
+    private void loadDailyActivityFromCloud() {
+        dailyActivitySync.downloadFromCloud(new DailyActivitySync.DownloadCallback() {
+            @Override
+            public void onDownloaded(List<DailyActivityTrackingModel> entries) {
 
             }
 
