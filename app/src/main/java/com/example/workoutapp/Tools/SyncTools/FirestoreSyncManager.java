@@ -160,7 +160,7 @@ public class FirestoreSyncManager {
         //syncGeneralGoals();
         //syncFoodGoals();
         syncDailyActivity();
-        syncDailyFood();
+        //syncDailyFood();
 
         startWorkoutSync(localExercises);
 
@@ -503,7 +503,8 @@ public class FirestoreSyncManager {
         }
         dailyActivitySync.uploadEntry(model);
     }
-
+    //TODO: сделать выгрузку на сервер ежедневной активности и ежедневного отслеживания кбжу
+    //это 4 функции ниже
     public void syncDailyActivity() {
         if (!isNetworkAvailable()) {
             showNoInternetDialog();
@@ -515,21 +516,32 @@ public class FirestoreSyncManager {
     }
 
     public void uploadDailyFood(DailyFoodTrackingModel model) {
-        if (!isNetworkAvailable()) {
-            showNoInternetDialog();
-            return;
-        }
-        dailyFoodSync.uploadEntry(model);
-    }
+        if (model == null || model.getDaily_food_tracking_date() == null) return;
 
-    public void syncDailyFood() {
+        final String dateKey = model.getDaily_food_tracking_date();
+        ChangeElmDao changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+
+        // 1. Ставим в очередь (тип "daily_food")
+        changeDao.enqueue(dateKey, "daily_food");
+
         if (!isNetworkAvailable()) {
-            showNoInternetDialog();
+            Log.d(TAG, "Офлайн. Данные КБЖУ сохранены в очередь.");
             return;
         }
-        DailyFoodTrackingDao dao = new DailyFoodTrackingDao(MainActivity.getAppDataBase());
-        dailyFoodSync.pullFromCloud(dao);
-        dailyFoodSync.pushLocalToCloud(dao);
+
+        // 2. Попытка немедленной отправки
+        dailyFoodSync.uploadEntry(model, new DailyFoodSync.SyncCallback() {
+            @Override
+            public void onSuccess() {
+                changeDao.removeFromQueue(dateKey);
+                Log.d(TAG, "КБЖУ за " + dateKey + " успешно синхронизированы.");
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e(TAG, "Ошибка немедленной синхронизации КБЖУ: " + error);
+            }
+        });
     }
 
     public void syncSingleExercise(ExerciseModel exercise) {
@@ -1000,6 +1012,27 @@ public class FirestoreSyncManager {
                     // Если цели больше нет в базе — чистим очередь
                     changeDao.removeFromQueue(uid);
                 }
+            }else if ("daily_food".equalsIgnoreCase(task.type)) {
+                // 10. Синхронизация КБЖУ (используем task.uid как дату)
+                DailyFoodTrackingDao foodDao = new DailyFoodTrackingDao(MainActivity.getAppDataBase());
+                DailyFoodTrackingModel foodEntry = foodDao.getEntryByDate(uid);
+
+                if (foodEntry != null) {
+                    dailyFoodSync.uploadEntry(foodEntry, new DailyFoodSync.SyncCallback() {
+                        @Override
+                        public void onSuccess() {
+                            changeDao.removeFromQueue(uid);
+                            Log.d(TAG, "КБЖУ из очереди синхронизированы: " + uid);
+                        }
+
+                        @Override
+                        public void onFailure(String error) {
+                            Log.e(TAG, "Фоновая синхронизация КБЖУ не удалась: " + error);
+                        }
+                    });
+                } else {
+                    changeDao.removeFromQueue(uid);
+                }
             }
         }
     }
@@ -1067,6 +1100,19 @@ public class FirestoreSyncManager {
         foodGoalSync.downloadGoals(new FoodGoalSync.DownloadCallback() {
             @Override
             public void onDownloaded(List<FoodGainGoalModel> goals) {
+
+            }
+
+            @Override
+            public void onError(String error) {
+
+            }
+        });
+    }
+    private void loadDailyFoodFromCloud() {
+        dailyFoodSync.downloadEntries(new DailyFoodSync.DownloadCallback() {
+            @Override
+            public void onDownloaded(List<DailyFoodTrackingModel> entries) {
 
             }
 
