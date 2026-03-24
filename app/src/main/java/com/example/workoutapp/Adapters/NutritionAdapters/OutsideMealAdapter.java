@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -202,7 +203,8 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
             if (mealUid != null && !mealUid.isEmpty()) {
                 DeletionQueueDao queueDao = new DeletionQueueDao(MainActivity.getAppDataBase());
                 ChangeElmDao changeElmDao = new ChangeElmDao(MainActivity.getAppDataBase());
-                queueDao.enqueue(mealUid, "meal");
+                queueDao.enqueue(mealUid, "meal", "");
+                Log.d("wjehgweghiwe", "УДАЛЕНИЕ ПРИЕМА ПИЩИ ЗАПИСАНО В ТАБЛИЦУ УДАЛЕНИЯ!!!!!!!!!!!!!!: " + mealUid);
                 changeElmDao.removeFromQueue(mealUid);
             }
 
@@ -223,6 +225,7 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
 
             // Удаляем сам приём пищи (имя) из локальной БД
             mealNameDao.deleteMealName(mealId);
+            MainActivity.getSyncManager().processPendingDeletions();
 
             // 3. ОБНОВЛЯЕМ ИНТЕРФЕЙС (мгновенно)
             allMealList.remove(position);
@@ -233,7 +236,7 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
 
             // 4. ЗАПУСКАЕМ ПРОЦЕСС ОЧИСТКИ ОЧЕРЕДИ (попытка удалить с сервера)
             // Метод сам проверит наличие интернета
-            MainActivity.getSyncManager().processPendingDeletions();
+
         });
 
         dialogDeleteMeal.show();

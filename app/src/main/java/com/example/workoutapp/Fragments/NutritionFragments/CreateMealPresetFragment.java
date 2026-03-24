@@ -987,7 +987,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                 mealUid = UidGenerator.generateMealPresetUid();
                 // создание нового пресета
                 long mealNameId = presetMealNameDao.addMealPresetName(presetMealName,mealUid);
-                date = presetMealNameDao.getMealDateById(mealNameId);
+                //date = presetMealNameDao.getMealDateById(mealNameId);
 
 
                 for (FoodModel eat : pressedEat) {
@@ -1007,7 +1007,7 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                     (int) localMealId,
                     presetMealName,
                     mealUid,
-                    date,
+                    "",
                     foodsToSync
 
             );

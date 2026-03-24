@@ -89,6 +89,7 @@ public class FirestoreSyncManager {
         this.mealPresetSync = new MealPresetSync();
         this.mealSync = new MealSync();
         this.changeDao = new ChangeElmDao(MainActivity.getAppDataBase());
+        FirebaseFirestore.setLoggingEnabled(true);
     }
 
     // =====================================================
@@ -162,15 +163,15 @@ public class FirestoreSyncManager {
         //syncDailyActivity();
         //syncDailyFood();
 
-        startWorkoutSync(localExercises);
+        //startWorkoutSync(localExercises);
 
         // ЕДА теперь синкается через realtime listener
-        startFoodRealtimeSync();
+        //startFoodRealtimeSync();
 
         Log.d(TAG, "Starting sync of all meal presets...");
-        mealPresetSync.downloadAllOnce();
+        //mealPresetSync.downloadAllOnce();
 
-        receiveMealFromServer();
+        //receiveMealFromServer();
 
 
         Log.d(TAG, "Full sync initialized");
@@ -704,7 +705,7 @@ public class FirestoreSyncManager {
             final String currentUid = task.uid;
             final String currentType = task.type;
             final String currentDate = task.data;
-
+            Log.e("gwregwgweeweweg", "Удаление элемента " + currentUid);
             if ("Workout_ex_delete".equals(currentType)) {
                 // Проверяем, есть ли дата для удаления упражнения
                 if (currentDate == null || currentDate.isEmpty()) {
@@ -757,24 +758,20 @@ public class FirestoreSyncManager {
                     @Override
                     public void onFailure(String error) {}
                 });
-            }
-            String collectionPath;
-            if ("meal_preset".equals(currentType)) {
-                collectionPath = "meal_presets";
-            } else if ("food".equals(currentType)) {
-                collectionPath = "base_food";
-            } else {
-                collectionPath = "meal_diary";
+            } else if ("meal".equalsIgnoreCase(task.type)) {
+                db.collection("users").document(userId)
+                        .collection("meal_diary")
+                        .document(task.uid)
+                        .delete()
+                        .addOnSuccessListener(aVoid -> {
+                            queueDao.removeFromQueue(currentUid);
+                            Log.d(TAG, "Удалено из облака (" + currentType + "): " + currentUid);
+                        })
+                        .addOnFailureListener(e -> Log.e(TAG, "Ошибка удаления документа: " + currentUid, e));
             }
 
-            db.collection("users").document(userId)
-                    .collection(collectionPath).document(currentUid)
-                    .delete()
-                    .addOnSuccessListener(aVoid -> {
-                        queueDao.removeFromQueue(currentUid);
-                        Log.d(TAG, "Удалено из облака (" + currentType + "): " + currentUid);
-                    })
-                    .addOnFailureListener(e -> Log.e(TAG, "Ошибка удаления документа: " + currentUid, e));
+
+
         }
     }
 
