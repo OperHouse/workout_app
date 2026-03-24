@@ -228,4 +228,37 @@ public class BaseEatDao {
                 new String[]{uid}
         );
     }
+
+    /**
+     * Получение продукта по его уникальному идентификатору (UID).
+     * Используется для синхронизации через BaseFoodChangeHandler.
+     */
+    public FoodModel getFoodByUid(String uid) {
+        if (uid == null || uid.isEmpty()) return null;
+
+        FoodModel food = null;
+        Cursor cursor = null;
+
+        try {
+            cursor = db.query(
+                    BASE_FOOD_TABLE,
+                    null,
+                    BASE_FOOD_UID + " = ?",
+                    new String[]{uid},
+                    null,
+                    null,
+                    null
+            );
+
+            if (cursor != null && cursor.moveToFirst()) {
+                food = getFoodModelFromCursor(cursor);
+            }
+        } catch (Exception e) {
+            android.util.Log.e("BaseEatDao", "Error getting food by UID: " + e.getMessage());
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+
+        return food;
+    }
 }
