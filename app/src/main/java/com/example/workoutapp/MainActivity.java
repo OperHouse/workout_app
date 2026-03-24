@@ -1,8 +1,11 @@
 package com.example.workoutapp;
 
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
@@ -10,6 +13,11 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.work.Constraints;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.NetworkType;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
@@ -19,11 +27,12 @@ import com.example.workoutapp.Fragments.WorkoutFragments.WorkoutFragment;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.Tools.EncryptionTools.DatabaseProvider;
-import com.example.workoutapp.Tools.SyncTools.FirestoreSyncManager;
 import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthConnectHelper;
 import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthConnectReader;
 import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthPermissions;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
+import com.example.workoutapp.Tools.SyncTools.FirestoreSyncManager;
+import com.example.workoutapp.Tools.SyncTools.SyncWorker;
 import com.example.workoutapp.Tools.UidGenerator;
 import com.example.workoutapp.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -34,6 +43,8 @@ import net.sqlcipher.database.SQLiteDatabase;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import kotlin.Unit;
 
@@ -46,13 +57,10 @@ public class MainActivity extends AppCompatActivity
     private BottomNavigationView bottomNavigationView;
     private List<ExerciseModel> cachedExercises;
 
-
     private FirebaseAuth.AuthStateListener authStateListener;
-
     private ActivityResultLauncher<String[]> healthPermissionLauncher;
     private static FirestoreSyncManager syncManager;
     private boolean isInitialSyncDone = false;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,14 +73,14 @@ public class MainActivity extends AppCompatActivity
         bottomNavigationView = findViewById(R.id.bottomNavView);
         bindingMain.bottomNavView.setBackground(null);
 
+        // Инициализация БД и Менеджера синхронизации
         appDataBase = DatabaseProvider.get(this);
-        //DatabaseExporter.exportDatabase(this, "WorkoutApp_plain.db");
         syncManager = new FirestoreSyncManager(this);
 
         loadExercisesFromDb();
         setInitialActiveButton();
 
-        // 2. Вместо простого вызова метода, вешаем слушатель
+        // Слушатель авторизации для запуска синхронизации при входе
         authStateListener = firebaseAuth -> {
             if (firebaseAuth.getCurrentUser() != null && !isInitialSyncDone) {
                 Log.d("CloudSync", "Auth подтвержден: " + firebaseAuth.getCurrentUser().getUid());
@@ -81,136 +89,94 @@ public class MainActivity extends AppCompatActivity
         };
         FirebaseAuth.getInstance().addAuthStateListener(authStateListener);
 
+        // Настройка Health Connect
+        setupHealthConnect();
 
-
-        // ---------- Health Connect permission launcher ----------
-        healthPermissionLauncher =
-                registerForActivityResult(
-                        new ActivityResultContracts.RequestMultiplePermissions(),
-                        result -> {
-                            // Проверяем, выданы ли ВСЕ запрошенные разрешения (шаги и калории)
-                            boolean allGranted = true;
-                            for (Boolean granted : result.values()) {
-                                if (!granted) {
-                                    allGranted = false;
-                                    break;
-                                }
-                            }
-
-                            if (allGranted) {
-                                syncHealthData();
-                            } else {
-                                Log.e("HealthConnect", "Не все разрешения выданы пользователем");
-                            }
-                        }
-                );
-
-        checkHealthPermissions();
-
-        // ---------- Bottom navigation ----------
+        // Bottom navigation
         bindingMain.bottomNavView.setOnItemSelectedListener(item -> {
-            if (item.getItemId() == R.id.Profile) {
-                showOrAddFragment("profile", new ProfileFragment());
-            } else if (item.getItemId() == R.id.Workout) {
+            int id = item.getItemId();
+            if (id == R.id.Profile) showOrAddFragment("profile", new ProfileFragment());
+            else if (id == R.id.Workout) {
                 WorkoutFragment workoutFragment = new WorkoutFragment();
                 workoutFragment.setExercises(getCachedExercises());
                 showOrAddFragment("workout", workoutFragment);
-            } else if (item.getItemId() == R.id.Nutrition) {
-                showOrAddFragment("nutrition", new NutritionFragment());
-            } else if (item.getItemId() == R.id.People) {
-                showOrAddFragment("people", new PeopleFragment());
-            }
+            } else if (id == R.id.Nutrition) showOrAddFragment("nutrition", new NutritionFragment());
+            else if (id == R.id.People) showOrAddFragment("people", new PeopleFragment());
             return true;
         });
     }
 
-    // ---------- Health Connect permissions ----------
+    /**
+     * ГЛАВНЫЙ МЕТОД: Начальная синхронизация с жестким ожиданием сервера (15 сек)
+     */
+    private void startInitialCloudSync() {
+        isInitialSyncDone = true;
 
-    private void checkHealthPermissions() {
-        // Проверяем текущее состояние разрешений через наш Helper
-        HealthConnectHelper.checkGrantedPermissions(
-                this,
-                HealthPermissions.INSTANCE.getREQUIRED_PERMISSIONS(),
-                grantedPermissions -> {
-                    Log.d("HealthConnect", "Granted permissions: " + grantedPermissions);
+        // Показываем индикатор загрузки
+        ProgressDialog progress = new ProgressDialog(this);
+        progress.setMessage("Синхронизация с облаком...");
+        progress.setCancelable(false);
+        progress.show();
 
-                    // Если количество выданных разрешений меньше, чем нам требуется
-                    if (!grantedPermissions.containsAll(
-                            HealthPermissions.INSTANCE.getREQUIRED_PERMISSIONS())) {
+        new Thread(() -> {
+            try {
+                // Небольшая пауза для готовности ресурсов
+                Thread.sleep(300);
 
-                        String[] permissionsArray =
-                                HealthPermissions.INSTANCE.getREQUIRED_PERMISSIONS().toArray(new String[0]);
-                        healthPermissionLauncher.launch(permissionsArray);
-                    } else {
-                        // Все разрешения (шаги + калории) есть, запускаем синхронизацию
-                        syncHealthData();
-                    }
-                    return Unit.INSTANCE;
-                }
-        );
-    }
+                if (appDataBase != null && appDataBase.isOpen()) {
+                    WORKOUT_EXERCISE_TABLE_DAO dao = new WORKOUT_EXERCISE_TABLE_DAO(appDataBase);
+                    List<ExerciseModel> allLocalExercises = dao.getAllExercisesForSync();
 
-    /** Синхронизация шагов с SQLite */
-    private void syncHealthData() {
-        HealthConnectReader reader = new HealthConnectReader(this);
+                    // Защелка для ожидания завершения всей цепочки
+                    CountDownLatch latch = new CountDownLatch(1);
+                    final boolean[] isServerDone = {false};
 
-        reader.readToday(data -> {
-            // Теперь читаем и дистанцию тоже (data.getDistance())
-            if (data.getSteps() > 0 || data.getCalories() > 0 || data.getDistance() > 0) {
+                    // Запускаем единую цепочку (Изменения -> Удаления -> Загрузка данных)
+                    syncManager.startFullSynchronization(allLocalExercises, () -> {
+                        isServerDone[0] = true;
+                        latch.countDown();
+                    });
 
-                String todayDate = java.time.LocalDate.now().toString();
-                DailyActivityTrackingDao dao = new DailyActivityTrackingDao(appDataBase);
+                    // Ждем 15 секунд подтверждения от сокета сервера
+                    boolean completedOnTime = latch.await(15, TimeUnit.SECONDS);
 
-                // 1. Проверяем, есть ли запись за сегодня локально
-                DailyActivityTrackingModel existing = dao.getActivityByDate(todayDate);
+                    runOnUiThread(() -> {
+                        progress.dismiss();
+                        if (completedOnTime && isServerDone[0]) {
+                            Toast.makeText(this, "Данные синхронизированы", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(this, "Сервер не ответил. Синхронизация продолжится в фоне.", Toast.LENGTH_LONG).show();
+                            Log.e("CloudSync", "Таймаут синхронизации 15с вышел");
+                        }
+                    });
 
-                String uid;
-                if (existing != null) {
-                    uid = existing.getDaily_activity_tracking_uid();
                 } else {
-                    // Если локально нет, используем дату как основу для UID или просто создаем новый
-                    // Т.к. в облаке ID документа = Дата, конфликта не будет
-                    uid = UidGenerator.generateDailyActivityUid();
+                    isInitialSyncDone = false;
+                    runOnUiThread(progress::dismiss);
                 }
-
-                DailyActivityTrackingModel model = new DailyActivityTrackingModel(
-                        0,
-                        todayDate,
-                        data.getSteps(),
-                        (float) data.getCalories(),
-                        uid,
-                        (float) data.getDistance()
-                );
-
-                // 2. Сохраняем/обновляем локально
-                dao.insertOrUpdate(model);
-
-                // 3. Отправляем в облако.
-                // Если в облаке уже есть запись с этим ID (датой), она просто обновится новыми значениями
-                if (syncManager != null) {
-                    syncManager.uploadDailyActivity(model);
-                }
-
-                Log.d("HealthConnect", "Saved: Steps=" + data.getSteps() + ", Dist=" + data.getDistance());
+            } catch (Exception e) {
+                Log.e("CloudSync", "Ошибка синхронизации: " + e.getMessage());
+                isInitialSyncDone = false;
+                runOnUiThread(progress::dismiss);
             }
-            return Unit.INSTANCE;
-        });
+        }).start();
     }
 
+    /**
+     * Метод для принудительной синхронизации (например, по кнопке в настройках)
+     */
+    public void forceSyncWithTimeout() {
+        startInitialCloudSync(); // Переиспользуем логику с таймаутом
+    }
 
+    // ---------- Работа с Фрагментами ----------
 
-    // ---------- Fragment handling ----------
     public void showOrAddFragment(String tag, Fragment fragment) {
-        FragmentTransaction transaction =
-                getSupportFragmentManager().beginTransaction();
-
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         for (Fragment f : getSupportFragmentManager().getFragments()) {
             if (f != null) transaction.hide(f);
         }
-
-        Fragment existing =
-                getSupportFragmentManager().findFragmentByTag(tag);
-
+        Fragment existing = getSupportFragmentManager().findFragmentByTag(tag);
         if (existing == null) {
             transaction.add(R.id.frameLayout, fragment, tag);
             fragmentCache.put(tag, fragment);
@@ -218,28 +184,65 @@ public class MainActivity extends AppCompatActivity
         } else {
             transaction.show(existing);
         }
-
         transaction.commit();
     }
 
-    // ---------- Database ----------
+    // ---------- Здоровье (Health Connect) ----------
+
+    private void setupHealthConnect() {
+        healthPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestMultiplePermissions(),
+                result -> {
+                    boolean allGranted = true;
+                    for (Boolean granted : result.values()) { if (!granted) { allGranted = false; break; } }
+                    if (allGranted) syncHealthData();
+                }
+        );
+        checkHealthPermissions();
+    }
+
+    private void checkHealthPermissions() {
+        HealthConnectHelper.checkGrantedPermissions(this, HealthPermissions.INSTANCE.getREQUIRED_PERMISSIONS(),
+                grantedPermissions -> {
+                    if (!grantedPermissions.containsAll(HealthPermissions.INSTANCE.getREQUIRED_PERMISSIONS())) {
+                        healthPermissionLauncher.launch(HealthPermissions.INSTANCE.getREQUIRED_PERMISSIONS().toArray(new String[0]));
+                    } else {
+                        syncHealthData();
+                    }
+                    return Unit.INSTANCE;
+                });
+    }
+
+    private void syncHealthData() {
+        HealthConnectReader reader = new HealthConnectReader(this);
+        reader.readToday(data -> {
+            if (data.getSteps() > 0 || data.getCalories() > 0) {
+                String todayDate = java.time.LocalDate.now().toString();
+                DailyActivityTrackingDao dao = new DailyActivityTrackingDao(appDataBase);
+                DailyActivityTrackingModel existing = dao.getActivityByDate(todayDate);
+
+                String uid = (existing != null) ? existing.getDaily_activity_tracking_uid() : UidGenerator.generateDailyActivityUid();
+                DailyActivityTrackingModel model = new DailyActivityTrackingModel(0, todayDate, data.getSteps(), (float) data.getCalories(), uid, (float) data.getDistance());
+
+                dao.insertOrUpdate(model);
+                if (syncManager != null) syncManager.uploadDailyActivity(model);
+            }
+            return Unit.INSTANCE;
+        });
+    }
+
+    // ---------- Утилиты БД ----------
+
     public void loadExercisesFromDb() {
-        WORKOUT_EXERCISE_TABLE_DAO dao =
-                new WORKOUT_EXERCISE_TABLE_DAO(appDataBase);
+        WORKOUT_EXERCISE_TABLE_DAO dao = new WORKOUT_EXERCISE_TABLE_DAO(appDataBase);
         cachedExercises = dao.getExByState("unfinished");
     }
 
-    public void reloadExercisesFromDb(){loadExercisesFromDb();}
+    public List<ExerciseModel> getCachedExercises() { return cachedExercises; }
 
-    public List<ExerciseModel> getCachedExercises() {
-        return cachedExercises;
-    }
+    public static SQLiteDatabase getAppDataBase() { return appDataBase; }
 
-    public static SQLiteDatabase getAppDataBase() {
-        if (appDataBase == null) {
-        }
-        return appDataBase;
-    }
+    public static FirestoreSyncManager getSyncManager() { return syncManager; }
 
     private void setInitialActiveButton() {
         bindingMain.bottomNavView.getMenu().getItem(2).setChecked(true);
@@ -248,79 +251,40 @@ public class MainActivity extends AppCompatActivity
         showOrAddFragment("workout", fragment);
     }
 
-    // ---------- Bottom nav visibility ----------
     @Override
     public void setBottomNavVisibility(boolean isVisible) {
         if (bottomNavigationView != null) {
-            bottomNavigationView.setVisibility(
-                    isVisible ? View.VISIBLE : View.GONE
-            );
+            bottomNavigationView.setVisibility(isVisible ? View.VISIBLE : View.GONE);
         }
     }
-
-
-//    private void syncDataWithCloud() {
-//        // 1. Создаем DAO для доступа к SQLite
-//        WORKOUT_EXERCISE_TABLE_DAO dao = new WORKOUT_EXERCISE_TABLE_DAO(appDataBase);
-//
-//        // 2. Выгружаем все данные из локальной базы
-//        List<ExerciseModel> allLocalExercises = dao.getAllExercisesForSync();
-//
-//        if (allLocalExercises != null && !allLocalExercises.isEmpty()) {
-//            // 3. Создаем объект менеджера
-//            FirestoreSyncManager syncManager = new FirestoreSyncManager();
-//
-//            // 4. ВЫЗЫВАЕМ ТОЛЬКО ЭТОТ МЕТОД
-//            // Он внутри себя сам всё сгруппирует и вызовет uploadWorkoutSession
-//            syncManager.syncAllWorkouts(allLocalExercises);
-//
-//            Log.d("CloudSync", "Запущена синхронизация для " + allLocalExercises.size() + " записей");
-//        }
-//    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
+    public void reloadExercisesFromDb() {
+        loadExercisesFromDb();
     }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (authStateListener != null) {
-            FirebaseAuth.getInstance().removeAuthStateListener(authStateListener);
-        }
+        if (authStateListener != null) FirebaseAuth.getInstance().removeAuthStateListener(authStateListener);
     }
 
-    private void startInitialCloudSync() {
-        // Ставим флаг СРАЗУ, чтобы не запустить поток дважды
-        isInitialSyncDone = true;
+    public static void schedulePeriodicBackupSync(Context context) {
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
 
-        new Thread(() -> {
-            try {
-                Log.d("CloudSync", "ВХОД В ПОТОК СИНХРОНИЗАЦИИ");
+        // Минимальный интервал в Android - 15 минут.
+        // Этого достаточно, чтобы "подчистить" хвосты, если приложение закрыто.
+        PeriodicWorkRequest periodicSyncRequest = new PeriodicWorkRequest.Builder(
+                SyncWorker.class,
+                15, TimeUnit.MINUTES)
+                .setConstraints(constraints)
+                .addTag("periodic_backup_sync")
+                .build();
 
-                // Даем базе время инициализироваться
-                Thread.sleep(100);
-
-                if (appDataBase != null && appDataBase.isOpen()) {
-                    WORKOUT_EXERCISE_TABLE_DAO dao = new WORKOUT_EXERCISE_TABLE_DAO(appDataBase);
-                    List<ExerciseModel> allLocalExercises = dao.getAllExercisesForSync();
-
-                    Log.d("CloudSync", "Запуск startFullSynchronization. Локальных данных: " +
-                            (allLocalExercises != null ? allLocalExercises.size() : 0));
-
-                    syncManager.startFullSynchronization(allLocalExercises);
-                } else {
-                    Log.e("CloudSync", "БАЗА НЕ ГОТОВА");
-                    isInitialSyncDone = false; // Сбрасываем флаг для повторной попытки
-                }
-            } catch (Exception e) {
-                Log.e("CloudSync", "ОШИБКА В ПОТОКЕ: " + e.getMessage());
-                isInitialSyncDone = false;
-            }
-        }).start();
-    }
-
-    public static FirestoreSyncManager getSyncManager() {
-        return syncManager;
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                "unique_periodic_sync",
+                ExistingPeriodicWorkPolicy.KEEP,
+                periodicSyncRequest
+        );
     }
 }

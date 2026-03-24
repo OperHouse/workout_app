@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -233,7 +234,9 @@ public class OutsideMealAdapter extends RecyclerView.Adapter<OutsideMealAdapter.
 
             // 4. ЗАПУСКАЕМ ПРОЦЕСС ОЧИСТКИ ОЧЕРЕДИ (попытка удалить с сервера)
             // Метод сам проверит наличие интернета
-            MainActivity.getSyncManager().processPendingDeletions();
+            MainActivity.getSyncManager().processPendingDeletions(() -> {
+                Log.d("Sync", "Все удаления завершены");
+            });
         });
 
         dialogDeleteMeal.show();

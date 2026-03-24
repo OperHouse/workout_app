@@ -10,6 +10,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -810,7 +811,10 @@ public class CreateMealPresetFragment extends Fragment implements OnEatItemClick
                 // 4. ПОПЫТКА СИНХРОНИЗАЦИИ
                 // Вместо прямого вызова MainActivity.getSyncManager().deleteFood(eatToDelete);
                 // Мы запускаем обработчик очереди
-                MainActivity.getSyncManager().processPendingDeletions();
+                MainActivity.getSyncManager().processPendingDeletions(() -> {
+                    // Можно оставить пустым или добавить Лог
+                    Log.d("Sync", "Удаление завершено");
+                });
 
                 toggleUIState();
                 r.requestLayout();
