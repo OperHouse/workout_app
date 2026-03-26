@@ -10,7 +10,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -431,10 +430,7 @@ public class SelectionMealPresetsFragment extends Fragment implements OnPresetMe
 
                 // 5. ПОПЫТКА СИНХРОНИЗАЦИИ С ОБЛАКОМ
                 // Метод сам проверит интернет внутри
-                MainActivity.getSyncManager().processPendingDeletions(() -> {
-                    // Можно оставить пустым или добавить Лог
-                    Log.d("Sync", "Удаление завершено");
-                });
+                MainActivity.getSyncManager().processPendingDeletions();
 
                 r.requestLayout();
                 dialogDeleteEat.dismiss();

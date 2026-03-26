@@ -12,7 +12,6 @@ import android.text.TextPaint;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -184,9 +183,7 @@ public class AuthorizationFragment extends Fragment {
                                 WORKOUT_EXERCISE_TABLE_DAO workoutDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
                                 List<ExerciseModel> localExercises = workoutDao.getAllExercisesForSync();
                                 FirestoreSyncManager syncManager = MainActivity.getSyncManager();
-                                syncManager.startFullSynchronization(localExercises, () -> {
-                                    Log.d("Sync", "Фоновая синхронизация завершена");
-                                });
+                                syncManager.startFullSynchronization(localExercises);
 
                                 navigateToMain();
                             } else {

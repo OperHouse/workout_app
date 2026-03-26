@@ -1,7 +1,6 @@
 package com.example.workoutapp;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,11 +12,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.work.Constraints;
-import androidx.work.ExistingPeriodicWorkPolicy;
-import androidx.work.NetworkType;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
 
 import com.example.workoutapp.Data.ProfileDao.DailyActivityTrackingDao;
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
@@ -32,7 +26,6 @@ import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthConnectRea
 import com.example.workoutapp.Tools.HealthSettingsActivityTools.HealthPermissions;
 import com.example.workoutapp.Tools.OnNavigationVisibilityListener;
 import com.example.workoutapp.Tools.SyncTools.FirestoreSyncManager;
-import com.example.workoutapp.Tools.SyncTools.SyncWorker;
 import com.example.workoutapp.Tools.UidGenerator;
 import com.example.workoutapp.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -132,10 +125,7 @@ public class MainActivity extends AppCompatActivity
                     final boolean[] isServerDone = {false};
 
                     // Запускаем единую цепочку (Изменения -> Удаления -> Загрузка данных)
-                    syncManager.startFullSynchronization(allLocalExercises, () -> {
-                        isServerDone[0] = true;
-                        latch.countDown();
-                    });
+                    syncManager.startFullSynchronization(allLocalExercises);
 
                     // Ждем 15 секунд подтверждения от сокета сервера
                     boolean completedOnTime = latch.await(15, TimeUnit.SECONDS);
@@ -267,24 +257,5 @@ public class MainActivity extends AppCompatActivity
         if (authStateListener != null) FirebaseAuth.getInstance().removeAuthStateListener(authStateListener);
     }
 
-    public static void schedulePeriodicBackupSync(Context context) {
-        Constraints constraints = new Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build();
 
-        // Минимальный интервал в Android - 15 минут.
-        // Этого достаточно, чтобы "подчистить" хвосты, если приложение закрыто.
-        PeriodicWorkRequest periodicSyncRequest = new PeriodicWorkRequest.Builder(
-                SyncWorker.class,
-                15, TimeUnit.MINUTES)
-                .setConstraints(constraints)
-                .addTag("periodic_backup_sync")
-                .build();
-
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                "unique_periodic_sync",
-                ExistingPeriodicWorkPolicy.KEEP,
-                periodicSyncRequest
-        );
-    }
 }

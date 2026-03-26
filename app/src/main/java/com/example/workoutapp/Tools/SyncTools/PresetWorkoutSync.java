@@ -43,7 +43,7 @@ public class PresetWorkoutSync {
         }
 
         DocumentReference docRef = db.collection("users").document(userId)
-                .collection("presets").document(presetUid);
+                .collection("workout_presets").document(presetUid);
 
         List<Map<String, Object>> lightExercises = new ArrayList<>();
 
@@ -136,7 +136,7 @@ public class PresetWorkoutSync {
         }
 
         db.collection("users").document(userId)
-                .collection("presets")
+                .collection("workout_presets")
                 .document(presetUid)
                 .delete()
                 .addOnSuccessListener(aVoid -> {
