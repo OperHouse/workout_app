@@ -1,4 +1,4 @@
-package com.example.workoutapp.Tools;
+package com.example.workoutapp.Tools.SyncTools;
 
 import android.util.Log;
 
@@ -40,6 +40,11 @@ public class WorkoutSessionSync2 {
     public WorkoutSessionSync2() {
         this.db = FirebaseFirestore.getInstance();
         this.userId = FirebaseAuth.getInstance().getUid();
+    }
+
+    public interface DownloadCallback {
+        void onDownloaded(int sessionCount);
+        void onError(String error);
     }
 
     /**
@@ -392,6 +397,58 @@ public class WorkoutSessionSync2 {
         ex.setSets(setsList);
 
         return ex;
+    }
+
+
+    /**
+     * Загрузка всех тренировок из облака при первом входе.
+     */
+    public void downloadAllWorkouts(@Nullable DownloadCallback callback) {
+        if (userId == null) {
+            if (callback != null) callback.onError("User not logged in");
+            return;
+        }
+
+        db.collection("users").document(userId).collection("workouts")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (queryDocumentSnapshots == null) {
+                        if (callback != null) callback.onDownloaded(0);
+                        return;
+                    }
+
+                    int count = 0;
+                    for (DocumentSnapshot snapshot : queryDocumentSnapshots.getDocuments()) {
+                        String cloudDate = snapshot.getId();
+                        Object exercisesObj = snapshot.get("exercises_map");
+
+                        if (exercisesObj instanceof Map) {
+                            Map<String, Object> exercisesMap = (Map<String, Object>) exercisesObj;
+                            List<ExerciseModel> cloudExercises = new ArrayList<>();
+
+                            for (Object value : exercisesMap.values()) {
+                                if (value instanceof Map) {
+                                    cloudExercises.add(mapToExercise((Map<String, Object>) value));
+                                }
+                            }
+
+                            WorkoutSessionModel cloudSession = new WorkoutSessionModel();
+                            cloudSession.setWorkoutDate(cloudDate);
+                            cloudSession.setExercises(cloudExercises);
+
+                            // Используем твой существующий метод сохранения в БД
+                            processAndSaveCloudSession(cloudSession);
+                            count++;
+                        }
+                    }
+
+                    Log.d(TAG, "Синхронизация тренировок завершена. Загружено сессий: " + count);
+                    if (callback != null) callback.onDownloaded(count);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Ошибка загрузки тренировок: " + e.getMessage());
+                    if (callback != null) callback.onError(e.getMessage());
+                });
     }
 
 

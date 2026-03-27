@@ -1,5 +1,7 @@
 package com.example.workoutapp.Fragments.ProfileFragments.Divide;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -127,7 +129,7 @@ public class DataManagementFragment extends Fragment {
         // СИНХРОНИЗАЦИЯ (Твой новый свитч)
         com.google.android.material.switchmaterial.SwitchMaterial syncSwitch = view.findViewById(R.id.sync_switch);
         if (syncSwitch != null) {
-            android.content.SharedPreferences prefs = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE);
+            android.content.SharedPreferences prefs = requireContext().getSharedPreferences("app_prefs", MODE_PRIVATE);
 
             isUpdatingProgrammatically = true;
             syncSwitch.setChecked(prefs.getBoolean("sync_enabled", false));
@@ -354,6 +356,13 @@ public class DataManagementFragment extends Fragment {
 
                 // 3. Обновляем настройки
                 prefs.edit().putBoolean("sync_enabled", false).apply();
+
+                if (getContext() != null) {
+                    getContext().getSharedPreferences("app_settings", android.content.Context.MODE_PRIVATE)
+                            .edit()
+                            .putBoolean("is_first_sync_after_login", false)
+                            .apply();
+                }
 
                 android.widget.Toast.makeText(getContext(), "Синхронизация отключена, ID удален", android.widget.Toast.LENGTH_SHORT).show();
             }

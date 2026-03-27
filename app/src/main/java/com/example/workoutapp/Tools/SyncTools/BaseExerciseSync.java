@@ -31,7 +31,14 @@ public class BaseExerciseSync {
 
     public interface SyncCallback {
         void onSuccess();
+
         void onFailure(String error);
+    }
+
+    public interface DownloadCallback {
+        void onDownloaded(List<BaseExModel> list);
+
+        void onError(String error);
     }
 
     /**
@@ -166,6 +173,45 @@ public class BaseExerciseSync {
                             }
                         }
                     }
+                });
+    }
+
+
+    /**
+     * Загружает кастомные упражнения пользователя из облака и сохраняет их в локальную БД.
+     * Проверка на дубликаты идет по UID.
+     */
+    public void downloadBaseExercisesFromCloud(DownloadCallback callback) {
+        if (userId == null) {
+            if (callback != null) callback.onError("Пользователь не авторизован");
+            return;
+        }
+
+        BASE_EXERCISE_TABLE_DAO dao = new BASE_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
+
+        db.collection("users").document(userId)
+                .collection("custom_exercises")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<BaseExModel> downloadedList = queryDocumentSnapshots.toObjects(BaseExModel.class);
+
+                    int importedCount = 0;
+                    for (BaseExModel cloudEx : downloadedList) {
+                        if (cloudEx != null && cloudEx.getBase_ex_uid() != null) {
+                            // Проверка на дубликаты: если такого UID в локальной базе нет — добавляем
+                            if (!dao.isExerciseUidExists(cloudEx.getBase_ex_uid())) {
+                                dao.addExercise(cloudEx);
+                                importedCount++;
+                            }
+                        }
+                    }
+
+                    Log.d("BaseExerciseSync", "Загрузка завершена. Добавлено новых: " + importedCount);
+                    if (callback != null) callback.onDownloaded(downloadedList);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("BaseExerciseSync", "Ошибка загрузки: " + e.getMessage());
+                    if (callback != null) callback.onError(e.getMessage());
                 });
     }
 

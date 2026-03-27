@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import com.example.workoutapp.Data.WorkoutDao.WORKOUT_PRESET_NAME_TABLE_DAO;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
 import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.google.firebase.auth.FirebaseAuth;
@@ -31,6 +32,11 @@ public class PresetWorkoutSync {
     public interface SyncCallback {
         void onSuccess();
         void onFailure(String error);
+    }
+
+    public interface DownloadCallback {
+        void onDownloaded(List<DocumentSnapshot> snapshots);
+        void onError(String error);
     }
 
     /**
@@ -100,32 +106,6 @@ public class PresetWorkoutSync {
                 .addOnFailureListener(e -> Log.e(TAG, "Ошибка при загрузке пресетов: " + e.getMessage()));
     }
 
-    private void parseAndSavePreset(DocumentSnapshot doc, WORKOUT_PRESET_NAME_TABLE_DAO presetDao) {
-        String uid = doc.getString("preset_uid");
-        String name = doc.getString("presetName");
-
-        // Получаем список упражнений из документа
-        List<Map<String, Object>> rawList = (List<Map<String, Object>>) doc.get("exercises_list");
-
-        if (uid == null || name == null) return;
-
-        List<ExerciseModel> exercises = new ArrayList<>();
-        if (rawList != null) {
-            for (Map<String, Object> item : rawList) {
-                ExerciseModel ex = new ExerciseModel();
-                ex.setExercise_uid((String) item.get("exercise_uid"));
-                ex.setExerciseName((String) item.get("exerciseName"));
-                ex.setExerciseType((String) item.get("exerciseType"));
-                ex.setExerciseBodyType((String) item.get("exerciseBodyType"));
-                // Сеты для пресета всегда остаются пустыми
-                exercises.add(ex);
-            }
-        }
-
-        // Вызываем комплексный метод сохранения в DAO, который мы обсуждали ранее
-        presetDao.savePresetFromCloud(name, uid, exercises);
-    }
-
     /**
      * Удаление пресета из облака (ОБНОВЛЕНО: добавлен callback)
      */
@@ -148,6 +128,68 @@ public class PresetWorkoutSync {
                     if (callback != null) callback.onFailure(e.getMessage());
                 });
     }
+
+
+
+    /**
+     * Загрузка всех пресетов из облака (Pull) с использованием callback
+     */
+    public void downloadFromCloud(@Nullable DownloadCallback callback) {
+        if (userId == null) {
+            if (callback != null) callback.onError("User not logged in");
+            return;
+        }
+        WORKOUT_PRESET_NAME_TABLE_DAO presetDao = new WORKOUT_PRESET_NAME_TABLE_DAO(MainActivity.getAppDataBase());
+
+        // Исправлено: используем workout_presets (как в методе upload)
+        db.collection("users").document(userId).collection("workout_presets")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    Log.d(TAG, "Найдено пресетов в облаке: " + queryDocumentSnapshots.size());
+
+                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
+                        parseAndSavePreset(doc, presetDao);
+                    }
+
+                    if (callback != null) callback.onDownloaded(queryDocumentSnapshots.getDocuments());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Ошибка при загрузке пресетов: " + e.getMessage());
+                    if (callback != null) callback.onError(e.getMessage());
+                });
+    }
+
+    private void parseAndSavePreset(DocumentSnapshot doc, WORKOUT_PRESET_NAME_TABLE_DAO presetDao) {
+        String uid = doc.getString("preset_uid");
+        String name = doc.getString("presetName");
+
+        // Безопасное получение списка
+        Object rawObject = doc.get("exercises_list");
+        if (!(rawObject instanceof List)) return;
+        List<Map<String, Object>> rawList = (List<Map<String, Object>>) rawObject;
+
+        if (uid == null || name == null) return;
+
+        if (presetDao.getPresetByUid(uid) != null) return;
+
+        List<ExerciseModel> exercises = new ArrayList<>();
+        if (rawList != null) {
+            for (Map<String, Object> item : rawList) {
+                ExerciseModel ex = new ExerciseModel();
+                ex.setExercise_uid((String) item.get("exercise_uid"));
+                ex.setExerciseName((String) item.get("exerciseName"));
+                ex.setExerciseType((String) item.get("exerciseType"));
+                ex.setExerciseBodyType((String) item.get("exerciseBodyType"));
+                exercises.add(ex);
+            }
+        }
+
+        // Сохраняем в локальную БД
+        presetDao.savePresetFromCloud(name, uid, exercises);
+    }
+
+
+
     /**
      * Проходит по всем локальным пресетам и отправляет их в облако
      */

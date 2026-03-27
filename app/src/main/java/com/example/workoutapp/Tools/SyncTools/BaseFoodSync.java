@@ -5,6 +5,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import com.example.workoutapp.Data.NutritionDao.BaseEatDao;
+import com.example.workoutapp.MainActivity;
 import com.example.workoutapp.Models.NutritionModels.FoodModel;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
@@ -27,6 +28,11 @@ public class BaseFoodSync {
     public interface SyncCallback {
         void onSuccess();
         void onFailure(String error);
+    }
+
+    public interface DownloadCallback {
+        void onDownloaded(int count);
+        void onError(String error);
     }
 
     public BaseFoodSync() {
@@ -205,6 +211,45 @@ public class BaseFoodSync {
                     }
 
                     Log.d(TAG, "Full sync completed");
+                });
+    }
+
+
+    /**
+     * Однократная полная загрузка справочника продуктов из облака с использованием callback.
+     * Вызывается при первом входе пользователя.
+     */
+    public void downloadAllFoods( @Nullable DownloadCallback callback) {
+        String uid = getUid();
+        if (uid == null) {
+            if (callback != null) callback.onError("User not authorized");
+            return;
+        }
+        BaseEatDao dao = new BaseEatDao(MainActivity.getAppDataBase());
+        getFoodCollection()
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    int count = 0;
+                    if (snapshot != null) {
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            FoodModel cloudFood = doc.toObject(FoodModel.class);
+                            if (cloudFood == null) continue;
+
+                            if (cloudFood.isDeleted()) {
+                                dao.deleteByUid(cloudFood.getFood_uid());
+                            } else {
+                                // insertOrUpdate гарантирует отсутствие дублей по UID
+                                dao.insertOrUpdate(cloudFood);
+                                count++;
+                            }
+                        }
+                    }
+                    Log.d(TAG, "Справочник продуктов загружен. Добавлено/обновлено: " + count);
+                    if (callback != null) callback.onDownloaded(count);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Ошибка загрузки справочника продуктов: " + e.getMessage());
+                    if (callback != null) callback.onError(e.getMessage());
                 });
     }
 }

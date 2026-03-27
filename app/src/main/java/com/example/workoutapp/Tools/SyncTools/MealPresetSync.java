@@ -21,6 +21,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.SetOptions;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -32,6 +33,11 @@ public class MealPresetSync {
     public interface SyncCallback {
         void onSuccess();
         void onFailure(String error);
+    }
+
+    public interface DownloadCallback {
+        void onDownloaded(List<MealModel> presets);
+        void onError(String error);
     }
 
     public MealPresetSync() {
@@ -263,5 +269,63 @@ public class MealPresetSync {
                 .addOnFailureListener(e ->
                         Log.e(TAG, "Full preset sync failed: " + e.getMessage())
                 );
+    }
+
+
+    /**
+     * Загрузка всех пресетов приемов пищи (one-time) с использованием callback.
+     * Вызывается при первом входе пользователя.
+     */
+    public void downloadAllPresets(@Nullable DownloadCallback callback) {
+        if (getUid() == null) {
+            if (callback != null) callback.onError("User not authorized");
+            return;
+        }
+
+        // Инициализируем DAO
+        PresetMealNameDao nameDao = new PresetMealNameDao(MainActivity.getAppDataBase());
+        PresetEatDao eatDao = new PresetEatDao(MainActivity.getAppDataBase());
+        ConnectingMealPresetDao connectDao = new ConnectingMealPresetDao(MainActivity.getAppDataBase());
+
+        getCollection()
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<MealModel> presets = new ArrayList<>();
+                    if (snapshot != null) {
+                        for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                            MealModel meal = doc.toObject(MealModel.class);
+                            if (meal == null) continue;
+
+                            presets.add(meal);
+
+                            // Логика синхронизации с локальной БД
+                            if (meal.isDeleted()) {
+                                nameDao.deleteByUid(meal.getMeal_uid());
+                                connectDao.deleteConnectionsByMealUid(meal.getMeal_uid());
+                                continue;
+                            }
+
+                            // 1️⃣ Сохраняем / обновляем заголовок пресета
+                            long mealId = nameDao.insertOrUpdate(meal);
+
+                            // 2️⃣ Удаляем старые связи, чтобы избежать дублей продуктов в пресете
+                            connectDao.deleteConnectionsByMealUid(meal.getMeal_uid());
+
+                            // 3️⃣ Пересобираем список продуктов
+                            if (meal.getMeal_food_list() != null) {
+                                for (FoodModel food : meal.getMeal_food_list()) {
+                                    long foodId = eatDao.insertOrUpdate(food);
+                                    connectDao.addMealPresetConnection(mealId, foodId);
+                                }
+                            }
+                        }
+                    }
+                    Log.d(TAG, "Загрузка пресетов питания завершена: " + presets.size());
+                    if (callback != null) callback.onDownloaded(presets);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Ошибка загрузки пресетов питания: " + e.getMessage());
+                    if (callback != null) callback.onError(e.getMessage());
+                });
     }
 }

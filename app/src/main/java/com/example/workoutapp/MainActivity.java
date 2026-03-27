@@ -1,6 +1,7 @@
 package com.example.workoutapp;
 
 import android.app.ProgressDialog;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -36,8 +37,6 @@ import net.sqlcipher.database.SQLiteDatabase;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import kotlin.Unit;
 
@@ -103,51 +102,47 @@ public class MainActivity extends AppCompatActivity
      * ГЛАВНЫЙ МЕТОД: Начальная синхронизация с жестким ожиданием сервера (15 сек)
      */
     private void startInitialCloudSync() {
-        isInitialSyncDone = true;
+        SharedPreferences prefs = getSharedPreferences("app_settings", MODE_PRIVATE);
+        boolean needCloudDownload = prefs.getBoolean("is_first_sync_after_login", false);
 
-        // Показываем индикатор загрузки
         ProgressDialog progress = new ProgressDialog(this);
-        progress.setMessage("Синхронизация с облаком...");
+        progress.setMessage("Синхронизация данных...");
         progress.setCancelable(false);
-        progress.show();
+
+        // Показываем диалог только если реально будем что-то качать
+        if (needCloudDownload) {
+            progress.show();
+        }
 
         new Thread(() -> {
             try {
-                // Небольшая пауза для готовности ресурсов
-                Thread.sleep(300);
+                // 1. Эти функции можно вызывать всегда — если очередей нет, они просто ничего не сделают
+                syncManager.processPendingChanges();
+                syncManager.processPendingDeletions();
 
-                if (appDataBase != null && appDataBase.isOpen()) {
-                    WORKOUT_EXERCISE_TABLE_DAO dao = new WORKOUT_EXERCISE_TABLE_DAO(appDataBase);
-                    List<ExerciseModel> allLocalExercises = dao.getAllExercisesForSync();
+                // 2. А это — только ОДИН раз после авторизации
+                if (needCloudDownload) {
+                    syncManager.downloadAllDataFromCloud();
 
-                    // Защелка для ожидания завершения всей цепочки
-                    CountDownLatch latch = new CountDownLatch(1);
-                    final boolean[] isServerDone = {false};
+                    // Сразу помечаем, что загрузка выполнена, чтобы при следующем запуске сюда не заходить
+                    prefs.edit().putBoolean("is_first_sync_after_login", false).apply();
 
-                    // Запускаем единую цепочку (Изменения -> Удаления -> Загрузка данных)
-                    syncManager.startFullSynchronization(allLocalExercises);
-
-                    // Ждем 15 секунд подтверждения от сокета сервера
-                    boolean completedOnTime = latch.await(15, TimeUnit.SECONDS);
-
-                    runOnUiThread(() -> {
-                        progress.dismiss();
-                        if (completedOnTime && isServerDone[0]) {
-                            Toast.makeText(this, "Данные синхронизированы", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(this, "Сервер не ответил. Синхронизация продолжится в фоне.", Toast.LENGTH_LONG).show();
-                            Log.e("CloudSync", "Таймаут синхронизации 15с вышел");
-                        }
-                    });
-
-                } else {
-                    isInitialSyncDone = false;
-                    runOnUiThread(progress::dismiss);
+                    // Даем немного времени базе данных
+                    Thread.sleep(1000);
                 }
+
+                runOnUiThread(() -> {
+                    if (!isFinishing() && !isDestroyed() && progress.isShowing()) {
+                        progress.dismiss();
+                        if (needCloudDownload) Toast.makeText(this, "Данные загружены", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
             } catch (Exception e) {
-                Log.e("CloudSync", "Ошибка синхронизации: " + e.getMessage());
-                isInitialSyncDone = false;
-                runOnUiThread(progress::dismiss);
+                Log.e("CloudSync", "Ошибка: " + e.getMessage());
+                runOnUiThread(() -> {
+                    if (!isFinishing() && !isDestroyed() && progress.isShowing()) progress.dismiss();
+                });
             }
         }).start();
     }

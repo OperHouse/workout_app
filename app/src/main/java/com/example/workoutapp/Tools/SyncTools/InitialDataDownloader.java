@@ -2,6 +2,7 @@ package com.example.workoutapp.Tools.SyncTools;
 
 import android.util.Log;
 
+import com.example.workoutapp.Models.NutritionModels.MealModel;
 import com.example.workoutapp.Models.ProfileModels.ActivityGoalModel;
 import com.example.workoutapp.Models.ProfileModels.DailyActivityTrackingModel;
 import com.example.workoutapp.Models.ProfileModels.DailyFoodTrackingModel;
@@ -9,6 +10,8 @@ import com.example.workoutapp.Models.ProfileModels.FoodGainGoalModel;
 import com.example.workoutapp.Models.ProfileModels.GeneralGoalModel;
 import com.example.workoutapp.Models.ProfileModels.UserProfileModel;
 import com.example.workoutapp.Models.ProfileModels.WeightHistoryModel;
+import com.example.workoutapp.Models.WorkoutModels.BaseExModel;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.List;
 
@@ -34,9 +37,98 @@ public class InitialDataDownloader {
         loadFoodGoals();
         loadDailyFood();
         loadDailyActivity();
+        loadBaseExercises();
+        loadWorkoutPresets();
+        loadMeals();
+        loadMealPresets();
+        loadBaseFoods();
+        loadWorkouts();
+    }
 
-        // Можно добавить загрузку упражнений и пресетов, если они нужны сразу
-        // loadWorkouts();
+
+    private void loadBaseExercises(){
+        manager.baseExerciseSync.downloadBaseExercisesFromCloud(new BaseExerciseSync.DownloadCallback() {
+            @Override
+            public void onDownloaded(List<BaseExModel> list) {
+                Log.d(TAG, "Базовые упражнения загружен");
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.d(TAG, "Ошибка загрузки базовых упражнений");
+            }
+        });
+    }
+
+    private void loadWorkouts() {
+        manager.workoutSessionSync2.downloadAllWorkouts(new WorkoutSessionSync2.DownloadCallback() {
+            @Override
+            public void onDownloaded(int sessionCount) {
+                Log.d("InitialLoad", "Загружено тренировочных дней: " + sessionCount);
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e("InitialLoad", "Ошибка загрузки тренировок: " + error);
+            }
+        });
+    }
+
+    private void loadBaseFoods() {
+
+        manager.baseFoodSync.downloadAllFoods( new BaseFoodSync.DownloadCallback() {
+            @Override
+            public void onDownloaded(int count) {
+                Log.d(TAG, "Справочник продуктов успешно обновлен: " + count);
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Ошибка загрузки справочника продуктов: " + error);
+            }
+        });
+    }
+
+    private void loadMealPresets() {
+        manager.mealPresetSync.downloadAllPresets(new MealPresetSync.DownloadCallback() {
+            @Override
+            public void onDownloaded(List<MealModel> presets) {
+                Log.d(TAG, "Пресетов питания загружено: " + presets.size());
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "Ошибка загрузки пресетов питания: " + error);
+            }
+        });
+    }
+
+    private void loadMeals(){
+        manager.mealSync.downloadAllMeals(new MealSync.DownloadCallback() {
+            @Override
+            public void onDownloaded(List<MealModel> meals) {
+                Log.d(TAG, "Приемы пищи загружены");
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.d(TAG, "Ошибка загрузки приемов пищи");
+            }
+        });
+    }
+
+    private void loadWorkoutPresets(){
+        manager.presetWorkoutSync.downloadFromCloud(new PresetWorkoutSync.DownloadCallback() {
+            @Override
+            public void onDownloaded(List<DocumentSnapshot> snapshots) {
+                Log.d(TAG, "Пресеты тренировок загружены");
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.d(TAG, "Ошибка загрузки пресетов тренировок");
+            }
+        });
     }
 
     private void loadProfile() {

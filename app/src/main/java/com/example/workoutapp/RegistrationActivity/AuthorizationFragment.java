@@ -3,6 +3,7 @@ package com.example.workoutapp.RegistrationActivity;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
@@ -30,17 +31,12 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.workoutapp.Data.ProfileDao.UserProfileDao;
-import com.example.workoutapp.Data.WorkoutDao.WORKOUT_EXERCISE_TABLE_DAO;
 import com.example.workoutapp.MainActivity;
-import com.example.workoutapp.Models.WorkoutModels.ExerciseModel;
 import com.example.workoutapp.R;
-import com.example.workoutapp.Tools.SyncTools.FirestoreSyncManager;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-import java.util.List;
 
 public class AuthorizationFragment extends Fragment {
 
@@ -172,19 +168,15 @@ public class AuthorizationFragment extends Fragment {
                         if (user != null) {
                             // ПРОВЕРКА ПОДТВЕРЖДЕНИЯ
                             if (user.isEmailVerified()) {
-                                // 1. Сохраняем UID
+                                // 1. Сохраняем UID (как у тебя и было)
                                 UserProfileDao profileDao = new UserProfileDao(MainActivity.getAppDataBase());
                                 profileDao.updateFirebaseId(user.getUid());
 
+                                // 2. Ставим флаг, что при следующем старте MainActivity нужно скачать всё из облака
+                                SharedPreferences prefs = requireActivity().getSharedPreferences("app_settings", Context.MODE_PRIVATE);
+                                prefs.edit().putBoolean("is_first_sync_after_login", true).apply();
 
-
-                                // 2. Синхронизируем профиль
-                                // 3. Синхронизируем тренировки
-                                WORKOUT_EXERCISE_TABLE_DAO workoutDao = new WORKOUT_EXERCISE_TABLE_DAO(MainActivity.getAppDataBase());
-                                List<ExerciseModel> localExercises = workoutDao.getAllExercisesForSync();
-                                FirestoreSyncManager syncManager = MainActivity.getSyncManager();
-                                syncManager.startFullSynchronization(localExercises);
-
+                                // 3. Переходим в Main
                                 navigateToMain();
                             } else {
                                 // Почта не подтверждена — отправляем на фрагмент верификации

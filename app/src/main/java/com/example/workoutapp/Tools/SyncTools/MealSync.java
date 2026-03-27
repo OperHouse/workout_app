@@ -48,6 +48,12 @@ public class MealSync {
         void onError(String error);
     }
 
+    public interface DownloadCallback {
+        void onDownloaded(List<MealModel> meals);
+
+        void onError(String error);
+    }
+
     // =====================================================
     // CONSTRUCTOR
     // =====================================================
@@ -307,5 +313,64 @@ public class MealSync {
                     Log.d(TAG, "Синхронизация всех приемов пищи завершена");
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "Ошибка loadAllMeals: " + e.getMessage()));
+    }
+
+
+    /**
+     * Загрузка всех приемов пищи из облака с сохранением в локальную БД.
+     * Используется при логине пользователя.
+     */
+    public void downloadAllMeals(@Nullable DownloadCallback callback) {
+        if (getUid() == null) {
+            if (callback != null) callback.onError("Пользователь не авторизован");
+            return;
+        }
+
+        // Инициализация DAO
+        MealNameDao nameDao = new MealNameDao(MainActivity.getAppDataBase());
+        MealFoodDao foodDao = new MealFoodDao(MainActivity.getAppDataBase());
+        ConnectingMealDao connectionDao = new ConnectingMealDao(MainActivity.getAppDataBase());
+
+        getMealsCollection()
+                .whereEqualTo("deleted", false) // Загружаем только не удаленные
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    List<MealModel> meals = new ArrayList<>();
+                    if (snapshots != null) {
+                        for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                            MealModel meal = doc.toObject(MealModel.class);
+                            if (meal != null) {
+                                meals.add(meal);
+
+                                // Логика сохранения (ваша существующая логика)
+                                // 1. Сохраняем заголовок приема пищи
+                                long localMealId = nameDao.insertMealName(
+                                        meal.getMeal_name(),
+                                        meal.getMealData(),
+                                        meal.getMeal_uid()
+                                );
+
+                                // Если -1, значит либо ошибка, либо (чаще) такой UID уже есть в базе
+                                if (localMealId != -1) {
+                                    // 2. Сохраняем продукты и связи
+                                    if (meal.getMeal_food_list() != null) {
+                                        for (FoodModel food : meal.getMeal_food_list()) {
+                                            long fId = foodDao.addSingleFood(food);
+                                            if (fId != -1) {
+                                                connectionDao.connectingSingleFood(localMealId, fId);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Log.d(TAG, "Загрузка приемов пищи завершена: " + meals.size());
+                    if (callback != null) callback.onDownloaded(meals);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Ошибка загрузки приемов пищи: " + e.getMessage());
+                    if (callback != null) callback.onError(e.getMessage());
+                });
     }
 }
